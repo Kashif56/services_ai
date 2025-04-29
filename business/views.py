@@ -7,8 +7,9 @@ from django.db import transaction
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 import json
+from decimal import Decimal
 
-from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering
+from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem
 
 
 @login_required
@@ -179,9 +180,13 @@ def business_pricing(request):
     # Get all services for this business
     services = ServiceOffering.objects.filter(business=business).order_by('name')
     
+    # Get all service items for this business
+    service_items = ServiceItem.objects.filter(business=business).order_by('name')
+    
     context = {
         'business': business,
-        'services': services
+        'services': services,
+        'service_items': service_items
     }
     
     return render(request, 'business/pricing.html', context)
@@ -317,14 +322,210 @@ def delete_service(request):
         service = get_object_or_404(ServiceOffering, id=service_id, business=business)
         service_name = service.name
         
-        # Delete service
-        service.delete()
+        # Use a transaction to ensure atomicity
+        with transaction.atomic():
+            # First, handle any related objects that might cause constraint issues
+            # Check for any StaffServiceAssignments related to this service
+            from bookings.models import StaffServiceAssignment, Booking
+            
+            # Delete any staff service assignments for this offering
+            StaffServiceAssignment.objects.filter(service_offering_id=service_id).delete()
+            
+            # Update any bookings that reference this service offering
+            Booking.objects.filter(service_offering_id=service_id).update(service_offering=None)
+            
+            # Now delete the service offering
+            service.delete()
         
         messages.success(request, f'Service "{service_name}" deleted successfully!')
     except Exception as e:
         messages.error(request, f'An error occurred: {str(e)}')
     
     return redirect('business:pricing')
+
+
+# Service Item Management
+
+@login_required
+@require_http_methods(["POST"])
+def add_service_item(request):
+    """
+    Add a new service item to the business
+    Handles form submission from the pricing page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        # Get form data
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        price_type = request.POST.get('price_type')
+        price_value = request.POST.get('price_value')
+        duration_minutes = request.POST.get('duration_minutes', 0)
+        max_quantity = request.POST.get('max_quantity', 1)
+        is_optional = 'is_optional' in request.POST
+        is_active = 'is_active' in request.POST
+        
+        # Validate required fields
+        if not name or not price_type or not price_value:
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('business:pricing')
+        
+        # Create service item
+        ServiceItem.objects.create(
+            business=business,
+            name=name,
+            description=description,
+            price_type=price_type,
+            price_value=Decimal(price_value),
+            duration_minutes=int(duration_minutes),
+            max_quantity=int(max_quantity),
+            is_optional=is_optional,
+            is_active=is_active
+        )
+        
+        messages.success(request, f'Service item "{name}" added successfully!')
+    except Exception as e:
+        messages.error(request, f'Error adding service item: {str(e)}')
+    
+    return redirect('business:pricing')
+
+
+@login_required
+@require_http_methods(["POST"])
+def edit_service_item(request):
+    """
+    Update an existing service item
+    Handles form submission from the pricing page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        # Get form data
+        item_id = request.POST.get('item_id')
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        price_type = request.POST.get('price_type')
+        price_value = request.POST.get('price_value')
+        duration_minutes = request.POST.get('duration_minutes', 0)
+        max_quantity = request.POST.get('max_quantity', 1)
+        is_optional = 'is_optional' in request.POST
+        is_active = 'is_active' in request.POST
+        
+        # Validate required fields
+        if not item_id or not name or not price_type or not price_value:
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('business:pricing')
+        
+        # Get service item and verify ownership
+        service_item = get_object_or_404(ServiceItem, pk=item_id)
+        if service_item.business != business:
+            messages.error(request, 'You do not have permission to edit this service item.')
+            return redirect('business:pricing')
+        
+        # Update service item
+        service_item.name = name
+        service_item.description = description
+        service_item.price_type = price_type
+        service_item.price_value = Decimal(price_value)
+        service_item.duration_minutes = int(duration_minutes)
+        service_item.max_quantity = int(max_quantity)
+        service_item.is_optional = is_optional
+        service_item.is_active = is_active
+        service_item.save()
+        
+        messages.success(request, f'Service item "{name}" updated successfully!')
+    except Exception as e:
+        messages.error(request, f'Error updating service item: {str(e)}')
+    
+    return redirect('business:pricing')
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_service_item(request):
+    """
+    Delete an existing service item
+    Handles form submission from the pricing page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        # Get form data
+        item_id = request.POST.get('item_id')
+        
+        # Validate required fields
+        if not item_id:
+            messages.error(request, 'Invalid request.')
+            return redirect('business:pricing')
+        
+        # Get service item and verify ownership
+        service_item = get_object_or_404(ServiceItem, pk=item_id)
+        if service_item.business != business:
+            messages.error(request, 'You do not have permission to delete this service item.')
+            return redirect('business:pricing')
+        
+        # Store name for success message
+        item_name = service_item.name
+        
+        # Delete service item
+        service_item.delete()
+        
+        messages.success(request, f'Service item "{item_name}" deleted successfully!')
+    except Exception as e:
+        messages.error(request, f'Error deleting service item: {str(e)}')
+    
+    return redirect('business:pricing')
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_service_item_details(request, item_id):
+    """
+    API endpoint to get service item details for editing
+    Returns JSON response with service item data
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        return JsonResponse({'error': 'Please register your business first.'}, status=403)
+    
+    business = request.user.business
+    
+    try:
+        # Get service item and verify ownership
+        service_item = get_object_or_404(ServiceItem, pk=item_id)
+        if service_item.business != business:
+            return JsonResponse({'error': 'You do not have permission to view this service item.'}, status=403)
+        
+        # Return service item data
+        return JsonResponse({
+            'id': str(service_item.id),
+            'name': service_item.name,
+            'description': service_item.description,
+            'price_type': service_item.price_type,
+            'price_value': float(service_item.price_value),
+            'duration_minutes': service_item.duration_minutes,
+            'max_quantity': service_item.max_quantity,
+            'is_optional': service_item.is_optional,
+            'is_active': service_item.is_active
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 # Package functionality has been removed as packages are not offered at the moment

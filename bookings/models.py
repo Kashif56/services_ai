@@ -1,11 +1,12 @@
 from django.db import models
 from django.utils import timezone
 import uuid
-from business.models import Business, Industry, IndustryField, BusinessCustomField
+from business.models import Business, Industry, IndustryField, BusinessCustomField, ServiceOffering, ServiceItem, ServiceOfferingItem
 from leads.models import Lead, LeadStatus
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
 
 
 class BookingStatus(models.TextChoices):
@@ -17,35 +18,7 @@ class BookingStatus(models.TextChoices):
     NO_SHOW = 'no_show', 'No Show'
 
 
-class ServiceType(models.Model):
-    """
-    Represents different types of services a business offers.
-    Each business can define multiple service types with different durations and prices.
-    """
-    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_types')
-    name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=120, blank=True)
-    description = models.TextField(blank=True, null=True)
-    duration_minutes = models.PositiveIntegerField(default=60)
-    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    color_code = models.CharField(max_length=7, blank=True, null=True, help_text="Hex color code for calendar display")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = "Service Type"
-        verbose_name_plural = "Service Types"
-        ordering = ['business', 'name']
-        unique_together = ['business', 'slug']
-    
-    def __str__(self):
-        return f"{self.business.name} - {self.name}"
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+# ServiceType model has been replaced by ServiceOffering in business.models
 
 
 class StaffRole(models.Model):
@@ -121,7 +94,7 @@ class StaffServiceAssignment(models.Model):
     This allows for filtering available staff by service type.
     """
     staff_member = models.ForeignKey(StaffMember, on_delete=models.CASCADE, related_name='service_assignments')
-    service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE, related_name='staff_assignments')
+    service_offering = models.ForeignKey(ServiceOffering, on_delete=models.CASCADE, related_name='staff_assignments')
     is_primary = models.BooleanField(default=False, help_text="Whether this is the staff member's primary service")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -129,10 +102,10 @@ class StaffServiceAssignment(models.Model):
     class Meta:
         verbose_name = "Staff Service Assignment"
         verbose_name_plural = "Staff Service Assignments"
-        unique_together = ['staff_member', 'service_type']
+        unique_together = ['staff_member', 'service_offering']
     
     def __str__(self):
-        return f"{self.staff_member.get_full_name()} - {self.service_type.name}"
+        return f"{self.staff_member.get_full_name()} - {self.service_offering.name}"
 
 
 class AVAILABILITY_TYPE(models.TextChoices):
@@ -279,13 +252,18 @@ class Booking(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='bookings')
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
-    service_type = models.ForeignKey(ServiceType, on_delete=models.SET_NULL, null=True, related_name='bookings')
+    service_offering = models.ForeignKey(ServiceOffering, on_delete=models.SET_NULL, null=True, related_name='bookings')
     staff_members = models.ManyToManyField(StaffMember, through='BookingStaffAssignment', related_name='assigned_bookings')
+    
+    # Default contact fields
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=20)
+    
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PENDING)
     booking_date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-
     location_type = models.CharField(max_length=20, choices=(
         ('onsite', 'On-site (Client Location)'),
         ('business', 'Business Location'),
@@ -293,10 +271,8 @@ class Booking(models.Model):
     ), default='business')
     location_details = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-
     cancellation_reason = models.TextField(blank=True, null=True)
     reminder_sent = models.BooleanField(default=False)
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -306,7 +282,9 @@ class Booking(models.Model):
         ordering = ['-start_time']
     
     def __str__(self):
-        return f"{self.lead.get_full_name()} - {self.business.name} - {self.start_time.strftime('%Y-%m-%d %H:%M')}"
+        if self.lead:
+            return f"{self.lead.get_full_name()} - {self.business.name} - {self.start_time.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.name} - {self.business.name} - {self.start_time.strftime('%Y-%m-%d %H:%M')}"
     
     def clean(self):
         if self.start_time >= self.end_time:
@@ -325,10 +303,10 @@ class Booking(models.Model):
     
     def save(self, *args, **kwargs):
         # Update lead status when booking is created or updated
-        if self.status == BookingStatus.CONFIRMED:
+        if self.lead and self.status == BookingStatus.CONFIRMED:
             self.lead.status = LeadStatus.APPOINTMENT_SCHEDULED
             self.lead.save(update_fields=['status', 'updated_at'])
-        elif self.status == BookingStatus.COMPLETED:
+        elif self.lead and self.status == BookingStatus.COMPLETED:
             self.lead.status = LeadStatus.APPOINTMENT_COMPLETED
             self.lead.save(update_fields=['status', 'updated_at'])
         
@@ -368,9 +346,9 @@ class Booking(models.Model):
     
     def get_available_staff(self):
         """
-        Find available staff members for this booking based on service type and availability.
+        Find available staff members for this booking based on service offering and availability.
         """
-        if not self.service_type:
+        if not self.service_offering:
             return []
         
         # Get staff members who can perform this service
@@ -378,7 +356,7 @@ class Booking(models.Model):
             business=self.business,
             is_active=True,
             is_available=True,
-            service_assignments__service_type=self.service_type
+            service_assignments__service_offering=self.service_offering
         ).distinct()
         
         # Filter by availability for the booking time
@@ -661,3 +639,46 @@ class BookingReminder(models.Model):
 # BookingAvailability model has been replaced by the more flexible StaffAvailability model
 # Business-wide availability can be implemented using a special "business" staff member
 # or by creating availability records for all staff members
+
+
+class BookingServiceItem(models.Model):
+    """
+    Associates service items with bookings.
+    Allows tracking which specific service items were selected for a booking.
+    """
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='service_items')
+    service_item = models.ForeignKey(ServiceItem, on_delete=models.CASCADE, related_name='booking_items')
+    quantity = models.PositiveIntegerField(default=1)
+    price_at_booking = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price of the item at the time of booking")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Booking Service Item"
+        verbose_name_plural = "Booking Service Items"
+        unique_together = ['booking', 'service_item']
+    
+    def __str__(self):
+        return f"{self.booking} - {self.service_item.name} (x{self.quantity})"
+    
+    def save(self, *args, **kwargs):
+        # If price_at_booking is not set, calculate it based on the service item's pricing rules
+        if not self.price_at_booking and self.service_item:
+            # Get base price from service offering if available
+            base_price = None
+            if self.booking.service_offering:
+                base_price = self.booking.service_offering.price
+                
+                # Check if this item is associated with this offering for any special pricing
+                try:
+                    offering_item = ServiceOfferingItem.objects.get(
+                        service_offering=self.booking.service_offering,
+                        service_item=self.service_item
+                    )
+                    # Could apply special pricing rules based on the offering association here
+                except ServiceOfferingItem.DoesNotExist:
+                    pass
+                    
+            self.price_at_booking = self.service_item.calculate_price(base_price, self.quantity)
+        super().save(*args, **kwargs)

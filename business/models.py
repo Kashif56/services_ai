@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 import uuid
+from decimal import Decimal
 
 class Industry(models.Model):
     """
@@ -198,4 +199,81 @@ class ServiceOffering(models.Model):
         super().save(*args, **kwargs)
 
 
+# Association model to link ServiceItems with ServiceOfferings
+class ServiceOfferingItem(models.Model):
+    """
+    Links service items to service offerings.
+    This allows for flexible composition of service offerings with reusable items.
+    """
+    service_offering = models.ForeignKey(ServiceOffering, on_delete=models.CASCADE, related_name='offering_items')
+    service_item = models.ForeignKey('ServiceItem', on_delete=models.CASCADE, related_name='offering_associations')
+    is_default = models.BooleanField(default=False, help_text="Whether this item is included by default with this offering")
+    is_required = models.BooleanField(default=False, help_text="Whether this item is required for this offering")
+    display_order = models.PositiveIntegerField(default=0, help_text="Order to display items in the offering")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Service Offering Item"
+        verbose_name_plural = "Service Offering Items"
+        ordering = ['service_offering', 'display_order', 'service_item__name']
+        unique_together = ['service_offering', 'service_item']
+    
+    def __str__(self):
+        return f"{self.service_offering.name} - {self.service_item.name}"
+
+
 # ServicePackage model removed as packages are not offered at the moment
+
+
+class ServiceItem(models.Model):
+    """
+    Represents individual service items that can be added to service offerings.
+    This allows for modular and dynamic pricing based on selected items.
+    Items are independent of specific service offerings for maximum flexibility.
+    """
+    PRICE_TYPE_CHOICES = (
+        ('fixed', 'Fixed Price'),
+        ('percentage', 'Percentage of Base Price'),
+        ('hourly', 'Hourly Rate'),
+        ('per_unit', 'Per Unit'),
+    )
+    
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_items')
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    price_type = models.CharField(max_length=20, choices=PRICE_TYPE_CHOICES, default='fixed')
+    price_value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    is_optional = models.BooleanField(default=True, help_text="Whether this item is optional or required by default")
+    is_active = models.BooleanField(default=True)
+    duration_minutes = models.PositiveIntegerField(default=0, help_text="Additional time required for this item")
+    max_quantity = models.PositiveIntegerField(default=1, help_text="Maximum quantity allowed for this item")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Service Item"
+        verbose_name_plural = "Service Items"
+        ordering = ['business', 'name']
+    
+    def __str__(self):
+        return f"{self.business.name} - {self.name}"
+    
+    def calculate_price(self, base_price=None, quantity=1):
+        """
+        Calculate the price for this service item based on its price type.
+        """
+        if quantity <= 0:
+            return Decimal('0.00')
+            
+        if self.price_type == 'fixed':
+            return self.price_value * quantity
+        elif self.price_type == 'percentage' and base_price:
+            return (base_price * self.price_value / 100) * quantity
+        elif self.price_type == 'hourly':
+            # Convert duration_minutes to hours and multiply by hourly rate
+            hours = self.duration_minutes / 60
+            return self.price_value * hours * quantity
+        elif self.price_type == 'per_unit':
+            return self.price_value * quantity
+        return Decimal('0.00')

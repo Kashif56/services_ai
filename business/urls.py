@@ -30,6 +30,12 @@ urlpatterns = [
     path('service/update/', views.update_service, name='update_service'),
     path('service/delete/', views.delete_service, name='delete_service'),
     path('service/<uuid:service_id>/details/', views.get_service_details, name='get_service_details'),
+    
+    # Service item management
+    path('service-item/add/', views.add_service_item, name='add_service_item'),
+    path('service-item/edit/', views.edit_service_item, name='edit_service_item'),
+    path('service-item/delete/', views.delete_service_item, name='delete_service_item'),
+    path('api/service-items/<uuid:item_id>/', views.get_service_item_details, name='get_service_item_details'),
     # Package functionality removed
     
     # API endpoints

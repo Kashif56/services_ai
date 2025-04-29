@@ -194,9 +194,10 @@ document.addEventListener('DOMContentLoaded', function() {
             modalTitle.textContent = 'Edit Service';
         }
         
-        // Update form action
+        // Update form action to the correct update URL
         if (addServiceForm) {
-            addServiceForm.action = addServiceForm.action.replace('add_service', 'update_service');
+            // Set the form action to the explicit update URL instead of string replacement
+            addServiceForm.action = '/business/service/update/';
             
             // Add hidden service ID field
             if (!document.getElementById('editServiceId')) {
