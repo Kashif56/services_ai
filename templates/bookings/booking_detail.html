@@ -1,0 +1,456 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Booking Header -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">Booking Details</h5>
+                <p class="text-white-50 small mb-0">ID: {{ booking.id }}</p>
+            </div>
+            <div class="d-flex">
+                <a href="{% url 'bookings:index' %}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Bookings
+                </a>
+                <div class="dropdown">
+                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="bookingActions" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog me-2"></i> Actions
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bookingActions">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit Booking</a></li>
+                    {% if booking.status == 'pending' %}
+                        <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Confirm Booking</a></li>
+                    {% endif %}
+                    {% if booking.status != 'cancelled' and booking.status != 'completed' %}
+                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Cancel Booking</a></li>
+                    {% endif %}
+                    {% if booking.status != 'completed' and booking.status != 'cancelled' %}
+                        <li><a class="dropdown-item text-info" href="#"><i class="fas fa-calendar-alt me-2"></i> Reschedule</a></li>
+                        <li><a class="dropdown-item text-primary" href="#"><i class="fas fa-check-double me-2"></i> Mark Completed</a></li>
+                        <li><a class="dropdown-item text-dark" href="#"><i class="fas fa-user-times me-2"></i> Mark No-Show</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="window.print(); return false;"><i class="fas fa-print me-2"></i> Print Details</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i> Send Reminder</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Booking Information -->
+        <div class="col-lg-8">
+            <!-- Status Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Booking Status</h5>
+                    {% if booking.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif booking.status == 'confirmed' %}
+                        <span class="badge bg-success">Confirmed</span>
+                    {% elif booking.status == 'completed' %}
+                        <span class="badge bg-info">Completed</span>
+                    {% elif booking.status == 'cancelled' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                    {% elif booking.status == 'rescheduled' %}
+                        <span class="badge bg-primary">Rescheduled</span>
+                    {% elif booking.status == 'no_show' %}
+                        <span class="badge bg-dark">No Show</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ booking.status }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Service</h6>
+                            <p>{{ booking.service_offering.name }}</p>
+                            
+                            <h6 class="fw-bold mt-3">Date & Time</h6>
+                            <p>{{ booking.booking_date|date:"l, F j, Y" }}<br>
+                            {{ booking.start_time|time:"g:i A" }} - {{ booking.end_time|time:"g:i A" }}</p>
+                            
+                            <h6 class="fw-bold mt-3">Location</h6>
+                            <p>
+                                {% if booking.location_type == 'business' %}
+                                    <span class="text-primary">Business Location</span>
+                                {% elif booking.location_type == 'onsite' %}
+                                    <span class="text-success">On-site (Client Location)</span>
+                                {% elif booking.location_type == 'virtual' %}
+                                    <span class="text-info">Virtual Meeting</span>
+                                {% endif %}
+                                {% if booking.location_details %}
+                                    <br>{{ booking.location_details }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Created</h6>
+                            <p>{{ booking.created_at|date:"M d, Y" }} at {{ booking.created_at|time:"g:i A" }}</p>
+                            
+                            <h6 class="fw-bold mt-3">Last Updated</h6>
+                            <p>{{ booking.updated_at|date:"M d, Y" }} at {{ booking.updated_at|time:"g:i A" }}</p>
+                            
+                            {% if booking.cancellation_reason %}
+                                <h6 class="fw-bold mt-3 text-danger">Cancellation Reason</h6>
+                                <p>{{ booking.cancellation_reason }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if booking.notes %}
+                        <div class="mt-3">
+                            <h6 class="fw-bold">Notes</h6>
+                            <p>{{ booking.notes }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Client Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Client Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Name</h6>
+                            <p>{{ booking.name }}</p>
+                            
+                            <h6 class="fw-bold mt-3">Email</h6>
+                            <p><a href="mailto:{{ booking.email }}">{{ booking.email }}</a></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Phone</h6>
+                            <p><a href="tel:{{ booking.phone_number }}">{{ booking.phone_number }}</a></p>
+                            
+                            {% if booking.lead %}
+                                <h6 class="fw-bold mt-3">Lead Source</h6>
+                                <p>
+                                    <a href="#" class="text-primary">
+                                        <i class="fas fa-external-link-alt me-1"></i> View Lead Details
+                                    </a>
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Fields -->
+                    {% if custom_fields %}
+                        <div class="mt-4">
+                            <h6 class="fw-bold border-bottom pb-2">Additional Information</h6>
+                            <div class="row mt-3">
+                                {% for field in custom_fields %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="fw-bold small text-muted">{{ field.business_field.name }}</h6>
+                                        <p>{{ field.value }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Industry Fields -->
+                    {% if industry_fields %}
+                        <div class="mt-4">
+                            <h6 class="fw-bold border-bottom pb-2">Industry-Specific Information</h6>
+                            <div class="row mt-3">
+                                {% for field in industry_fields %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="fw-bold small text-muted">{{ field.industry_field.name }}</h6>
+                                        <p>{{ field.value }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Service Items - Improved Design -->
+            <div class="card mb-4 service-details-card">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Service Details</h5>
+                    <span class="badge bg-primary">Duration: {{ booking.service_offering.duration }} minutes</span>
+                </div>
+                <div class="card-body">
+                    <!-- Service Summary -->
+                    <div class="service-summary mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4 class="service-title">{{ booking.service_offering.name }}</h4>
+                                {% if booking.service_offering.description %}
+                                    <p class="text-muted">{{ booking.service_offering.description }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="price-tag">
+                                    <span class="currency">$</span>
+                                    <span class="amount">{{ total_price }}</span>
+                                </div>
+                                <div class="small text-muted">Total Price</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Service Items List -->
+                    <div class="service-items-list">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Service Breakdown</h6>
+                        
+                        <!-- Base Service -->
+                        <div class="service-item base-service d-flex justify-content-between align-items-start mb-3 p-3 rounded bg-dark text-white">
+                            <div class="service-item-details">
+                                <div class="d-flex align-items-center">
+                                    <div class="service-icon me-3 bg-primary text-white">
+                                        <i class="fas fa-concierge-bell"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ booking.service_offering.name }}</h6>
+                                        <span class="badge bg-primary">Base Service</span>
+                                        {% if booking.service_offering.description %}
+                                            <p class="small text-white-50 mb-0 mt-1">{{ booking.service_offering.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="service-item-pricing text-end">
+                                <div class="fw-bold">${{ booking.service_offering.price }}</div>
+                                <div class="small text-white-50">Qty: 1</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Service Items -->
+                        {% for item in service_items %}
+                            <div class="service-item d-flex justify-content-between align-items-start mb-3 p-3 rounded bg-dark text-white{% if item.service_item.is_optional %} optional-service{% endif %}">
+                                <div class="service-item-details">
+                                    <div class="d-flex align-items-center">
+                                        <div class="service-icon me-3 {% if item.service_item.is_optional %}bg-secondary{% else %}bg-info{% endif %} text-white">
+                                            <i class="fas fa-plus"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ item.service_item.name }}</h6>
+                                            {% if not item.service_item.is_optional %}
+                                                <span class="badge bg-info">Required</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Optional</span>
+                                            {% endif %}
+                                            {% if item.service_item.description %}
+                                                <p class="small text-white-50 mb-0 mt-1">{{ item.service_item.description }}</p>
+                                            {% endif %}
+                                            {% if item.service_item.duration_minutes > 0 %}
+                                                <span class="small text-white-50"><i class="far fa-clock me-1"></i> +{{ item.service_item.duration_minutes }} min</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="service-item-pricing text-end">
+                                    <div class="fw-bold">${{ item.price_at_booking }}</div>
+                                    <div class="small text-white-50">Qty: {{ item.quantity }}</div>
+                                    <div class="item-total small text-info">Total: ${{ item.price_at_booking|floatformat:2 }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Price Summary -->
+                        <div class="price-summary mt-4 p-3 rounded bg-dark text-white">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Base Price:</span>
+                                <span>${{ booking.service_offering.price }}</span>
+                            </div>
+                            {% if service_items %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Additional Items:</span>
+                                    <span>${{ service_items_total }}</span>
+                                </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between fw-bold mt-2 pt-2 border-top border-secondary">
+                                <span>Total:</span>
+                                <span class="text-info">${{ total_price }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Staff Assignments -->
+            {% if booking.staff_assignments.all %}
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Assigned Staff</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for assignment in booking.staff_assignments.all %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if assignment.staff_member.profile_image %}
+                                            <img src="{{ assignment.staff_member.profile_image.url }}" alt="{{ assignment.staff_member.get_full_name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ assignment.staff_member.get_full_name }}</h6>
+                                            <p class="text-muted mb-0 small">
+                                                {% for role in assignment.staff_member.roles.all %}
+                                                    {{ role.name }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                                {% if assignment.is_primary %}
+                                                    <span class="badge bg-primary ms-2">Primary</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {% if assignment.assignment_notes %}
+                                        <div class="mt-2 ms-5 ps-3 border-start">
+                                            <small class="text-muted">{{ assignment.assignment_notes }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Timeline -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Booking Timeline</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for event in timeline_events %}
+                            <div class="list-group-item">
+                                <div class="d-flex">
+                                    <div class="timeline-icon me-3">
+                                        <div class="icon-circle bg-{{ event.type }} text-white">
+                                            <i class="fas {{ event.icon }}"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ event.description }}</h6>
+                                        <p class="text-muted mb-0 small">
+                                            {{ event.timestamp|date:"M d, Y" }} at {{ event.timestamp|time:"g:i A" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reminders -->
+            {% if booking.reminders.all %}
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Reminders</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for reminder in booking.reminders.all %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                {% if reminder.reminder_type == 'sms' %}
+                                                    <i class="fas fa-sms me-2 text-primary"></i> SMS Reminder
+                                                {% elif reminder.reminder_type == 'email' %}
+                                                    <i class="fas fa-envelope me-2 text-primary"></i> Email Reminder
+                                                {% elif reminder.reminder_type == 'voice' %}
+                                                    <i class="fas fa-phone me-2 text-primary"></i> Voice Reminder
+                                                {% endif %}
+                                            </h6>
+                                            <p class="text-muted mb-0 small">
+                                                Scheduled: {{ reminder.scheduled_time|date:"M d, Y" }} at {{ reminder.scheduled_time|time:"g:i A" }}
+                                            </p>
+                                        </div>
+                                        <span class="badge {% if reminder.status == 'sent' %}bg-success{% elif reminder.status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                            {{ reminder.status|title }}
+                                        </span>
+                                    </div>
+                                    {% if reminder.error_message %}
+                                        <div class="mt-2">
+                                            <small class="text-danger">{{ reminder.error_message }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-2"></i> Send Email to Client
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-sms me-2"></i> Send SMS to Client
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar-plus me-2"></i> Schedule Follow-up
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-sticky-note me-2"></i> Add Note
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Information -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Business Information</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">{{ booking.business.name }}</h6>
+                    <p class="mb-0">{{ booking.business.phone_number }}</p>
+                    <p class="mb-0"><a href="mailto:{{ booking.business.email }}">{{ booking.business.email }}</a></p>
+                    
+                    {% if booking.business.address %}
+                        <hr>
+                        <h6 class="fw-bold">Address</h6>
+                        <p class="mb-0">{{ booking.business.address }}</p>
+                        <p class="mb-0">
+                            {% if booking.business.city %}{{ booking.business.city }}{% endif %}
+                            {% if booking.business.state %}, {{ booking.business.state }}{% endif %}
+                            {% if booking.business.zip_code %} {{ booking.business.zip_code }}{% endif %}
+                        </p>
+                    {% endif %}
+                    
+                    {% if booking.business.website %}
+                        <hr>
+                        <h6 class="fw-bold">Website</h6>
+                        <p class="mb-0"><a href="{{ booking.business.website }}" target="_blank">{{ booking.business.website }}</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/bookings-detail.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/bookings-detail.js' %}"></script>
+{% endblock %}

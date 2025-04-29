@@ -1,0 +1,170 @@
+/* bookings-detail.css - Styles for the booking detail page */
+
+/* Timeline styling */
+.timeline-icon .icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-created {
+    background-color: #0d6efd; /* Primary blue */
+}
+
+.bg-confirmed {
+    background-color: #198754; /* Success green */
+}
+
+.bg-cancelled {
+    background-color: #dc3545; /* Danger red */
+}
+
+.bg-completed {
+    background-color: #0dcaf0; /* Info blue */
+}
+
+.bg-rescheduled {
+    background-color: #6610f2; /* Purple */
+}
+
+.bg-no_show {
+    background-color: #212529; /* Dark */
+}
+
+/* Card styling */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-bottom: 0;
+}
+
+/* Status badge styling */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Service Details Styling */
+.service-details-card .service-title {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.service-details-card .price-tag {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0d6efd;
+    line-height: 1;
+}
+
+.service-details-card .price-tag .currency {
+    font-size: 1rem;
+    vertical-align: top;
+    position: relative;
+    top: 0.25rem;
+    margin-right: 0.1rem;
+}
+
+.service-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+    border-left: 3px solid #0d6efd;
+}
+
+.service-item:hover {
+    background-color: #f0f0f0;
+    transform: translateX(3px);
+}
+
+.service-item.base-service {
+    border-left-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.service-item.optional-service {
+    border-left-color: #6c757d;
+}
+
+.service-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.price-summary {
+    background-color: #f8f9fa;
+    border-left: 3px solid #198754;
+}
+
+.item-total {
+    color: #0d6efd;
+}
+
+/* Table styling */
+.table th {
+    font-weight: 600;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Staff member styling */
+.staff-member-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+
+/* Print styles */
+@media print {
+    .btn, .dropdown, .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    
+    .container-fluid {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: none;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .service-item {
+        flex-direction: column;
+    }
+    
+    .service-item-pricing {
+        margin-top: 1rem;
+        text-align: left !important;
+    }
+}
