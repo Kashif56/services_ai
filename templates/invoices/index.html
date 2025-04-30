@@ -1,0 +1,169 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Invoices{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Invoices</h2>
+        <a href="#" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> New Invoice
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" id="invoice-filter-form" class="row g-3">
+                <!-- Status Filter -->
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for status_code, status_label in invoice_statuses %}
+                            <option value="{{ status_code }}" {% if current_status == status_code %}selected{% endif %}>{{ status_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                
+                <!-- Search -->
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control" placeholder="Search invoices..." value="{{ search_query }}">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                    <a href="{% url 'invoices:index' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">All Invoices</h5>
+        </div>
+        <div class="card-body">
+            {% if invoices %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Client</th>
+                                <th>Booking Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ invoice.invoice_number }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ invoice.booking.name }}</div>
+                                        <div class="small text-muted">{{ invoice.booking.email }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ invoice.booking.booking_date|date:"M d, Y" }}</div>
+                                        <div class="small text-muted">{{ invoice.booking.start_time|time:"g:i A" }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ invoice.due_date|date:"M d, Y" }}</div>
+                                    </td>
+                                    <td>
+                                        {% if invoice.status == 'draft' %}
+                                            <span class="badge bg-secondary">Draft</span>
+                                        {% elif invoice.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif invoice.status == 'paid' %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% elif invoice.status == 'partially_paid' %}
+                                            <span class="badge bg-info">Partially Paid</span>
+                                        {% elif invoice.status == 'overdue' %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                        {% elif invoice.status == 'cancelled' %}
+                                            <span class="badge bg-dark">Cancelled</span>
+                                        {% elif invoice.status == 'refunded' %}
+                                            <span class="badge bg-primary">Refunded</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ invoice.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>{{ invoice.created_at|date:"M d, Y" }}</div>
+                                        <div class="small text-muted">{{ invoice.created_at|time:"g:i A" }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ invoice.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ invoice.id }}">
+                                                <li><a class="dropdown-item" href="{% url 'invoices:invoice_detail' invoice.id %}"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                {% if invoice.status == 'draft' or invoice.status == 'pending' %}
+                                                    <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Mark as Paid</a></li>
+                                                {% endif %}
+                                                {% if invoice.status != 'cancelled' %}
+                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Cancel</a></li>
+                                                {% endif %}
+                                                <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i> Print Invoice</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i> Email Invoice</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No invoices found. 
+                    {% if current_status or date_from or date_to or search_query %}
+                        Try adjusting your filters or <a href="{% url 'invoices:index' %}">view all invoices</a>.
+                    {% else %}
+                        Invoices will be automatically created when bookings are made.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/invoices-index.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/invoices-index.js' %}"></script>
+{% endblock %}
