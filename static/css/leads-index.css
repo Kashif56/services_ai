@@ -1,0 +1,47 @@
+/* Leads Index CSS */
+.badge {
+    font-size: 0.8rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Custom status colors */
+.badge.bg-purple {
+    background-color: #8e44ad !important;
+}
+
+.badge.bg-teal {
+    background-color: #16a085 !important;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Filter card styling */
+.card-header {
+    padding: 0.75rem 1.25rem;
+}
+
+/* Hover effect for table rows */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+    transition: background-color 0.2s ease;
+}
+
+/* Dropdown menu styling */
+.dropdown-menu {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-item i {
+    width: 1rem;
+    text-align: center;
+}

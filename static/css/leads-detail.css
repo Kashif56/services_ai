@@ -1,0 +1,109 @@
+/* Leads Detail CSS */
+.lead-avatar {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-primary);
+}
+
+/* Dark theme styles */
+.bg-gradient-navy {
+    background: linear-gradient(135deg, #1a2a3a 0%, #0f172a 100%);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
+}
+
+.bg-dark-light {
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.bg-dark-light:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Enhanced badges */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Custom badge colors */
+.badge.bg-purple {
+    background-color: #8e44ad !important;
+}
+
+.badge.bg-teal {
+    background-color: #16a085 !important;
+}
+
+/* Timeline styling */
+.timeline {
+    position: relative;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.timeline-content {
+    background-color: rgba(0,0,0,0.03);
+    border-radius: 0.25rem;
+    padding: 10px;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0,0,0,0.1);
+}
+
+/* Card equal height */
+.h-100 {
+    height: 100%;
+}
+
+/* Quick actions */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Table styling */
+.table-borderless th, .table-borderless td {
+    border: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .timeline {
+        max-height: 300px;
+    }
+}

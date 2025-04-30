@@ -94,6 +94,17 @@
                 <h5 class="mb-0">Client Information</h5>
             </div>
             <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label for="lead_id" class="form-label">Select Lead (Optional)</label>
+                        <select name="lead_id" id="lead_id" class="form-select">
+                            <option value="">No lead selected</option>
+                            <!-- Lead options will be populated via JavaScript -->
+                        </select>
+                        <div class="form-text">Select an existing lead or leave blank to create a booking without a lead association.</div>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="client_name" class="form-label">Client Name <span class="text-danger">*</span></label>
@@ -207,4 +218,68 @@
 
 {% block extra_js %}
 <script src="{% static 'js/bookings-create-booking.js' %}"></script>
+<script>
+    // Lead selection functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const leadSelect = document.getElementById('lead_id');
+        const clientNameInput = document.getElementById('client_name');
+        const clientEmailInput = document.getElementById('client_email');
+        const clientPhoneInput = document.getElementById('client_phone');
+        
+        // Function to fetch leads from the API
+        function fetchLeads() {
+            fetch('{% url "bookings:get_leads" %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.leads && data.leads.length > 0) {
+                        // Clear existing options except the default one
+                        while (leadSelect.options.length > 1) {
+                            leadSelect.remove(1);
+                        }
+                        
+                        // Add lead options
+                        data.leads.forEach(lead => {
+                            const option = document.createElement('option');
+                            option.value = lead.id;
+                            option.textContent = `${lead.name} (${lead.email})`;
+                            option.dataset.email = lead.email;
+                            option.dataset.phone = lead.phone;
+                            option.dataset.name = lead.name;
+                            leadSelect.appendChild(option);
+                            
+                            {% if selected_lead %}
+                            // If there's a selected lead from the URL, select it
+                            if (lead.id === '{{ selected_lead.id }}') {
+                                option.selected = true;
+                                // Also populate the client fields
+                                clientNameInput.value = lead.name;
+                                clientEmailInput.value = lead.email;
+                                clientPhoneInput.value = lead.phone;
+                            }
+                            {% endif %}
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching leads:', error));
+        }
+        
+        // Fetch leads when the page loads
+        fetchLeads();
+        
+        // Update client fields when a lead is selected
+        leadSelect.addEventListener('change', function() {
+            if (this.value) {
+                const selectedOption = this.options[this.selectedIndex];
+                clientNameInput.value = selectedOption.dataset.name;
+                clientEmailInput.value = selectedOption.dataset.email;
+                clientPhoneInput.value = selectedOption.dataset.phone;
+            } else {
+                // Clear client fields if no lead is selected
+                clientNameInput.value = '';
+                clientEmailInput.value = '';
+                clientPhoneInput.value = '';
+            }
+        });
+    });
+</script>
 {% endblock %}

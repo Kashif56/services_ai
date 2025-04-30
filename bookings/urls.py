@@ -8,6 +8,7 @@ urlpatterns = [
     path('create/', views.create_booking, name='create_booking'),
     path('<uuid:booking_id>/', views.booking_detail, name='booking_detail'),
     
-    # API endpoints - only keeping service items endpoint
+    # API endpoints
     path('api/service-items/<uuid:service_id>/', views.get_service_items, name='get_service_items'),
+    path('api/leads/', views.get_leads, name='get_leads'),
 ]

@@ -15,6 +15,10 @@
     height: 100vh;
 }
 
+.card-header{
+    background-color: var(--secondary-teal-dark) !important;
+}
+
 /* Sidebar */
 .sidebar {
     width: 260px;
@@ -185,7 +189,7 @@
 
 /* Top Navbar */
 .top-navbar {
-    background-color: var(--color-surface);
+    background-color: var(--color-background);
     border-bottom: 1px solid var(--color-border);
     padding: 0.75rem 1.5rem;
     height: 64px;

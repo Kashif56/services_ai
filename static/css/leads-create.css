@@ -1,0 +1,261 @@
+/* Leads Create CSS */
+
+/* Card styling */
+.card {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Background gradient */
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #6366f1, #8b5cf6);
+}
+
+/* Section styling */
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-icon {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.section-icon:hover {
+    transform: scale(1.05);
+}
+
+/* Form floating labels */
+.form-floating > .form-control,
+.form-floating > .form-select {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+.form-floating > .form-control:-webkit-autofill ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+/* Form control styling */
+.form-control, .form-select {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+}
+
+.form-control::placeholder {
+    color: #a0aec0;
+    opacity: 1;
+}
+
+/* Text styling */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Button styling */
+.btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.btn-primary:hover {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(99, 102, 241, 0.15);
+}
+
+.btn-outline-secondary {
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f8fafc;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+/* Progress bar */
+.progress {
+    border-radius: 1rem;
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(45deg, #6366f1, #8b5cf6);
+    transition: width 0.3s ease;
+}
+
+/* Tips card */
+.card ul {
+    padding-left: 1.5rem;
+}
+
+.card ul li {
+    position: relative;
+    padding-left: 0.5rem;
+    line-height: 1.6;
+}
+
+/* Form validation styling */
+.was-validated .form-control:invalid,
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.was-validated .form-control:valid,
+.form-control.is-valid {
+    border-color: #198754;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Status and Source Options Styling */
+.status-options, .source-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.status-option, .source-option {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    margin: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.status-option:hover, .source-option:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+    transform: translateX(5px);
+}
+
+.form-check-input:checked ~ .form-check-label {
+    font-weight: 600;
+}
+
+.status-option .form-check-input:checked ~ .form-check-label,
+.source-option .form-check-input:checked ~ .form-check-label {
+    color: var(--bs-primary);
+}
+
+.status-option .status-icon,
+.source-option .source-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: white;
+}
+
+/* Status-specific styling */
+.status-new .status-icon {
+    background-color: #3b82f6;
+}
+
+.status-contacted .status-icon {
+    background-color: #6366f1;
+}
+
+.status-qualified .status-icon {
+    background-color: #f59e0b;
+}
+
+.status-appointment_scheduled .status-icon {
+    background-color: #10b981;
+}
+
+/* Source-specific styling */
+.source-website .source-icon {
+    background-color: #06b6d4;
+}
+
+.source-phone .source-icon {
+    background-color: #8b5cf6;
+}
+
+.source-referral .source-icon {
+    background-color: #f97316;
+}
+
+.source-social_media .source-icon {
+    background-color: #ec4899;
+}
+
+.source-other .source-icon {
+    background-color: #6b7280;
+}
+
+/* Animation for selected option */
+.form-check-input:checked ~ .form-check-label .status-icon,
+.form-check-input:checked ~ .form-check-label .source-icon {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-section {
+        padding: 1rem 0;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+    }
+    
+    .section-header h4 {
+        font-size: 1.25rem;
+    }
+    
+    .status-options, .source-options {
+        gap: 0.5rem;
+    }
+    
+    .status-option, .source-option {
+        padding: 0.4rem 0.6rem;
+    }
+}

@@ -1,0 +1,201 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Leads{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Leads</h2>
+        <a href="{% url 'leads:create_lead' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> New Lead
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" id="lead-filter-form" class="row g-3">
+                <!-- Status Filter -->
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for status_code, status_label in lead_statuses %}
+                            <option value="{{ status_code }}" {% if current_status == status_code %}selected{% endif %}>{{ status_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Source Filter -->
+                <div class="col-md-3">
+                    <label for="source" class="form-label">Source</label>
+                    <select name="source" id="source" class="form-select">
+                        <option value="">All Sources</option>
+                        {% for source_code, source_label in lead_sources %}
+                            <option value="{{ source_code }}" {% if current_source == source_code %}selected{% endif %}>{{ source_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                
+                <!-- Search -->
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search</label>
+                    <div class="input-group">
+                        <input type="text" name="search" id="search" class="form-control" placeholder="Search leads..." value="{{ search_query }}">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                    <a href="{% url 'leads:index' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leads Table -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">All Leads</h5>
+        </div>
+        <div class="card-body">
+            {% if leads %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Last Contacted</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in leads %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ lead.get_full_name }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ lead.email }}</div>
+                                        <div class="small text-muted">{{ lead.phone }}</div>
+                                    </td>
+                                    <td>
+                                        {% if lead.status == 'new' %}
+                                            <span class="badge bg-info">New</span>
+                                        {% elif lead.status == 'contacted' %}
+                                            <span class="badge bg-primary">Contacted</span>
+                                        {% elif lead.status == 'responded' %}
+                                            <span class="badge bg-success">Responded</span>
+                                        {% elif lead.status == 'qualified' %}
+                                            <span class="badge bg-warning text-dark">Qualified</span>
+                                        {% elif lead.status == 'appointment_scheduled' %}
+                                            <span class="badge bg-purple">Appointment Scheduled</span>
+                                        {% elif lead.status == 'appointment_completed' %}
+                                            <span class="badge bg-teal">Appointment Completed</span>
+                                        {% elif lead.status == 'converted' %}
+                                            <span class="badge bg-success">Converted</span>
+                                        {% elif lead.status == 'lost' %}
+                                            <span class="badge bg-danger">Lost</span>
+                                        {% elif lead.status == 'junk' %}
+                                            <span class="badge bg-dark">Junk</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ lead.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ lead.get_source_display }}</span>
+                                    </td>
+                                    <td>
+                                        {% if lead.last_contacted %}
+                                            <div>{{ lead.last_contacted|date:"M d, Y" }}</div>
+                                            <div class="small text-muted">{{ lead.last_contacted|time:"g:i A" }}</div>
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>{{ lead.created_at|date:"M d, Y" }}</div>
+                                        <div class="small text-muted">{{ lead.created_at|time:"g:i A" }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ lead.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ lead.id }}">
+                                                <li><a class="dropdown-item" href="{% url 'leads:lead_detail' lead.id %}"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                {% if lead.status == 'new' %}
+                                                    <li><a class="dropdown-item text-primary" href="#"><i class="fas fa-phone me-2"></i> Mark Contacted</a></li>
+                                                {% endif %}
+                                                {% if lead.status != 'converted' and lead.status != 'lost' and lead.status != 'junk' %}
+                                                    <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Mark Converted</a></li>
+                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Mark Lost</a></li>
+                                                {% endif %}
+                                                {% if lead.status != 'appointment_scheduled' and lead.status != 'appointment_completed' %}
+                                                    <li><a class="dropdown-item text-info" href="#"><i class="fas fa-calendar-alt me-2"></i> Schedule Appointment</a></li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No leads found. 
+                    {% if current_status or current_source or date_from or date_to or search_query %}
+                        Try adjusting your filters or <a href="{% url 'leads:index' %}">view all leads</a>.
+                    {% else %}
+                        <a href="#">Create your first lead</a> to get started.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/leads-index.css' %}">
+<style>
+    /* Custom badge colors */
+    .bg-purple {
+        background-color: #8e44ad;
+        color: white;
+    }
+    .bg-teal {
+        background-color: #16a085;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/leads-index.js' %}"></script>
+{% endblock %}

@@ -66,6 +66,8 @@
     --space-3xl: 4rem;
 }
 
+
+
 /* Dark Mode Theme Variables */
 [data-bs-theme="dark"] {
     --color-background: var(--gray-darkest);

@@ -7,7 +7,7 @@
 <div class="container-fluid py-4">
     <!-- Booking Header -->
     <div class="card mb-4">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <div class="card-header text-white d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="mb-0">Booking Details</h5>
                 <p class="text-white-50 small mb-0">ID: {{ booking.id }}</p>
@@ -46,7 +46,7 @@
         <div class="col-lg-8">
             <!-- Status Card -->
             <div class="card mb-4">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <div class="card-header text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Booking Status</h5>
                     {% if booking.status == 'pending' %}
                         <span class="badge bg-warning text-dark">Pending</span>
@@ -113,7 +113,7 @@
             
             <!-- Client Information -->
             <div class="card mb-4">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">Client Information</h5>
                 </div>
                 <div class="card-body">
@@ -132,7 +132,7 @@
                             {% if booking.lead %}
                                 <h6 class="fw-bold mt-3">Lead Source</h6>
                                 <p>
-                                    <a href="#" class="text-primary">
+                                    <a href="{% url 'leads:lead_detail' booking.lead.id %}" class="text-primary">
                                         <i class="fas fa-external-link-alt me-1"></i> View Lead Details
                                     </a>
                                 </p>
@@ -174,7 +174,7 @@
             
             <!-- Service Items - Improved Design -->
             <div class="card mb-4 service-details-card">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <div class="card-header text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Service Details</h5>
                     <span class="badge bg-primary">Duration: {{ booking.service_offering.duration }} minutes</span>
                 </div>
@@ -203,7 +203,7 @@
                         <h6 class="fw-bold mb-3 border-bottom pb-2">Service Breakdown</h6>
                         
                         <!-- Base Service -->
-                        <div class="service-item base-service d-flex justify-content-between align-items-start mb-3 p-3 rounded bg-dark text-white">
+                        <div class="service-item base-service d-flex justify-content-between align-items-start mb-3 p-3 rounded text-white">
                             <div class="service-item-details">
                                 <div class="d-flex align-items-center">
                                     <div class="service-icon me-3 bg-primary text-white">
@@ -226,7 +226,7 @@
                         
                         <!-- Additional Service Items -->
                         {% for item in service_items %}
-                            <div class="service-item d-flex justify-content-between align-items-start mb-3 p-3 rounded bg-dark text-white{% if item.service_item.is_optional %} optional-service{% endif %}">
+                            <div class="service-item base-service d-flex justify-content-between align-items-start mb-3 p-3 rounded text-white{% if item.service_item.is_optional %} optional-service{% endif %}">
                                 <div class="service-item-details">
                                     <div class="d-flex align-items-center">
                                         <div class="service-icon me-3 {% if item.service_item.is_optional %}bg-secondary{% else %}bg-info{% endif %} text-white">
@@ -257,7 +257,7 @@
                         {% endfor %}
                         
                         <!-- Price Summary -->
-                        <div class="price-summary mt-4 p-3 rounded bg-dark text-white">
+                        <div class="price-summary mt-4 p-3 rounded bg-info text-white">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Base Price:</span>
                                 <span>${{ booking.service_offering.price }}</span>
@@ -280,7 +280,7 @@
             <!-- Staff Assignments -->
             {% if booking.staff_assignments.all %}
                 <div class="card mb-4">
-                    <div class="card-header bg-dark text-white">
+                    <div class="card-header text-white">
                         <h5 class="mb-0">Assigned Staff</h5>
                     </div>
                     <div class="card-body">
@@ -324,7 +324,7 @@
         <div class="col-lg-4">
             <!-- Timeline -->
             <div class="card mb-4">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">Booking Timeline</h5>
                 </div>
                 <div class="card-body p-0">
@@ -353,7 +353,7 @@
             <!-- Reminders -->
             {% if booking.reminders.all %}
                 <div class="card mb-4">
-                    <div class="card-header bg-dark text-white">
+                    <div class="card-header text-white">
                         <h5 class="mb-0">Reminders</h5>
                     </div>
                     <div class="card-body p-0">
@@ -393,7 +393,7 @@
             
             <!-- Quick Actions -->
             <div class="card mb-4">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">Quick Actions</h5>
                 </div>
                 <div class="card-body">
@@ -416,7 +416,7 @@
             
             <!-- Business Information -->
             <div class="card">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">Business Information</h5>
                 </div>
                 <div class="card-body">

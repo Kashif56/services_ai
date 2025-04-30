@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.db import models
 from business.models import ServiceOffering, BusinessCustomField, ServiceItem, ServiceOfferingItem, Industry, IndustryField
 from .models import Booking, BookingField, BookingServiceItem, BookingStatus
+from leads.models import Lead
 from django.utils import timezone
 import json
 
@@ -69,6 +70,16 @@ def create_booking(request):
 
     service_offerings = ServiceOffering.objects.filter(business=business, is_active=True).order_by('name')
     custom_fields = BusinessCustomField.objects.filter(business=business, is_active=True).order_by('display_order', 'name')
+    
+    # Check if a lead ID was provided in the URL
+    lead_id = request.GET.get('lead')
+    selected_lead = None
+    
+    if lead_id:
+        try:
+            selected_lead = Lead.objects.get(id=lead_id, business=business)
+        except Lead.DoesNotExist:
+            pass
 
     if request.method == 'POST':
         # Basic Booking fields
@@ -84,6 +95,7 @@ def create_booking(request):
         client_name = request.POST.get('client_name')
         client_email = request.POST.get('client_email')
         client_phone = request.POST.get('client_phone')
+        selected_lead_id = request.POST.get('lead_id')
 
         # Validation (minimal, expand as needed)
         errors = []
@@ -117,9 +129,21 @@ def create_booking(request):
                 'custom_fields': custom_fields,
             })
 
+        # Get the lead if selected
+        lead = None
+        if selected_lead_id:
+            try:
+                lead = Lead.objects.get(id=selected_lead_id, business=business)
+                # Update lead status to appointment_scheduled
+                lead.status = 'appointment_scheduled'
+                lead.save()
+            except Lead.DoesNotExist:
+                pass
+        
         # Create Booking
         booking = Booking.objects.create(
             business=business,
+            lead=lead,  # This can be None if no lead was selected
             service_offering=service_offering,
             booking_date=booking_date,
             start_time=start_time,
@@ -184,6 +208,7 @@ def create_booking(request):
     return render(request, 'bookings/create_booking.html', {
         'service_offerings': service_offerings,
         'custom_fields': custom_fields,
+        'selected_lead': selected_lead,
     })
 
 @login_required
@@ -330,32 +355,41 @@ def get_service_items(request, service_id):
     except ServiceOffering.DoesNotExist:
         return JsonResponse({'error': 'Service not found'}, status=404)
 
+
 @login_required
-def get_industry_fields(request, service_id):
-    """API endpoint to get industry-specific fields for a service"""
+def get_leads(request):
+    """API endpoint to get leads for the booking form"""
     business = getattr(request.user, 'business', None)
     if not business:
         return JsonResponse({'error': 'Business not found'}, status=404)
     
-    industry = business.industry
-    industry_fields = IndustryField.objects.filter(industry=industry, is_active=True)
+    # Check if a specific lead ID was requested
+    lead_id = request.GET.get('lead_id')
     
-    fields = []
-    for field in industry_fields:
-        fields.append({
-            'id': field.id,
-            'name': field.name,
-            'slug': field.slug,
-            'field_type': field.field_type,
-            'options': field.options,
-            'placeholder': field.placeholder,
-            'help_text': field.help_text,
-            'required': field.required,
-            'default_value': field.default_value
-        })
-    
-    return JsonResponse({
-        'service_id': str(service_id),
-        'industry_name': industry.name,
-        'fields': fields
-    })
+    if lead_id:
+        # Return only the specific lead if it exists and belongs to the business
+        try:
+            lead = Lead.objects.get(id=lead_id, business=business)
+            lead_data = [{
+                'id': str(lead.id),
+                'name': f"{lead.first_name} {lead.last_name}",
+                'email': lead.email,
+                'phone': lead.phone,
+                'status': lead.status,
+                'source': lead.source
+            }]
+            return JsonResponse({'leads': lead_data})
+        except Lead.DoesNotExist:
+            return JsonResponse({'error': 'Lead not found'}, status=404)
+    else:
+        # Return all leads for the business
+        leads = Lead.objects.filter(business=business).order_by('-created_at')
+        lead_data = [{
+            'id': str(lead.id),
+            'name': f"{lead.first_name} {lead.last_name}",
+            'email': lead.email,
+            'phone': lead.phone,
+            'status': lead.status,
+            'source': lead.source
+        } for lead in leads]
+        return JsonResponse({'leads': lead_data})

@@ -7,24 +7,17 @@ from business.models import Business, Industry, IndustryField
 class LeadStatus(models.TextChoices):
     NEW = 'new', 'New'
     CONTACTED = 'contacted', 'Contacted'
-    RESPONDED = 'responded', 'Responded'
     QUALIFIED = 'qualified', 'Qualified'
     APPOINTMENT_SCHEDULED = 'appointment_scheduled', 'Appointment Scheduled'
-    APPOINTMENT_COMPLETED = 'appointment_completed', 'Appointment Completed'
     CONVERTED = 'converted', 'Converted'
     LOST = 'lost', 'Lost'
-    JUNK = 'junk', 'Junk'
 
 
 class LeadSource(models.TextChoices):
     WEBSITE = 'website', 'Website'
-    PHONE = 'phone', 'Phone'
-    EMAIL = 'email', 'Email'
+    PHONE = 'phone', 'Phone Call'
     REFERRAL = 'referral', 'Referral'
     SOCIAL_MEDIA = 'social_media', 'Social Media'
-    GOOGLE = 'google', 'Google'
-    YELP = 'yelp', 'Yelp'
-    WEBHOOK = 'webhook', 'Webhook'
     OTHER = 'other', 'Other'
 
 
