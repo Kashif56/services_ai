@@ -16,6 +16,10 @@ urlpatterns = [
     path('notifications/', views.notification_preferences, name='notifications'),
     path('upgrade/', views.upgrade_plan, name='upgrade'),
     
+    # Business configuration
+    path('configuration/', views.business_configuration, name='configuration'),
+    path('configuration/update/', views.update_business_configuration, name='update_configuration'),
+    
     # Custom fields management
     path('custom-fields/', views.custom_fields, name='custom_fields'),
     path('custom-field/add/', views.add_custom_field, name='add_custom_field'),

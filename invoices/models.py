@@ -51,7 +51,8 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         # Generate invoice number if not set
         if not self.invoice_number:
-            number = 'inv'.join(random.choices('0123456789', k=8))
+            prefix = 'inv'
+            number = prefix + ''.join(random.choices('0123456789', k=8))
             self.invoice_number = number
         
         super().save(*args, **kwargs)

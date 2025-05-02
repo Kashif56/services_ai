@@ -23,9 +23,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (sidebarToggleSmall) {
-        sidebarToggleSmall.addEventListener('click', function() {
-            document.body.classList.remove('sidebar-mobile-open');
-        });
+        try {
+            sidebarToggleSmall.addEventListener('click', function() {
+                document.body.classList.remove('sidebar-mobile-open');
+            });
+        } catch (error) {
+            console.error('Error adding event listener to sidebarToggleSmall:', error);
+        }
     }
     
     // Check for saved sidebar state
@@ -43,8 +47,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Close sidebar when clicking outside on mobile
     document.addEventListener('click', function(event) {
-        const isClickInsideSidebar = sidebar?.contains(event.target);
-        const isClickOnToggler = navbarToggler?.contains(event.target);
+        // Make sure sidebar exists before trying to use it
+        if (!sidebar) return;
+        
+        const isClickInsideSidebar = sidebar.contains(event.target);
+        const isClickOnToggler = navbarToggler ? navbarToggler.contains(event.target) : false;
         
         if (!isClickInsideSidebar && !isClickOnToggler && window.innerWidth < 992) {
             if (document.body.classList.contains('sidebar-mobile-open')) {

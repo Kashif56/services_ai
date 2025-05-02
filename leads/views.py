@@ -1,11 +1,43 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Q
 from django.contrib import messages
 from .models import Lead, LeadStatus, LeadSource
 from business.models import Business
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+import logging
+import uuid
+from .webhook_processors import get_processor, autodiscover_processors, register_processor
+# Import webhook processors directly
+from .webhook_processors.zoho import ZohoWebhookProcessor
+try:
+    from .webhook_processors.hubspot import HubSpotWebhookProcessor
+    from .webhook_processors.salesforce import SalesforceWebhookProcessor
+    from .webhook_processors.pipedrive import PipedriveWebhookProcessor
+    from .webhook_processors.monday import MondayWebhookProcessor
+except ImportError:
+    print("Some webhook processors could not be imported")
+
+logger = logging.getLogger(__name__)
+
+# Auto-discover webhook processors
+autodiscover_processors()
+
+# Direct registration of webhook processors
+print("Directly registering webhook processors...")
+register_processor('zoho', ZohoWebhookProcessor)
+try:
+    register_processor('hubspot', HubSpotWebhookProcessor)
+    register_processor('salesforce', SalesforceWebhookProcessor)
+    register_processor('pipedrive', PipedriveWebhookProcessor)
+    register_processor('monday', MondayWebhookProcessor)
+    print("All webhook processors registered directly")
+except NameError:
+    print("Some webhook processors could not be registered")
 
 @login_required
 def index(request):
@@ -193,3 +225,64 @@ def edit_lead(request, lead_id):
     }
     
     return render(request, 'leads/edit.html', context)
+
+@csrf_exempt
+@require_POST
+def webhook_receiver(request, lead_source, business_id):
+    """
+    Main webhook receiver view that handles incoming webhooks from different CRM systems.
+    
+    Args:
+        request: The Django HttpRequest object
+        lead_source: The CRM source identifier (e.g., 'hubspot', 'salesforce')
+        business_id: The UUID of the business this webhook is for
+    
+    Returns:
+        HttpResponse: The response to send back to the webhook sender
+    """
+    print(f"Received webhook from {lead_source} for business {business_id}")
+    print(f"Request body: {request.body}")
+    print(f"Content type: {request.content_type}")
+    
+    try:
+        # Get the appropriate webhook processor for this source
+        try:
+            # Force lowercase for consistent matching
+            processor = get_processor(lead_source.lower())
+            print(f"Found processor for {lead_source}: {processor.__class__.__name__}")
+        except KeyError:
+            print(f"No webhook processor found for source: {lead_source}")
+            # Attempt to reload webhook processors
+            autodiscover_processors()
+            
+            # Try one more time
+            try:
+                processor = get_processor(lead_source.lower())
+                print(f"Successfully loaded processor for {lead_source} after rediscovery")
+            except KeyError:
+                # Last resort: direct registration
+                if lead_source.lower() == 'zoho':
+                    print("Directly registering Zoho processor as last resort")
+                    from .webhook_processors.zoho import ZohoWebhookProcessor
+                    register_processor('zoho', ZohoWebhookProcessor)
+                    processor = get_processor('zoho')
+                else:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': f'Unsupported lead source: {lead_source}'
+                    }, status=400)
+        
+        # Process the webhook
+        print(f"Processing webhook with {processor.__class__.__name__}")
+        response = processor.process_webhook(request, business_id)
+        print(f"Webhook processing completed with status: {response.status_code}")
+        return response
+        
+    except Exception as e:
+        print(f"Error processing webhook: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error processing webhook: {str(e)}'
+        }, status=500)

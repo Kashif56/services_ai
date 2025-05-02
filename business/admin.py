@@ -88,22 +88,19 @@ class BusinessCustomFieldAdmin(admin.ModelAdmin):
 
 @admin.register(BusinessConfiguration)
 class BusinessConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('business', 'sms_enabled', 'voice_enabled', 'follow_up_attempts')
-    list_filter = ('sms_enabled', 'voice_enabled')
+    list_display = ('business', 'voice_enabled')
+    list_filter = ('voice_enabled',)
     search_fields = ('business__name',)
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
         ('Business', {
             'fields': ('business',)
         }),
-        ('Webhook Configuration', {
-            'fields': ('webhook_secret', 'lead_notification_email')
-        }),
         ('Communication Settings', {
-            'fields': ('sms_enabled', 'voice_enabled', 'twilio_phone_number')
+            'fields': ('voice_enabled', 'twilio_phone_number')
         }),
         ('Follow-up Configuration', {
-            'fields': ('initial_response_delay', 'follow_up_attempts', 'follow_up_interval')
+            'fields': ('initial_response_delay',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

@@ -2,7 +2,20 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 import uuid
+from django.conf import settings
 from decimal import Decimal
+
+
+
+BASE_URL = settings.BASE_URL
+
+CRM_CHOICES = (
+    ('hubspot', 'HubSpot'),
+    ('salesforce', 'Salesforce'),
+    ('zoho', 'Zoho CRM'),
+    ('pipedrive', 'Pipedrive'),
+    ('custom', 'Custom CRM'),
+)
 
 class Industry(models.Model):
     """
@@ -59,6 +72,10 @@ class Business(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+    def get_lead_webhook_url(self):
+        return f"{BASE_URL}/leads/webhook/{self.id}/"
 
 
 FIELD_TYPES = (
@@ -151,19 +168,26 @@ class BusinessConfiguration(models.Model):
     Business-specific configuration settings.
     """
     business = models.OneToOneField(Business, on_delete=models.CASCADE, related_name='configuration')
-    webhook_secret = models.CharField(max_length=100, blank=True, null=True)
-    lead_notification_email = models.EmailField(blank=True, null=True)
-    sms_enabled = models.BooleanField(default=True)
+
+    # Voice Configuration
     voice_enabled = models.BooleanField(default=True)
-    twilio_phone_number = models.CharField(max_length=20, blank=True, null=True)
     initial_response_delay = models.PositiveIntegerField(default=5, help_text="Delay in minutes before first contact")
-    follow_up_attempts = models.PositiveIntegerField(default=3)
-    follow_up_interval = models.PositiveIntegerField(default=60, help_text="Interval in minutes between follow-ups")
+
+
+    # Twilio Configuration for SMS
+    twilio_phone_number = models.CharField(max_length=20, blank=True, null=True)
+    twilio_sid = models.CharField(max_length=255, blank=True, null=True)
+    twilio_auth_token = models.CharField(max_length=255, blank=True, null=True)
+    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Configuration for {self.business.name}"
+    
+    
+
 
 
 class ServiceOffering(models.Model):

@@ -136,20 +136,11 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">Booking Settings</h6>
-                                <p class="mb-0 text-muted small">Configure booking rules</p>
+                                <h6 class="mb-1">Business Configuration</h6>
+                                <p class="mb-0 text-muted small">Configure voice, SMS and webhooks</p>
                             </div>
-                            <a href="{% url 'business:booking_settings' %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-calendar-alt me-1"></i> Configure
-                            </a>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">Notification Preferences</h6>
-                                <p class="mb-0 text-muted small">Manage email and SMS alerts</p>
-                            </div>
-                            <a href="{% url 'business:notifications' %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-bell me-1"></i> Configure
+                            <a href="{% url 'business:configuration' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-cogs me-1"></i> Configure
                             </a>
                         </li>
                     </ul>

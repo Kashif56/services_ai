@@ -1,0 +1,192 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Business Configuration | Services AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/business-configuration.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Business Configuration</h1>
+            <p class="text-muted">Manage your business configuration settings</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Configuration Form -->
+        <div class="col-lg-8">
+            <form id="configurationForm" method="post" action="{% url 'business:update_configuration' %}">
+                {% csrf_token %}
+                
+                <!-- Voice Configuration Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Voice Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="voiceEnabled" name="voice_enabled" {% if config.voice_enabled %}checked{% endif %}>
+                            <label class="form-check-label" for="voiceEnabled">Enable Voice Assistant</label>
+                        </div>
+                        <div class="mb-3">
+                            <label for="initialResponseDelay" class="form-label">Initial Response Delay (minutes)</label>
+                            <input type="number" class="form-control" id="initialResponseDelay" name="initial_response_delay" value="{{ config.initial_response_delay }}" min="1" max="60">
+                            <div class="form-text">Time to wait before first contact with leads</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Twilio Configuration Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Twilio SMS Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="twilioPhoneNumber" class="form-label">Twilio Phone Number</label>
+                            <input type="text" class="form-control" id="twilioPhoneNumber" name="twilio_phone_number" value="{{ config.twilio_phone_number|default:'' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="twilioSid" class="form-label">Twilio SID</label>
+                            <input type="text" class="form-control" id="twilioSid" name="twilio_sid" value="{{ config.twilio_sid|default:'' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="twilioAuthToken" class="form-label">Twilio Auth Token</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="twilioAuthToken" name="twilio_auth_token" value="{{ config.twilio_auth_token|default:'' }}">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="twilioAuthToken">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Webhook Configuration Card -->
+                <div class="card shadow-sm mb-4 webhook-section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Lead Webhook</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" class="form-control dark-input" id="webhookUrl" value="{{ webhook_url }}" readonly>
+                        <div class="mb-3">
+                            <label for="webhookCrmSource" class="form-label">Lead Source</label>
+                            <select class="form-select dark-select" id="webhookCrmSource">
+                                <option value="">Select Lead Source</option>
+                                {% for value, label in crm_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fullWebhookUrl" class="form-label">Full Webhook URL</label>
+                            <div class="input-group mb-2">
+                                <div style="background-color: #333; color: #fff;" class="form-control dark-input webhook-url-display" id="fullWebhookUrl"></div>
+                                <button class="btn btn-outline-secondary copy-button" type="button" data-clipboard-target="#fullWebhookUrl">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">This URL will update automatically when you select a CRM source</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Help Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Configuration Help</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6><i class="fas fa-microphone me-2"></i>Voice Configuration</h6>
+                        <p class="small text-muted">Enable or disable the voice assistant for your business. Set the initial response delay to control how quickly the system responds to new leads.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-sms me-2"></i>Twilio SMS Configuration</h6>
+                        <p class="small text-muted">Enter your Twilio credentials to enable SMS functionality. You'll need a Twilio account with a phone number, SID, and auth token.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-link me-2"></i>Lead Webhook Configuration</h6>
+                        <p class="small text-muted">Use the webhook URL to receive leads from your CRM or other systems. Select your CRM source and add a custom identifier to track the source of leads.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize clipboard.js
+        new ClipboardJS('.copy-button');
+        
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    input.type = 'password';
+                    this.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        });
+        
+        // Update full webhook URL when CRM source changes
+        const webhookUrl = document.getElementById('webhookUrl').value;
+        const webhookCrmSource = document.getElementById('webhookCrmSource');
+        const fullWebhookUrl = document.getElementById('fullWebhookUrl');
+        
+        function updateFullWebhookUrl() {
+            let url = webhookUrl;
+            
+            if (webhookCrmSource.value) {
+                url += '/' + webhookCrmSource.value + '/';
+            }
+            
+            fullWebhookUrl.textContent = url;
+        }
+        
+        webhookCrmSource.addEventListener('change', function() {
+            updateFullWebhookUrl();
+        });
+        
+        // Add success message for copy buttons
+        document.querySelectorAll('.copy-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalHTML;
+                }, 2000);
+            });
+        });
+    });
+</script>
+{% endblock %}

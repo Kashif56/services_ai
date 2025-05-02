@@ -9,7 +9,7 @@ from django.urls import reverse
 import json
 from decimal import Decimal
 
-from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem
+from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem, CRM_CHOICES
 
 
 @login_required
@@ -572,3 +572,74 @@ def get_service_details(request, service_id):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["GET"])
+def business_configuration(request):
+    """
+    Render the business configuration page
+    Shows voice settings, Twilio credentials, and webhook configuration
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    # Get or create business configuration
+    try:
+        config, created = BusinessConfiguration.objects.get_or_create(business=business)
+    except Exception as e:
+        messages.error(request, f'Error retrieving configuration: {str(e)}')
+        config = None
+    
+    # Generate webhook URL
+    webhook_url = business.get_lead_webhook_url()
+    
+    context = {
+        'business': business,
+        'config': config,
+        'webhook_url': webhook_url,
+        'crm_choices': CRM_CHOICES
+    }
+    
+    return render(request, 'business/configuration.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_business_configuration(request):
+    """
+    Update business configuration settings
+    Handles form submission from the configuration page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        # Get or create configuration
+        config, created = BusinessConfiguration.objects.get_or_create(business=business)
+        
+        # Update voice settings
+        config.voice_enabled = 'voice_enabled' in request.POST
+        config.initial_response_delay = int(request.POST.get('initial_response_delay', 5))
+        
+        # Update Twilio settings
+        config.twilio_phone_number = request.POST.get('twilio_phone_number', '')
+        config.twilio_sid = request.POST.get('twilio_sid', '')
+        config.twilio_auth_token = request.POST.get('twilio_auth_token', '')
+        
+        # Save changes
+        config.save()
+        
+        messages.success(request, 'Business configuration updated successfully!')
+    except Exception as e:
+        messages.error(request, f'An error occurred: {str(e)}')
+    
+    return redirect('business:configuration')
