@@ -1,0 +1,129 @@
+{% extends "common/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}AI Agent - {{ business.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ai_agent.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="card mb-4">
+        <div class="card-header text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">AI Agent Configuration</h5>
+                <p class="text-white-50 small mb-0">Configure your AI assistant to handle customer inquiries</p>
+            </div>
+            <div>
+                <button type="button" id="test-agent-btn" class="btn btn-primary">
+                    <i class="fas fa-robot me-2"></i>Test Agent
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header text-white">
+                    <h5 class="mb-0">Agent Configuration</h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form action="{% url 'ai_agent:dashboard' %}" method="POST" id="agent-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Agent Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                placeholder="e.g., Business Assistant" value="{{ agent_config.name|default:'' }}">
+                            <small class="form-text text-muted">This name will be used to identify your agent.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="prompt" class="form-label">Custom Instructions</label>
+                            <textarea class="form-control" id="prompt" name="prompt" rows="15" 
+                                placeholder="Add any specific instructions for your agent here...">{{ agent_config.prompt|default:'' }}</textarea>
+                            <small class="form-text text-muted">
+                                These instructions will be added to the system prompt. You can include specific information about your business, 
+                                how you want the agent to respond, or any other guidance.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Save Configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header text-white">
+                    <h5 class="mb-0">How the Agent Works</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        The AI agent automatically includes information about your business, services, and operating hours. 
+                        It can help clients with:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Booking appointments</li>
+                        <li>Checking availability</li>
+                        <li>Getting information about your services</li>
+                        <li>Rescheduling or canceling appointments</li>
+                        <li>Answering general questions about your business</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-5" id="test-agent-section">
+            <div class="card mb-4">
+                <div class="card-header text-white">
+                    <h5 class="mb-0">Test Your AI Agent</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Use this interface to test how your AI agent responds to different inquiries.
+                    </p>
+                    
+                    <div id="chat-container" class="chat-container mb-3">
+                        <div class="system-message text-center mb-3">
+                            <p class="mb-0">Start a conversation with your AI agent.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="text" id="message-input" class="form-control" placeholder="Type your message...">
+                        <button class="btn btn-primary" type="button" id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Define variables that will be used in the external JS file
+    const processMessageUrl = "{% url 'ai_agent:process_message' %}";
+    const businessId = "{{ business.id }}";
+</script>
+<script src="{% static 'js/ai_agent.js' %}"></script>
+{% endblock %}

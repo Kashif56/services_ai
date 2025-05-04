@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if agent_config %}Edit{% else %}Create{% endif %} AI Agent Configuration - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>{% if agent_config %}Edit{% else %}Create{% endif %} AI Agent Configuration</h6>
+                    <a href="{% url 'ai_agent:config_list' %}" class="btn btn-sm btn-outline-primary">Back to Configurations</a>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% if agent_config %}{% url 'ai_agent:config_edit' agent_config.id %}{% else %}{% url 'ai_agent:config_create' %}{% endif %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name" class="form-control-label">Agent Name</label>
+                                    <input class="form-control" type="text" id="name" name="name" value="{{ agent_config.name|default:'Business Assistant' }}" required>
+                                    <small class="form-text text-muted">A descriptive name for this agent configuration.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if agent_config.is_active or agent_config is None %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">Set as active agent</label>
+                                    </div>
+                                    <small class="form-text text-muted">Only one agent can be active at a time. Setting this as active will deactivate other agents.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="system_prompt" class="form-control-label">System Prompt</label>
+                            <textarea class="form-control" id="system_prompt" name="system_prompt" rows="6">{{ agent_config.system_prompt|default:"You are an AI assistant for a business. Your job is to help clients with appointments, services, and general inquiries. Be professional, helpful, and concise. You can use tools to check availability, book appointments, calculate costs, and more." }}</textarea>
+                            <small class="form-text text-muted">The system prompt defines the agent's role and capabilities. This is the high-level instruction that guides the agent's behavior.</small>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="business_prompt" class="form-control-label">Business-Specific Prompt</label>
+                            <textarea class="form-control" id="business_prompt" name="business_prompt" rows="8">{{ agent_config.business_prompt|default:"" }}</textarea>
+                            <small class="form-text text-muted">Add business-specific details here, such as services offered, business hours, policies, and any specific language or tone you want the agent to use.</small>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <h6>Prompt Examples and Suggestions</h6>
+                            <div class="accordion" id="promptExamples">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                            Example System Prompt
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#promptExamples">
+                                        <div class="accordion-body">
+                                            <pre class="bg-light p-3 rounded">You are an AI assistant for a business. Your job is to help clients with appointments, services, and general inquiries. Be professional, helpful, and concise.
+
+You can use tools to:
+1. Check availability for appointments
+2. Book new appointments
+3. Reschedule existing appointments
+4. Cancel appointments
+5. Calculate the cost of services
+6. Check payment status
+
+When clients ask about booking an appointment, make sure to collect:
+- Their name
+- Phone number
+- Preferred date and time
+- The service they're interested in
+
+Be friendly but professional, and avoid making promises the business can't keep. If you're unsure about something, it's better to suggest the client contact the business directly.</pre>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('system_prompt').value = this.previousElementSibling.textContent.trim()">Use This Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTwo">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                            Example Business Prompt
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#promptExamples">
+                                        <div class="accordion-body">
+                                            <pre class="bg-light p-3 rounded">You represent [Business Name], a [type of business] located in [location].
+
+Our business hours are:
+- Monday-Friday: 9:00 AM - 6:00 PM
+- Saturday: 10:00 AM - 4:00 PM
+- Sunday: Closed
+
+We offer the following services:
+1. [Service 1] - $[Price] - [Duration] minutes
+2. [Service 2] - $[Price] - [Duration] minutes
+3. [Service 3] - $[Price] - [Duration] minutes
+
+Our cancellation policy requires 24-hour notice for appointment cancellations. Late cancellations may incur a fee of [amount].
+
+When speaking with clients, maintain a [formal/casual/friendly] tone. Always thank clients for choosing our business and offer to help with anything else they might need.</pre>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('business_prompt').value = this.previousElementSibling.textContent.trim()">Use This Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary">{% if agent_config %}Update{% else %}Create{% endif %} Agent Configuration</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

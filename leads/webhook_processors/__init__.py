@@ -19,7 +19,7 @@ def register_processor(source_id, processor_class):
         processor_class (class): The processor class to handle webhooks from this source
     """
     _webhook_processors[source_id] = processor_class
-    print(f"Registered webhook processor for {source_id}: {processor_class.__name__}")
+   
 
 def get_processor(source_id):
     """
@@ -35,8 +35,6 @@ def get_processor(source_id):
         KeyError: If no processor is registered for the given source
     """
     if source_id not in _webhook_processors:
-        # Print all available processors for debugging
-        print(f"Available webhook processors: {list(_webhook_processors.keys())}")
         raise KeyError(f"No webhook processor registered for source: {source_id}")
     
     return _webhook_processors[source_id]()
@@ -48,27 +46,25 @@ def autodiscover_processors():
     """
     from django.apps import apps
     
-    print("Starting webhook processor autodiscovery...")
+    
     
     # Directly register from the leads app registry
     try:
         # First, try direct import
         from ..webhook_processors import registry
         registry.register()
-        print("Registered webhook processors from leads app directly")
+    
     except (ImportError, AttributeError) as e:
-        print(f"Failed to import registry directly: {str(e)}")
         
-        # Try alternative import approach
+        
         try:
             # Force import the registry module from the current package
             from . import registry
             registry.register()
-            print("Registered webhook processors from leads.webhook_processors")
+        
         except (ImportError, AttributeError) as e:
-            print(f"Failed to import registry from current package: {str(e)}")
             
-            # Manual registration as a fallback
+            
             try:
                 # Manually register the processors
                 from .zoho import ZohoWebhookProcessor
@@ -83,9 +79,8 @@ def autodiscover_processors():
                 register_processor('pipedrive', PipedriveWebhookProcessor)
                 register_processor('monday', MondayWebhookProcessor)
                 
-                print("Manually registered webhook processors as fallback")
+            
             except Exception as e:
-                print(f"Failed to manually register processors: {str(e)}")
+                pass
     
-    # Print all registered processors for debugging
-    print(f"Registered webhook processors after autodiscovery: {list(_webhook_processors.keys())}")
+    

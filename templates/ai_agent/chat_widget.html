@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ business.name }} - Chat Assistant</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        
+        .chat-header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .chat-header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 80%;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .assistant-message {
+            align-self: flex-start;
+            background-color: white;
+            border: 1px solid #ddd;
+        }
+        
+        .system-message {
+            align-self: center;
+            background-color: #f8f9fa;
+            border: 1px dashed #ddd;
+            color: #6c757d;
+            font-size: 0.9em;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        .message-time {
+            font-size: 0.7em;
+            text-align: right;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid #ddd;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .chat-input button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        
+        .chat-input button:hover {
+            background-color: #0069d9;
+        }
+        
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .loading-dots {
+            display: flex;
+        }
+        
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            border-radius: 50%;
+            background-color: #007bff;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+        
+        .loading-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>{{ business.name }} Assistant</h1>
+        </div>
+        
+        <div id="chat-messages" class="chat-messages">
+            <div class="message system-message">
+                <div class="message-content">Welcome to {{ business.name }}! How can I help you today?</div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type your message here...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Generate a unique session key for this chat session
+            let sessionKey = localStorage.getItem('chat_session_key');
+            if (!sessionKey) {
+                sessionKey = 'widget_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('chat_session_key', sessionKey);
+            }
+            
+            function addMessage(content, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}-message`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = content;
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                
+                const now = new Date();
+                timeDiv.textContent = now.getHours().toString().padStart(2, '0') + ':' + 
+                                     now.getMinutes().toString().padStart(2, '0');
+                
+                messageDiv.appendChild(contentDiv);
+                messageDiv.appendChild(timeDiv);
+                chatMessages.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                return messageDiv;
+            }
+            
+            function addLoadingIndicator() {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'message assistant-message loading-indicator';
+                
+                const dotsDiv = document.createElement('div');
+                dotsDiv.className = 'loading-dots';
+                
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'loading-dot';
+                    dotsDiv.appendChild(dot);
+                }
+                
+                loadingDiv.appendChild(dotsDiv);
+                chatMessages.appendChild(loadingDiv);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                return loadingDiv;
+            }
+            
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (!message) return;
+                
+                // Add user message to chat
+                addMessage(message, 'user');
+                
+                // Clear input
+                messageInput.value = '';
+                
+                // Show loading indicator
+                const loadingIndicator = addLoadingIndicator();
+                
+                // Send message to API
+                fetch('{% url "ai_agent:process_message" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        business_id: {{ business.id }},
+                        message: message,
+                        session_key: sessionKey
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove loading indicator
+                    chatMessages.removeChild(loadingIndicator);
+                    
+                    if (data.success) {
+                        // Add assistant response to chat
+                        addMessage(data.response, 'assistant');
+                    } else {
+                        // Show error
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'message system-message error-message';
+                        errorDiv.textContent = 'Error: ' + (data.error || 'Unknown error occurred');
+                        chatMessages.appendChild(errorDiv);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                })
+                .catch(error => {
+                    // Remove loading indicator
+                    chatMessages.removeChild(loadingIndicator);
+                    
+                    // Show error
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'message system-message error-message';
+                    errorDiv.textContent = 'Network error: Could not connect to the server';
+                    chatMessages.appendChild(errorDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    console.error('Error:', error);
+                });
+            }
+            
+            // Send message on button click
+            sendButton.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Focus input on page load
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>
