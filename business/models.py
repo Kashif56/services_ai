@@ -265,6 +265,7 @@ class ServiceItem(models.Model):
     
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_items')
     name = models.CharField(max_length=100)
+    identifier = models.SlugField(max_length=120, blank=True, help_text="Unique identifier for this service item (e.g., number_of_bedrooms)")
     description = models.TextField(blank=True, null=True)
     price_type = models.CharField(max_length=20, choices=PRICE_TYPE_CHOICES, default='fixed')
     price_value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
@@ -282,6 +283,12 @@ class ServiceItem(models.Model):
     
     def __str__(self):
         return f"{self.business.name} - {self.name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.identifier:
+            # Convert name to snake_case for identifier
+            self.identifier = slugify(self.name).replace('-', '_')
+        super().save(*args, **kwargs)
     
     def calculate_price(self, base_price=None, quantity=1):
         """

@@ -581,9 +581,9 @@ def is_staff_available(staff, booking_date, booking_start_time, booking_end_time
             print(f"[DEBUG] Staff {staff.id} has weekly rules but none allow this time")
             return False
         
-        # If no availability rules exist for this day, staff is considered unavailable by default
+        # If no availability rules exist for this day, staff is considered available by default
         print(f"[DEBUG] Staff {staff.id} has no availability rules for this day")
-        return False
+        return True
 
     except Exception as e:
         import traceback

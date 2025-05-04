@@ -7,9 +7,10 @@ from django.utils import timezone
 from django.db.models import Q
 
 from bookings.models import Booking, BookingStatus, StaffAvailability, StaffMember, BookingStaffAssignment, BookingServiceItem
-from business.models import Business, ServiceOffering, ServiceItem
+from business.models import Business, ServiceOffering, ServiceItem, ServiceOfferingItem
 from leads.models import Lead
-from bookings.availability import check_timeslot_availability, find_available_slots_on_date
+from bookings.availability import check_timeslot_availability, find_available_slots_on_date, is_staff_available
+from decimal import Decimal
 
 class CheckAvailabilityInput(BaseModel):
     """Input for checking availability."""
@@ -242,6 +243,7 @@ class BookAppointmentInput(BaseModel):
     customer_name: str = Field(..., description="Name of the customer")
     customer_phone: str = Field(..., description="Phone number of the customer")
     customer_email: Optional[str] = Field(None, description="Email of the customer")
+    service_items: Optional[List[Dict[str, Any]]] = Field(None, description="List of service items with identifiers and quantities")
     notes: Optional[str] = Field(None, description="Additional notes for the appointment")
 
 class BookAppointmentTool(BaseTool):
@@ -251,9 +253,10 @@ class BookAppointmentTool(BaseTool):
     
     def _run(self, date: str, time: str, service_name: str, business_id: str,
              customer_name: str, customer_phone: str, customer_email: Optional[str] = None,
+             service_items: Optional[List[Dict[str, Any]]] = None,
              notes: Optional[str] = None) -> str:
         try:
-            print(f"[DEBUG] BookAppointmentTool called with: date={date}, time={time}, service_name={service_name}, business_id={business_id}, customer_name={customer_name}, customer_phone={customer_phone}, customer_email={customer_email}, notes={notes}")
+            print(f"[DEBUG] BookAppointmentTool called with: date={date}, time={time}, service_name={service_name}, business_id={business_id}, customer_name={customer_name}, customer_phone={customer_phone}, customer_email={customer_email}, service_items={service_items}, notes={notes}")
             
             # Get the business
             try:
@@ -436,78 +439,168 @@ class BookAppointmentTool(BaseTool):
                 print(f"[DEBUG] Created booking: {booking.id}")
                 
                 # Add service items to the booking
+                total_extra_duration = 0
+                total_extra_price = Decimal('0.00')
+                
+                if service_items:
+                    print(f"[DEBUG] Processing service items: {service_items}")
+                    for item in service_items:
+                        try:
+                            identifier = item.get('identifier')
+                            quantity = int(item.get('quantity', 1))
+                            
+                            if quantity <= 0:
+                                print(f"[DEBUG] Invalid quantity for service item '{identifier}': {quantity}")
+                                continue
+                            
+                            # Find service item by identifier
+                            service_item = None
+                            try:
+                                # Try exact match first
+                                service_item = ServiceItem.objects.get(
+                                    business=business,
+                                    identifier=identifier,
+                                    is_active=True
+                                )
+                                print(f"[DEBUG] Found service item by exact identifier: {service_item.name} (ID: {service_item.id})")
+                            except ServiceItem.DoesNotExist:
+                                # Try case-insensitive match
+                                service_item = ServiceItem.objects.filter(
+                                    business=business,
+                                    identifier__iexact=identifier,
+                                    is_active=True
+                                ).first()
+                                
+                                if service_item:
+                                    print(f"[DEBUG] Found service item by case-insensitive identifier: {service_item.name} (ID: {service_item.id})")
+                                else:
+                                    # Try name match
+                                    service_item = ServiceItem.objects.filter(
+                                        business=business,
+                                        name__iexact=identifier,
+                                        is_active=True
+                                    ).first()
+                                    
+                                    if service_item:
+                                        print(f"[DEBUG] Found service item by name: {service_item.name} (ID: {service_item.id})")
+                                    else:
+                                        print(f"[DEBUG] Service item '{identifier}' not found")
+                                        continue
+                            
+                            if service_item:
+                                # Calculate price based on the service item's pricing rules
+                                item_price = service_item.calculate_price(service.price, quantity)
+                                
+                                # Create the BookingServiceItem to link the booking with the service item
+                                booking_service_item = BookingServiceItem.objects.create(
+                                    booking=booking,
+                                    service_item=service_item,
+                                    quantity=quantity,
+                                    price_at_booking=item_price
+                                )
+                                
+                                # Add to total extra duration and price
+                                total_extra_duration += service_item.duration_minutes * quantity
+                                total_extra_price += item_price
+                                
+                                print(f"[DEBUG] Created booking service item: {booking_service_item.id}, Price: {item_price}, Extra Duration: {service_item.duration_minutes * quantity} minutes")
+                        except Exception as e:
+                            import traceback
+                            print(f"[DEBUG] Error creating booking service item: {str(e)}")
+                            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+                            continue
+                else:
+                    # Just add the main service without any additional service items
+                    print(f"[DEBUG] No service items provided, just using the main service")
+                    
+                    # No additional service items, so no extra duration or price
+                    pass
+                
+                # Update booking end time if there's extra duration
+                if total_extra_duration > 0:
+                    new_end_time = (datetime.combine(date_obj, time_obj) + 
+                                   timedelta(minutes=service.duration + total_extra_duration)).time()
+                    booking.end_time = new_end_time
+                    booking.save(update_fields=['end_time'])
+                    print(f"[DEBUG] Updated booking end time to include extra duration: {new_end_time}")
+                
+                # Assign staff members based on availability
                 try:
-                    # Find a service item associated with this service offering
-                    service_items = ServiceItem.objects.filter(
+                    print(f"[DEBUG] Finding available staff")
+                    
+                    # Get all staff for this business
+                    all_staff = StaffMember.objects.filter(
                         business=business,
-                        serviceofferingitem__service_offering=service
+                        is_active=True
                     )
                     
-                    if service_items.exists():
-                        service_item = service_items.first()
-                        # Create the BookingServiceItem to link the booking with the service item
-                        booking_service_item = BookingServiceItem.objects.create(
+                    print(f"[DEBUG] Total staff members: {all_staff.count()}")
+                    
+                    # Check availability for each staff member
+                    available_staff = []
+                    for staff in all_staff:
+                        # Use the is_staff_available function from availability.py
+                        from bookings.availability import is_staff_available
+                        if is_staff_available(staff, date_obj, time_obj, booking.end_time):
+                            available_staff.append(staff)
+                            print(f"[DEBUG] Staff {staff.id} is available")
+                    
+                    print(f"[DEBUG] Found {len(available_staff)} available staff members")
+                    
+                    if available_staff:
+                        # Assign the first available staff member
+                        staff = available_staff[0]
+                        BookingStaffAssignment.objects.create(
                             booking=booking,
-                            service_item=service_item,
-                            quantity=1,
-                            price_at_booking=service.price
+                            staff_member=staff
                         )
-                        print(f"[DEBUG] Created booking service item: {booking_service_item.id}")
+                        staff_name = staff.get_full_name()
+                        print(f"[DEBUG] Assigned staff: {staff_name}")
                     else:
-                        print(f"[DEBUG] No service items found for this service offering")
+                        # If no staff is available, assign the first staff member anyway
+                        if all_staff.exists():
+                            staff = all_staff.first()
+                            BookingStaffAssignment.objects.create(
+                                booking=booking,
+                                staff_member=staff
+                            )
+                            staff_name = staff.get_full_name()
+                            print(f"[DEBUG] No available staff found, assigned first staff: {staff_name}")
+                        else:
+                            staff_name = "No staff assigned yet"
+                            print(f"[DEBUG] No staff assigned")
                 except Exception as e:
                     import traceback
-                    print(f"[DEBUG] Error creating booking service item: {str(e)}")
+                    print(f"[DEBUG] Error assigning staff: {str(e)}")
                     print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-            except Exception as e:
-                import traceback
-                print(f"[DEBUG] Error creating booking: {str(e)}")
-                print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-                return f"Error creating booking: {str(e)}"
-            
-            # Assign staff members based on availability
-            try:
-                print(f"[DEBUG] Finding available staff")
-                available_staff = StaffMember.objects.filter(
-                    business=business,
-                    is_active=True
-                ).exclude(
-                    # Exclude staff with conflicting bookings
-                    id__in=BookingStaffAssignment.objects.filter(
-                        booking__start_time__lt=booking.end_time,
-                        booking__end_time__gt=booking.start_time,
-                        booking__status__in=[BookingStatus.CONFIRMED, BookingStatus.PENDING, BookingStatus.RESCHEDULED]
-                    ).values_list('staff_member_id', flat=True)
-                ).exclude(
-                    # Exclude staff with unavailability records
-                    id__in=StaffAvailability.objects.filter(
-                        start_time__lt=booking.end_time,
-                        end_time__gt=booking.start_time,
-                        is_available=False
-                    ).values_list('staff_id', flat=True)
-                )
-                
-                print(f"[DEBUG] Found {available_staff.count()} available staff members")
-                
-                if available_staff.exists():
-                    # Assign the first available staff member
-                    staff = available_staff.first()
-                    BookingStaffAssignment.objects.create(
-                        booking=booking,
-                        staff_member=staff
-                    )
-                    staff_name = staff.name
-                    print(f"[DEBUG] Assigned staff: {staff_name}")
-                else:
                     staff_name = "No staff assigned yet"
-                    print(f"[DEBUG] No staff assigned")
+            
+                # Create a detailed response with service items information
+                response = f"Appointment booked successfully!\n\nDetails:\n- Date: {date}\n- Time: {time}\n- Service: {service.name}\n- Base Duration: {service.duration} minutes\n- Base Price: ${service.price}"
+                
+                # Add service items details if any were added
+                booking_service_items = BookingServiceItem.objects.filter(booking=booking)
+                if booking_service_items.exists():
+                    response += "\n\nSelected Service Items:"
+                    total_price = service.price
+                    for bsi in booking_service_items:
+                        response += f"\n- {bsi.service_item.name} (x{bsi.quantity}): ${bsi.price_at_booking}"
+                        total_price += bsi.price_at_booking
+                    
+                    # Add total duration and price
+                    total_duration = service.duration + total_extra_duration
+                    response += f"\n\nTotal Duration: {total_duration} minutes"
+                    response += f"\nTotal Price: ${total_price}"
+                
+                response += f"\nStaff: {staff_name}\n\nBooking ID: {booking.id}"
+                
+                return response
+            
             except Exception as e:
                 import traceback
-                print(f"[DEBUG] Error assigning staff: {str(e)}")
+                print(f"[DEBUG] Error in BookAppointmentTool: {str(e)}")
                 print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-                staff_name = "No staff assigned yet"
-            
-            return f"Appointment booked successfully!\n\nDetails:\n- Date: {date}\n- Time: {time}\n- Service: {service.name}\n- Duration: {service.duration} minutes\n- Price: ${service.price}\n- Staff: {staff_name}\n\nBooking ID: {booking.id}"
+                return f"An error occurred while booking the appointment: {str(e)}"
             
         except Exception as e:
             import traceback
@@ -618,6 +711,13 @@ class RescheduleAppointmentTool(BaseTool):
                     booking__booking_date=new_booking_date,
                     booking__status__in=[BookingStatus.CONFIRMED, BookingStatus.PENDING, BookingStatus.RESCHEDULED]
                 ).values_list('staff_member_id', flat=True)
+            ).exclude(
+                # Exclude staff with unavailability records (off days)
+                id__in=StaffAvailability.objects.filter(
+                    start_time__lt=end_datetime.time(),
+                    end_time__gt=new_booking_time,
+                    off_day=True
+                ).values_list('staff_member_id', flat=True)
             )
             
             # Reassign staff if needed
@@ -640,7 +740,8 @@ class RescheduleAppointmentTool(BaseTool):
                         staff_member=staff
                     )
                     
-                    print(f"[DEBUG] Assigned new staff: {staff.get_full_name()}")
+                    staff_name = staff.get_full_name()
+                    print(f"[DEBUG] Assigned new staff: {staff_name}")
             
             return f"Appointment rescheduled successfully to {new_date} at {new_time}. Booking ID: {booking.id}"
             
@@ -712,3 +813,106 @@ class CancelAppointmentTool(BaseTool):
             print(f"[DEBUG] Error in CancelAppointmentTool: {str(e)}")
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
             return f"An error occurred while cancelling the appointment: {str(e)}"
+
+class GetServiceItemsInput(BaseModel):
+    """Input for getting available service items."""
+    business_id: str = Field(..., description="ID of the business")
+    service_name: Optional[str] = Field(None, description="Name of the service to filter items by")
+
+class GetServiceItemsTool(BaseTool):
+    name: str = "get_service_items"
+    description: str = "Get available service items for a business"
+    args_schema: Type[BaseModel] = GetServiceItemsInput
+    
+    def _run(self, business_id: str, service_name: Optional[str] = None) -> str:
+        try:
+            print(f"[DEBUG] GetServiceItemsTool called with: business_id={business_id}, service_name={service_name}")
+            
+            # Get the business
+            try:
+                # Try to get by ID first
+                try:
+                    from uuid import UUID
+                    # Check if business_id is a valid UUID
+                    print(f"[DEBUG] Attempting to parse business_id as UUID: {business_id}")
+                    uuid_obj = UUID(business_id, version=4)
+                    business = Business.objects.get(id=uuid_obj)
+                    print(f"[DEBUG] Found business by UUID: {business.name}")
+                except (ValueError, TypeError) as e:
+                    print(f"[DEBUG] business_id is not a valid UUID: {str(e)}")
+                    # If not a valid UUID, try to find by name
+                    print(f"[DEBUG] Trying to find business by name: {business_id}")
+                    business = Business.objects.filter(name__iexact=business_id).first()
+                    if not business:
+                        print(f"[DEBUG] Business with name '{business_id}' not found")
+                        return f"Business with name '{business_id}' not found. Please use a valid business ID."
+                    print(f"[DEBUG] Found business by name: {business.name} (ID: {business.id})")
+            except Business.DoesNotExist:
+                print(f"[DEBUG] Business with ID {business_id} not found")
+                return f"Business with ID {business_id} not found."
+            
+            # Get service items
+            service_items_query = ServiceItem.objects.filter(
+                business=business,
+                is_active=True
+            )
+            
+            # Filter by service if provided
+            if service_name:
+                try:
+                    service = ServiceOffering.objects.get(
+                        business=business,
+                        name__iexact=service_name,
+                        is_active=True
+                    )
+                    
+                    # We're not filtering by service offering anymore as requested
+                    # Just keeping the service for reference in the response
+                    
+                except ServiceOffering.DoesNotExist:
+                    print(f"[DEBUG] Service '{service_name}' not found")
+                    return f"Service '{service_name}' not found for business '{business.name}'."
+            
+            service_items = service_items_query.all()
+            
+            if not service_items:
+                return f"No service items found for business '{business.name}'" + \
+                       (f" and service '{service_name}'" if service_name else "")
+            
+            # Format the response
+            items_info = []
+            for item in service_items:
+                price_info = f"${item.price_value}" if item.price_type == 'fixed' else \
+                             f"{item.price_value}% of base price" if item.price_type == 'percentage' else \
+                             f"${item.price_value}/hour" if item.price_type == 'hourly' else \
+                             f"${item.price_value} per unit"
+                
+                items_info.append({
+                    "identifier": item.identifier,
+                    "name": item.name,
+                    "description": item.description or "No description",
+                    "price": price_info,
+                    "duration": f"{item.duration_minutes} minutes" if item.duration_minutes else "No additional time",
+                    "optional": "Optional" if item.is_optional else "Required"
+                })
+            
+            # Create a formatted response
+            response = f"Available service items for {business.name}"
+            if service_name:
+                response += f" and service '{service_name}'"
+            response += ":\n\n"
+            
+            for i, item in enumerate(items_info, 1):
+                response += f"{i}. {item['name']} (ID: {item['identifier']})\n"
+                response += f"   Description: {item['description']}\n"
+                response += f"   Price: {item['price']}\n"
+                response += f"   Duration: {item['duration']}\n"
+                response += f"   {item['optional']}\n\n"
+            
+            return response
+            
+        except Exception as e:
+            import traceback
+            print(f"[DEBUG] Error in GetServiceItemsTool: {str(e)}")
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            return f"An error occurred while getting service items: {str(e)}"

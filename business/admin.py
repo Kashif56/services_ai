@@ -6,7 +6,8 @@ from .models import (
     IndustryField, 
     BusinessCustomField, 
     BusinessConfiguration,
-    SMTPConfig
+    SMTPConfig,
+    ServiceItem
 )
 
 
@@ -122,6 +123,29 @@ class SMTPConfigAdmin(admin.ModelAdmin):
         }),
         ('SMTP Settings', {
             'fields': ('host', 'port', 'username', 'password', 'reply_to', 'from_email')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ServiceItem)
+class ServiceItemAdmin(admin.ModelAdmin):
+    list_display = ('business', 'name', 'identifier', 'price_value', 'is_active')
+    list_filter = ('business', 'is_active')
+    search_fields = ('name', 'identifier')
+    list_editable = ('is_active',)
+    prepopulated_fields = {'identifier': ('name',)}
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Service Item', {
+            'fields': ('business', 'name', 'identifier', 'description', 'price_type', 'price_value', 'is_active')
+        }),
+        ('Optional Settings', {
+            'fields': ('is_optional', 'duration_minutes', 'max_quantity'),
+            'classes': ('collapse',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

@@ -203,6 +203,13 @@ class LangChainAgent:
                 f"- {service.name}: {service.description or 'No description'} - ${service.price} - {service.duration} minutes"
                 for service in services
             ])
+
+            # Get service items with their identifiers
+            service_items = ServiceItem.objects.filter(business=self.business, is_active=True)
+            service_items_text = "\n".join([
+                f"- {service_item.name} ({service_item.identifier}): {service_item.description or 'No description'} - ${service_item.price_value} - {service_item.duration_minutes} minutes"
+                for service_item in service_items
+            ])
             
             # Default system prompt
             system_prompt = f"""
@@ -221,6 +228,20 @@ class LangChainAgent:
             Available services:
             {services_text}
             
+            Available service items:
+            {service_items_text}
+
+
+            Script:
+            1- Greet and Welcome User and Ask If they are Intresed in Business Service
+            2- If Yes, Ask for the Service Name and Date and Time
+            3- If No, Ask if have any questions and Answer them with Details You have AVAILABLE IN THE PROMPT
+            4- Ask for Name, Email and Phone Number
+            5- Ask for the Service Items
+            6- Ask for the Service Items Quantity
+            7- Ask for Notes
+            8- When you have all the detail go ahead an Book an Appointment with All Details and Service Items If User has Selected Any
+            
             When helping customers:
             - Be friendly, professional, and concise
             - Ask for all necessary information before booking
@@ -238,6 +259,10 @@ class LangChainAgent:
             - Use the book_appointment tool with the business_id: {business_id}
             - Make sure to convert dates to YYYY-MM-DD format
             - Make sure to convert times to HH:MM format
+            - IMPORTANT: When a customer mentions service items like "2 bedrooms" or "100 sq feet area", you MUST include these as service_items in the book_appointment tool call
+            - Format service_items as a list of dictionaries with 'identifier' and 'quantity' keys
+            - Example service_items: [{{"identifier": "bedroom", "quantity": 2}}, {{"identifier": "bathroom", "quantity": 2}}]
+            - Make sure to use the exact identifier shown in the service items list above
             
             For rescheduling appointments:
             - Use the reschedule_appointment tool with the business_id: {business_id}
