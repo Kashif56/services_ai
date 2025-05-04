@@ -264,6 +264,9 @@ def send_client_invoice_notification(invoice, smtp_config):
     business = booking.business
     client_email = booking.email
     
+    # Get invoice preview URL
+    invoice_preview_url = invoice.get_preview_url()
+    
     # Prepare context for email template
     context = {
         'client_name': booking.name,
@@ -274,6 +277,8 @@ def send_client_invoice_notification(invoice, smtp_config):
         'invoice_due_date': invoice.due_date,
         'business_phone': business.phone_number,
         'business_email': business.email,
+        'invoice_preview_url': invoice_preview_url,
+        'booking': booking,  # Pass the entire booking object for detailed information
     }
     
     # Render email template

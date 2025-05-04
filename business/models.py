@@ -4,7 +4,7 @@ from django.utils.text import slugify
 import uuid
 from django.conf import settings
 from decimal import Decimal
-
+from services_ai.utils import generate_id
 
 
 BASE_URL = settings.BASE_URL
@@ -48,7 +48,7 @@ class Business(models.Model):
     Represents a business entity that belongs to a specific industry.
     Each business can have its own configuration and customization.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     name = models.CharField(max_length=150)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='business')
     industry = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='businesses')
@@ -72,6 +72,11 @@ class Business(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.id = generate_id('bus_')
+        super().save(*args, **kwargs)
     
 
     def get_lead_webhook_url(self):
@@ -195,7 +200,7 @@ class ServiceOffering(models.Model):
     Represents a service offered by a business.
     This is a simplified model for managing service offerings directly.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_offerings')
     name = models.CharField(max_length=100)
     identifier = models.SlugField(max_length=120, blank=True, help_text="Unique identifier for this service (e.g., number_of_bedrooms)")
@@ -217,6 +222,8 @@ class ServiceOffering(models.Model):
         return f"{self.business.name} - {self.name}"
     
     def save(self, *args, **kwargs):
+        if not self.id:
+            self.id = generate_id('serv_')
         if not self.identifier:
             # Convert name to snake_case for identifier
             self.identifier = slugify(self.name).replace('-', '_')

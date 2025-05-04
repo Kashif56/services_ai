@@ -41,14 +41,15 @@ def index(request):
     # Get today's appointments count
     todays_appointments_count = Booking.objects.filter(
         business=business,
-        booking_date=today
+        created_at__date=today
     ).count()
+
     
     # Get yesterday's appointments count for comparison
     yesterday = today - timedelta(days=1)
     yesterdays_appointments_count = Booking.objects.filter(
         business=business,
-        booking_date=yesterday
+        created_at__date=yesterday
     ).count()
     
     # Calculate appointment change percentage
@@ -88,7 +89,7 @@ def index(request):
     # Get revenue this week from booking service items
     revenue_this_week = BookingServiceItem.objects.filter(
         booking__business=business,
-        booking__booking_date__range=[week_start, week_end]
+        booking__created_at__date__range=[week_start, week_end]
     ).annotate(
         item_total=ExpressionWrapper(
             F('price_at_booking') * F('quantity'),
@@ -99,7 +100,7 @@ def index(request):
     # Get revenue last week for comparison
     revenue_last_week = BookingServiceItem.objects.filter(
         booking__business=business,
-        booking__booking_date__range=[last_week_start, last_week_end]
+        booking__created_at__date__range=[last_week_start, last_week_end]
     ).annotate(
         item_total=ExpressionWrapper(
             F('price_at_booking') * F('quantity'),
@@ -128,4 +129,5 @@ def index(request):
         'today': today,
     }
     
+
     return render(request, 'dashboard/index.html', context)

@@ -2,8 +2,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta, date
-from .models import Booking
-from invoices.models import Invoice
+from .models import Booking, BookingStatus
+from invoices.models import Invoice, InvoiceStatus
 
 
 
@@ -17,8 +17,11 @@ def create_invoice_for_booking(sender, instance, created, **kwargs):
         
         Invoice.objects.create(
             booking=instance,
-            status='pending',
+            status=InvoiceStatus.PENDING,
             due_date=due_date,
         )
+
+        instance.status = BookingStatus.PENDING
+        instance.save(update_fields=['status'])
         
        

@@ -5,6 +5,9 @@ from bookings.models import Booking
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 import random
+from services_ai.utils import generate_id
+from django.conf import settings
+from django.urls import reverse
 
 class InvoiceStatus(models.TextChoices):
     DRAFT = 'draft', 'Draft'
@@ -31,7 +34,7 @@ class Invoice(models.Model):
     Main invoice model to store billing information related to bookings.
     Links to a booking and tracks payment status.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='invoices')
     invoice_number = models.CharField(max_length=50, unique=True)
     status = models.CharField(max_length=20, choices=InvoiceStatus.choices, default=InvoiceStatus.DRAFT)
@@ -51,11 +54,13 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         # Generate invoice number if not set
         if not self.invoice_number:
-            prefix = 'inv'
-            number = prefix + ''.join(random.choices('0123456789', k=8))
-            self.invoice_number = number
+            self.invoice_number = generate_id('inv_')
         
         super().save(*args, **kwargs)
+    
+
+    def get_preview_url(self):
+        return reverse('invoices:public_invoice_detail', kwargs={'id': self.id})
 
     
 
@@ -65,7 +70,7 @@ class Payment(models.Model):
     Tracks individual payments made against invoices.
     Multiple payments can be made for a single invoice.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices)
@@ -88,6 +93,6 @@ class Payment(models.Model):
         return f"Payment of {self.amount} for Invoice #{self.invoice.invoice_number}"
     
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        self.id = generate_id('pay_')
         super().save(*args, **kwargs)
 

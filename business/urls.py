@@ -33,13 +33,13 @@ urlpatterns = [
     path('service/add/', views.add_service, name='add_service'),
     path('service/update/', views.update_service, name='update_service'),
     path('service/delete/', views.delete_service, name='delete_service'),
-    path('service/<uuid:service_id>/details/', views.get_service_details, name='get_service_details'),
+    path('service/<str:service_id>/details/', views.get_service_details, name='get_service_details'),
     
     # Service item management
     path('service-item/add/', views.add_service_item, name='add_service_item'),
     path('service-item/edit/', views.edit_service_item, name='edit_service_item'),
     path('service-item/delete/', views.delete_service_item, name='delete_service_item'),
-    path('api/service-items/<uuid:item_id>/', views.get_service_item_details, name='get_service_item_details'),
+    path('api/service-items/<str:item_id>/', views.get_service_item_details, name='get_service_item_details'),
     # Package functionality removed
     
     # SMTP Configuration
@@ -55,14 +55,14 @@ urlpatterns = [
     # Staff management
     path('staff/', views.staff_management, name='staff'),
     path('staff/add/', views.add_staff, name='add_staff'),
-    path('staff/<uuid:staff_id>/', views.staff_detail, name='staff_detail'),
-    path('staff/<uuid:staff_id>/update/', views.update_staff, name='update_staff'),
+    path('staff/<str:staff_id>/', views.staff_detail, name='staff_detail'),
+    path('staff/<str:staff_id>/update/', views.update_staff, name='update_staff'),
     path('staff/update-status/', views.update_staff_status, name='update_staff_status'),
     path('staff/<staff_id>/add-availability/', views.add_staff_availability, name='add_staff_availability'),
     path('staff/<staff_id>/update-availability/', views.update_staff_availability, name='update_staff_availability'),
     path('staff/delete-availability/', views.delete_staff_availability, name='delete_staff_availability'),
-    path('staff/<uuid:staff_id>/add-off-day/', views.add_staff_off_day, name='add_staff_off_day'),
-    path('staff/<uuid:staff_id>/update-weekly-off-days/', views.update_weekly_off_days, name='update_weekly_off_days'),
+    path('staff/<str:staff_id>/add-off-day/', views.add_staff_off_day, name='add_staff_off_day'),
+    path('staff/<str:staff_id>/update-weekly-off-days/', views.update_weekly_off_days, name='update_weekly_off_days'),
     
     # Staff role management
     path('staff-role/add/', views.add_staff_role, name='add_staff_role'),

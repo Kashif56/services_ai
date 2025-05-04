@@ -1,12 +1,12 @@
 from django.db import models
 from django.utils import timezone
-import uuid
 from business.models import Business, Industry, IndustryField, BusinessCustomField, ServiceOffering, ServiceItem, ServiceOfferingItem
 from leads.models import Lead, LeadStatus
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
+from services_ai.utils import generate_id
 
 
 class BookingStatus(models.TextChoices):
@@ -55,7 +55,7 @@ class StaffMember(models.Model):
     Represents staff members who provide services and can be assigned to bookings.
     Each staff member belongs to a business and can have one or more roles.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='staff_members')
     roles = models.ManyToManyField(StaffRole, related_name='staff_members')
     first_name = models.CharField(max_length=100)
@@ -86,6 +86,13 @@ class StaffMember(models.Model):
     
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.id = generate_id('staff')
+        super().save(*args, **kwargs)
+    
+
 
 
 class StaffServiceAssignment(models.Model):
@@ -249,7 +256,7 @@ class Booking(models.Model):
     Links to a lead and includes all details about the scheduled appointment.
     Staff members are assigned through the BookingStaffAssignment model.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='bookings')
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     service_offering = models.ForeignKey(ServiceOffering, on_delete=models.SET_NULL, null=True, related_name='bookings')
@@ -309,6 +316,9 @@ class Booking(models.Model):
         elif self.lead and self.status == BookingStatus.COMPLETED:
             self.lead.status = LeadStatus.APPOINTMENT_COMPLETED
             self.lead.save(update_fields=['status', 'updated_at'])
+        
+        if not self.id:
+            self.id = generate_id('book_')
         
         super().save(*args, **kwargs)
     

@@ -24,7 +24,7 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
         service: Optional ServiceOffering object
         
     Returns:
-        Tuple of (is_available, reason)
+        Tuple of (is_available, reason, available_staff)
     """
     try:
         print(f"[DEBUG] check_timeslot_availability called with: business={business}, start_time={start_time}, duration_minutes={duration_minutes}, service={service}")
@@ -37,7 +37,7 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
                 print(f"[DEBUG] Found business: {business.name}")
             except Business.DoesNotExist:
                 print(f"[DEBUG] Business with ID {business} not found")
-                return False, f"Business with ID {business} not found"
+                return False, f"Business with ID {business} not found", []
         
         # Calculate end time
         end_time = start_time + timedelta(minutes=duration_minutes)
@@ -51,7 +51,7 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
         
         if not business_hours:
             print(f"[DEBUG] Business is closed on this day")
-            return False, "Business is closed on this day"
+            return False, "Business is closed on this day", []
         
         # Check if the time falls within business hours
         is_within_hours = False
@@ -87,7 +87,7 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
         
         if not is_within_hours:
             print(f"[DEBUG] Time is outside business hours")
-            return False, "Time is outside business hours"
+            return False, "Time is outside business hours", []
         
         # Check if there are any conflicting bookings
         try:
@@ -109,27 +109,29 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
                 print(f"[DEBUG] Using confirmed status: {confirmed_status}")
                 conflicting_bookings = Booking.objects.filter(
                     business=business,
-                    start_time__lt=end_time,
-                    end_time__gt=start_time,
+                    booking_date=start_time.date(),
+                    start_time__lt=end_time.time(),
+                    end_time__gt=start_time.time(),
                     status=confirmed_status
                 )
             else:
                 print(f"[DEBUG] No confirmed status found, checking all bookings")
                 conflicting_bookings = Booking.objects.filter(
                     business=business,
-                    start_time__lt=end_time,
-                    end_time__gt=start_time
+                    booking_date=start_time.date(),
+                    start_time__lt=end_time.time(),
+                    end_time__gt=start_time.time()
                 )
             
             print(f"[DEBUG] Found {conflicting_bookings.count()} conflicting bookings")
             
             if conflicting_bookings.exists():
-                return False, "Time slot conflicts with existing bookings"
+                return False, "Time slot conflicts with existing bookings", []
                 
         except Exception as e:
             print(f"[DEBUG] Error checking conflicting bookings: {str(e)}")
             # If there's an error with the booking fields, return a generic message
-            return False, "Unable to check booking conflicts"
+            return False, "Unable to check booking conflicts", []
         
         # Check if any staff is available
         try:
@@ -139,7 +141,7 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
             
             if not all_staff.exists():
                 print(f"[DEBUG] No staff members found for this business")
-                return False, "No staff members found for this business"
+                return False, "No staff members found for this business", []
             
             # For each staff member, check if they're available
             available_staff = []
@@ -158,21 +160,32 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
             print(f"[DEBUG] Found {len(available_staff)} available staff members")
             
             if not available_staff:
-                return False, "No staff available at this time"
+                return False, "No staff available at this time", []
             
-            return True, "Available"
+            # Convert staff members to a serializable format
+            staff_data = []
+            for staff in available_staff:
+                staff_data.append({
+                    'id': str(staff.id),
+                    'name': staff.get_full_name(),
+                    'email': staff.email,
+                    'phone': staff.phone
+                })
+            
+            return True, "Available", staff_data
             
         except Exception as e:
-            print(f"[DEBUG] Error checking staff availability: {str(e)}")
-            # If there's an error, assume no staff is available
-            return False, "Unable to check staff availability"
-    
+            import traceback
+            print(f"[DEBUG] Error in check_timeslot_availability: {str(e)}")
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            return False, f"Error checking availability: {str(e)}", []
+
     except Exception as e:
         import traceback
         print(f"[DEBUG] Error in check_timeslot_availability: {str(e)}")
         print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-        return False, f"Error checking availability: {str(e)}"
-
+        return False, f"Error checking availability: {str(e)}", []
+    
 def _is_staff_available(staff, start_time, end_time):
     """
     Check if a staff member is available during a specific time slot.

@@ -72,7 +72,28 @@
             <p><strong>Due Date:</strong> {{ invoice_due_date|date:"F j, Y" }}</p>
         </div>
         
-        <p>To view the complete invoice details or make a payment, please log in to your account or contact us directly.</p>
+        <p>To view the complete invoice details or make a payment, please click the button below:</p>
+        
+        <div class="button-container" style="text-align: center; margin: 25px 0;">
+            <a href="{{ invoice_preview_url }}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View Invoice Details</a>
+        </div>
+        
+        <div class="booking-details" style="background-color: #f8f9fa; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+            <h3>Booking Details:</h3>
+            <p><strong>Service:</strong> {{ booking.service_offering.name }}</p>
+            <p><strong>Date:</strong> {{ booking.booking_date }}</p>
+            <p><strong>Time:</strong> {{ booking.start_time }} - {{ booking.end_time }}</p>
+            <p><strong>Location:</strong> {{ booking.get_location_type_display }}</p>
+            {% if booking.location_details %}
+            <p><strong>Location Details:</strong> {{ booking.location_details }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="payment-notice" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #856404;">Important Payment Notice:</h3>
+            <p><strong>Your booking slot is currently PENDING and will only be confirmed after payment is received.</strong></p>
+            <p>Please note that if payment is not received within 3 hours, your slot may be released and made available to other clients.</p>
+        </div>
         
         <div class="business-details">
             <h3>Contact Information:</h3>
@@ -81,7 +102,7 @@
             <p><strong>Email:</strong> {{ business_email }}</p>
         </div>
         
-        <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
+        <p>If you have any questions regarding this invoice or your booking, please don't hesitate to contact us.</p>
         
         <p>Thank you for your business!</p>
         

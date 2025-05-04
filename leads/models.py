@@ -1,7 +1,7 @@
 from django.db import models
-import uuid
 from django.utils import timezone
 from business.models import Business, Industry, IndustryField
+from services_ai.utils import generate_id
 
 
 class LeadStatus(models.TextChoices):
@@ -26,7 +26,7 @@ class Lead(models.Model):
     Main lead model to store basic lead information.
     Industry-specific data is stored in LeadField model.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='leads')
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -68,6 +68,11 @@ class Lead(models.Model):
             return field.value
         except LeadField.DoesNotExist:
             return None
+    
+
+    def save(self, *args, **kwargs):
+        self.id = generate_id('lead_')
+        super().save(*args, **kwargs)
 
 
 class LeadField(models.Model):
@@ -112,7 +117,7 @@ class LeadCommunication(models.Model):
         ('received', 'Received'),
     )
     
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, editable=False)
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='communications')
     direction = models.CharField(max_length=10, choices=DIRECTION_CHOICES)
     comm_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
@@ -128,6 +133,10 @@ class LeadCommunication(models.Model):
     
     def __str__(self):
         return f"{self.lead} - {self.get_comm_type_display()} ({self.get_direction_display()})"
+    
+    def save(self, *args, **kwargs):
+        self.id = generate_id('comm_')
+        super().save(*args, **kwargs)
 
 
 class WebhookEndpoint(models.Model):

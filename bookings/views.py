@@ -10,6 +10,7 @@ from leads.models import Lead
 from django.utils import timezone
 import json
 from .availability import check_timeslot_availability
+from datetime import datetime
 
 # Create your views here.
 @login_required
@@ -450,15 +451,48 @@ def check_availability(request):
     except ValueError:
         return JsonResponse({'error': 'Duration must be a valid integer'}, status=400)
     
+    # Convert date and time strings to datetime object
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+        time_obj = datetime.strptime(time_str, '%H:%M').time()
+        start_time = datetime.combine(date_obj, time_obj)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date or time format'}, status=400)
+    
+    # Get service object if ID is provided
+    service = None
+    if service_offering_id:
+        try:
+            service = ServiceOffering.objects.get(id=service_offering_id, business=business)
+        except ServiceOffering.DoesNotExist:
+            pass  # Service will remain None
+    
     # Check availability
-    availability_result = check_timeslot_availability(
+    is_available, reason, available_staff = check_timeslot_availability(
         business.id,
-        date_str,
-        time_str,
+        start_time,
         duration_minutes,
-        service_offering_id,
-        staff_member_id
+        service
     )
+    
+    availability_result = {
+        'is_available': is_available,
+        'reason': reason if not is_available else None,
+        'available_staff': available_staff
+    }
+    
+    # If not available, get alternate timeslots
+    if not is_available:
+        from .availability import get_alternate_timeslots
+        alternate_slots = get_alternate_timeslots(
+            business.id,
+            date_obj,
+            time_obj,
+            duration_minutes,
+            service_offering_id,
+            staff_member_id
+        )
+        availability_result['alternate_slots'] = alternate_slots
 
     print("Availability result:", availability_result)
     

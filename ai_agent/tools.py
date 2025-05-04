@@ -35,24 +35,22 @@ class CheckAvailabilityTool(BaseTool):
             try:
                 # Try to get by ID first
                 try:
-                    from uuid import UUID
-                    # Check if business_id is a valid UUID
-                    print(f"[DEBUG] Attempting to parse business_id as UUID: {business_id}")
-                    uuid_obj = UUID(business_id, version=4)
-                    business = Business.objects.get(id=uuid_obj)
-                    print(f"[DEBUG] Found business by UUID: {business.name}")
-                except (ValueError, TypeError) as e:
-                    print(f"[DEBUG] business_id is not a valid UUID: {str(e)}")
-                    # If not a valid UUID, try to find by name
+                    # Check if business_id is a valid ID
+                    print(f"[DEBUG] Attempting to find business with ID: {business_id}")
+                    business = Business.objects.get(id=business_id)
+                    print(f"[DEBUG] Found business by ID: {business.name}")
+                except (Business.DoesNotExist) as e:
+                    print(f"[DEBUG] Business not found with ID: {str(e)}")
+                    # If not found by ID, try to find by name
                     print(f"[DEBUG] Trying to find business by name: {business_id}")
                     business = Business.objects.filter(name__iexact=business_id).first()
                     if not business:
                         print(f"[DEBUG] Business with name '{business_id}' not found")
                         return f"Business with name '{business_id}' not found. Please use a valid business ID."
                     print(f"[DEBUG] Found business by name: {business.name} (ID: {business.id})")
-            except Business.DoesNotExist:
-                print(f"[DEBUG] Business with ID {business_id} not found")
-                return f"Business with ID {business_id} not found."
+            except Exception as e:
+                print(f"[DEBUG] Error finding business: {str(e)}")
+                return f"Error finding business: {str(e)}"
             
             # Parse the date
             try:
