@@ -122,7 +122,7 @@ class CheckAvailabilityTool(BaseTool):
                     print(f"[DEBUG] Parameters: business={business.id}, start_time={appointment_datetime}, duration_minutes={duration_minutes}, service={service.id if service else None}")
                     
                     try:
-                        is_available, reason = check_timeslot_availability(
+                        is_available, reason, _ = check_timeslot_availability(
                             business=business,
                             start_time=appointment_datetime,
                             duration_minutes=duration_minutes,
@@ -329,7 +329,7 @@ class BookAppointmentTool(BaseTool):
             # Check availability
             print(f"[DEBUG] Checking availability with check_timeslot_availability")
             try:
-                is_available, reason = check_timeslot_availability(
+                is_available, reason, _available_staff = check_timeslot_availability(
                     business=business,
                     start_time=appointment_datetime,
                     duration_minutes=service.duration,
@@ -656,7 +656,7 @@ class RescheduleAppointmentTool(BaseTool):
                 )
                 
                 # Check availability
-                is_available, reason = check_timeslot_availability(
+                is_available, reason, _available_staff = check_timeslot_availability(
                     business=business,
                     start_time=new_appointment_datetime,
                     duration_minutes=duration_minutes,
