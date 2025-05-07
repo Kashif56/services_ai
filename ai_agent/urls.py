@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, api_views
 
 app_name = 'ai_agent'
 
@@ -17,4 +17,11 @@ urlpatterns = [
     
     # Chat widget for embedding
     path('widget/<int:business_id>/', views.chat_widget, name='chat_widget'),
+    
+    # Retell API endpoints
+    path('api/retell/check-availability/', api_views.check_availability, name='retell_check_availability'),
+    path('api/retell/book-appointment/', api_views.book_appointment, name='retell_book_appointment'),
+    path('api/retell/cancel-appointment/', api_views.cancel_appointment, name='retell_cancel_appointment'),
+    path('api/retell/reschedule-appointment/', api_views.reschedule_appointment, name='retell_reschedule_appointment'),
+    path('api/retell/get-appointment/<str:booking_id>/', api_views.get_appointment, name='retell_get_appointment'),
 ]

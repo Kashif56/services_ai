@@ -116,6 +116,7 @@ def business_profile(request):
     
     # Get business data
     business = request.user.business
+    print(business.id)
     
     context = {
         'business': business,

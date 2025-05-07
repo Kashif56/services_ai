@@ -1,0 +1,70 @@
+
+[{
+    "type": "object",
+    "description": "Book Appointment JSON",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Full Name of the Client"
+      },
+      "email": {
+        "type": "string",
+        "description": "Email Address of the Client"
+      },
+      "phone": {
+        "type": "string",
+        "description": "Phone Number of the Client"
+      },
+      "type_of_service": {
+        "type": "string",
+        "description": "Type of Service"
+      },
+      "bedrooms": {
+        "type": "number",
+        "description": "Count of bedrooms"
+      },
+      "bathroom": {
+        "type": "number",
+        "description": "Count of bathrooms"
+      },
+      "square_feet": {
+        "type": "number",
+        "description": "Area in Square Feet that Needs Cleaning"
+      },
+      "appointment_date_time": {
+        "type": "string",
+        "description": "Appointment Date and Time Given by the User"
+      },
+      "city": {
+        "type": "string",
+        "description": "City of the Service Location"
+      },
+      "business_id": {
+        "type": "string",
+        "description": "Business ID"
+      }
+    },
+    "required": ["name", "email", "phone", "type_of_service", "bedrooms", "bathroom", "square_feet", "appointment_date_time", "city", "business_id"]
+  },
+  
+
+
+
+  {
+    "type": "object",
+    "description": "Check Availability JSON",
+    "properties": {
+      "date_time_str": {
+        "type": "string",
+        "description": "Date and Time for Which we have to check Availability in Human ReadAble Format or As It is As User provide"
+      },
+      "business_id": {
+        "type": "string",
+        "description": "Business ID"
+      }
+    },
+    "required": [
+      "date_time_str",
+      "business_id"
+    ]
+  }]
