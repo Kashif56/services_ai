@@ -300,9 +300,11 @@ class Booking(models.Model):
         # Check for overlapping bookings
         overlapping = Booking.objects.filter(
             business=self.business,
+            booking_date=self.booking_date,
             start_time__lt=self.end_time,
             end_time__gt=self.start_time,
             status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.RESCHEDULED]
+
         ).exclude(pk=self.pk)
         
         if overlapping.exists():
