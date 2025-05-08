@@ -1,0 +1,60 @@
+{% extends "accounts/base_accounts.html" %}
+
+{% block title %}My Profile - Account Management{% endblock %}
+
+{% block account_content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">My Profile</h4>
+    </div>
+    <div class="card-body">
+        <div id="alert-container"></div>
+        <form id="profile-form" method="POST" action="{% url 'accounts:profile' %}" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                        <div class="invalid-feedback">
+                            Please provide your first name.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                        <div class="invalid-feedback">
+                            Please provide your last name.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ request.user.email }}" required>
+                <div class="invalid-feedback">
+                    Please provide a valid email address.
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" readonly>
+                <small class="form-text text-muted">Username cannot be changed.</small>
+            </div>
+            
+           
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
