@@ -345,9 +345,14 @@ document.addEventListener('DOMContentLoaded', function() {
         items.forEach(item => {
             html += `
                 <div class="col-md-6 mb-3">
-                    <div class="card h-100">
+                    <div class="card h-100 bg-dark">
                         <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title">${item.name}</h5>
+                            <span class="text-primary ${item.is_optional ? 'text-success' : 'text-danger'}">${item.is_optional ? 'Optional' : 'Required'}</span>
+                        </div>
+                            
+                            
                             <p class="card-text">${item.description || ''}</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-primary fw-bold">$${item.price_value}</span>
@@ -358,14 +363,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                            name="service_items[]" 
                                            value="${item.id}"
                                            data-price="${item.price_value}"
-                                           ${item.is_required ? 'checked disabled' : ''}>
+                                           ${item.is_optional ? '' : 'checked disabled'}>
                                     <label class="form-check-label" for="item_${item.id}">
-                                        ${item.is_required ? 'Required' : 'Add'}
+                                        ${item.is_optional ? 'Add' : 'Required'}
                                     </label>
                                 </div>
                             </div>
                             ${item.max_quantity > 1 ? `
-                            <div class="mt-2 quantity-control ${!item.is_required && !selectedItems[item.id] ? 'd-none' : ''}">
+                            <div class="mt-2 quantity-control ${item.is_optional && !selectedItems[item.id] ? 'd-none' : ''}">
                                 <label for="quantity_${item.id}">Quantity:</label>
                                 <div class="input-group input-group-sm">
                                     <button type="button" class="btn btn-outline-secondary decrease-qty" data-item-id="${item.id}">-</button>

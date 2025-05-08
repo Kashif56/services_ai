@@ -1,0 +1,45 @@
+.gateway-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gateway-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.gateway-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.gateway-card .card-title {
+    font-weight: 600;
+}
+
+.gateway-card .badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.gateway-card .fa-stripe {
+    color: #6772e5;
+}
+
+.gateway-card .fa-square {
+    color: #3e4eb8;
+}
+
+/* Modal styling */
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

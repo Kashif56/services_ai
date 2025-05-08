@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datetime
 
-from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem, CRM_CHOICES, SMTPConfig
+from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem, CRM_CHOICES, SMTPConfig, StripeCredentials, SquareCredentials
 
 
 @login_required
@@ -648,6 +648,181 @@ def update_business_configuration(request):
         messages.error(request, f'An error occurred: {str(e)}')
     
     return redirect('business:configuration')
+
+# Payment Gateway Management Views
+@login_required
+def payment_gateways(request):
+    """
+    Render the payment gateways management page
+    Shows Stripe and Square integration options
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    context = {
+        'business': business,
+    }
+    
+    return render(request, 'business/payment_gateways.html', context)
+
+
+@login_required
+def save_stripe_credentials(request):
+    """
+    Save Stripe credentials for the business
+    Creates or updates the StripeCredentials model
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+    business = request.user.business
+    stripe_secret_key = request.POST.get('stripe_secret_key')
+    stripe_publishable_key = request.POST.get('stripe_publishable_key')
+    
+    if not stripe_secret_key or not stripe_publishable_key:
+        return JsonResponse({'success': False, 'message': 'All fields are required'})
+    
+    try:
+        # Try to get existing credentials or create new ones
+        stripe_credentials, created = StripeCredentials.objects.get_or_create(
+            business=business,
+            defaults={
+                'stripe_secret_key': stripe_secret_key,
+                'stripe_publishable_key': stripe_publishable_key
+            }
+        )
+        
+        # If credentials already existed, update them
+        if not created:
+            stripe_credentials.stripe_secret_key = stripe_secret_key
+            stripe_credentials.stripe_publishable_key = stripe_publishable_key
+            stripe_credentials.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Stripe credentials saved successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+@login_required
+def save_square_credentials(request):
+    """
+    Save Square credentials for the business
+    Creates or updates the SquareCredentials model
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+    business = request.user.business
+    access_token = request.POST.get('access_token')
+    app_id = request.POST.get('app_id')
+    location_id = request.POST.get('location_id')
+    
+    if not access_token or not app_id or not location_id:
+        return JsonResponse({'success': False, 'message': 'All fields are required'})
+    
+    try:
+        # Try to get existing credentials or create new ones
+        square_credentials, created = SquareCredentials.objects.get_or_create(
+            business=business,
+            defaults={
+                'access_token': access_token,
+                'app_id': app_id,
+                'location_id': location_id
+            }
+        )
+        
+        # If credentials already existed, update them
+        if not created:
+            square_credentials.access_token = access_token
+            square_credentials.app_id = app_id
+            square_credentials.location_id = location_id
+            square_credentials.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Square credentials saved successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+@login_required
+@require_http_methods(["POST"])
+def set_default_payment_gateway(request):
+    """
+    Set the default payment gateway for the business
+    Updates the default_payment_method field in the Business model
+    """
+    try:
+        data = json.loads(request.body)
+        gateway = data.get('gateway')
+        
+        if not gateway or gateway not in ['stripe', 'square']:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid payment gateway specified'
+            })
+        
+        business = request.user.business
+        
+        # Check if the specified gateway is configured
+        if gateway == 'stripe' and not hasattr(business, 'stripe_credentials'):
+            return JsonResponse({
+                'success': False,
+                'message': 'Stripe credentials not configured'
+            })
+        elif gateway == 'square' and not hasattr(business, 'square_credentials'):
+            return JsonResponse({
+                'success': False,
+                'message': 'Square credentials not configured'
+            })
+        
+        # Update the default payment method
+        business.default_payment_method = gateway
+        business.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{gateway.capitalize()} has been set as your default payment gateway'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid JSON data'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+@login_required
+def test_smtp_connection(request):
+    """
+    Test SMTP connection with provided credentials
+    Sends a test email to the business email
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
 
 # Staff Management Views
 @login_required

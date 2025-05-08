@@ -54,7 +54,7 @@ class BusinessAdmin(admin.ModelAdmin):
     inlines = [BusinessConfigurationInline, BusinessCustomFieldInline]
     fieldsets = (
         ('Basic Information', {
-            'fields': ('id', 'name', 'industry', 'description', 'is_active')
+            'fields': ('id', 'name', 'industry', 'description', 'is_active', 'default_payment_method')
         }),
         ('Contact Information', {
             'fields': ('email', 'phone_number', 'website')

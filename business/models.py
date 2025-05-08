@@ -9,6 +9,12 @@ from services_ai.utils import generate_id
 
 BASE_URL = settings.BASE_URL
 
+
+PAYMENT_CHOICES = (
+    ('stripe', 'Stripe'),
+    ('square', 'Square'),
+)
+
 CRM_CHOICES = (
     ('hubspot', 'HubSpot'),
     ('salesforce', 'Salesforce'),
@@ -64,6 +70,8 @@ class Business(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    default_payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, null=True, blank=True)
 
     class Meta:
         verbose_name = "Business"
@@ -339,4 +347,30 @@ class SMTPConfig(models.Model):
     
     def __str__(self):
         return f"SMTP Config for {self.business.name}"
+    
+
+
+class SquareCredentials(models.Model):
+    business = models.OneToOneField(Business, on_delete=models.CASCADE, related_name='square_credentials')
+    access_token = models.CharField(max_length=255, null=True, blank=True)
+    app_id = models.CharField(max_length=255, null=True, blank=True)
+    location_id = models.CharField(max_length=255, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Square Credentials for {self.business.name}"
+
+
+class StripeCredentials(models.Model):
+    business = models.OneToOneField(Business, on_delete=models.CASCADE, related_name='stripe_credentials')
+    stripe_secret_key = models.CharField(max_length=255, null=True, blank=True)
+    stripe_publishable_key = models.CharField(max_length=255, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Stripe Credentials for {self.business.name}"
     

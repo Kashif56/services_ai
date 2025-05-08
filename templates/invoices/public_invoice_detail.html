@@ -1,839 +1,1160 @@
+{% extends 'common/public_base.html' %}
+{% load static %}
 {% load booking_filters %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice #{{ invoice.invoice_number }}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts - Outfit -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    <style>
-        :root {
-            --primary-color: #4F46E5;
-            --primary-light: #E0E7FF;
-            --primary-medium-light: #A5B4FC;
-            --primary-medium-dark: #4338CA;
-            --primary-dark: #312E81;
-            
-            --secondary-color: #0CA5E9;
-            --secondary-light: #BAE6FD;
-            --secondary-medium-light: #38BDF8;
-            --secondary-medium-dark: #0369A1;
-            --secondary-dark: #075985;
-            
-            --gray-lightest: #F8FAFC;
-            --gray-light: #F1F5F9;
-            --gray-medium-light: #E2E8F0;
-            --gray-medium: #CBD5E1;
-            --gray-medium-dark: #475569;
-            --gray-dark: #1E293B;
-            --gray-darkest: #0F172A;
-            
-            --success: #10B981;
-            --success-light: #D1FAE5;
-            --warning: #F59E0B;
-            --warning-light: #FEF3C7;
-            --error: #EF4444;
-            --error-light: #FEE2E2;
-            --info: #3B82F6;
-            --info-light: #DBEAFE;
-        }
 
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--gray-light);
-            color: var(--gray-dark);
-            line-height: 1.6;
-        }
+{% block title %}Invoice #{{ invoice.invoice_number }} - {{ invoice.booking.business.name }}{% endblock %}
 
+{% block styles %}
+<style>
+    .invoice-container {
+        max-width: 1200px;
+        width: 95%;
+        margin: 0 auto;
+        padding: 15px;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .table th {
+        background-color: #f8f9fa;
+    }
+    .payment-status-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+        min-height: 30px;
+    }
+    #card-container {
+        min-height: 90px;
+    }
+    .payment-badge {
+        position: absolute;
+        top: 20px;
+        right: 50%;
+        transform: translateX(50%);
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 600;
+        z-index: 1;
+    }
+
+    /* Invoice details styling */
+    .invoice-detail-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
+
+    .detail-row {
+        margin-bottom: 8px;
+    }
+
+    /* Service item styling */
+    .service-details li {
+        margin-bottom: 4px;
+    }
+
+    /* Pay button styling */
+    #payButtonContainer.fixed-bottom {
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        padding-top: 15px;
+    }
+
+    #payButtonContainer .btn-success {
+        transition: all 0.3s ease;
+    }
+
+    #payButtonContainer .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    /* Mobile floating button */
+    .mobile-float-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        width: auto !important;
+        border-radius: 50px;
+        padding: 12px 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        display: none;
+    }
+
+    @media (max-width: 767px) {
         .invoice-container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            width: 100%;
+            padding: 10px;
         }
-
-        .invoice-header {
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 0.75rem 0.75rem 0 0;
-            padding: 1.5rem;
+        .payment-badge {
+            position: static;
+            display: inline-block;
+            margin: 0 auto 15px;
+            transform: none;
         }
-
-        .invoice-body {
-            padding: 1.5rem;
-        }
-
-        .invoice-footer {
-            background-color: var(--gray-light);
-            border-radius: 0 0 0.75rem 0.75rem;
-            padding: 1.5rem;
+        .header-section {
+            flex-direction: column;
             text-align: center;
         }
-
-        .status-badge {
-            padding: 0.35rem 0.75rem;
-            border-radius: 9999px;
-            font-weight: 500;
-            font-size: 0.875rem;
+        .header-section > div {
+            width: 100%;
+            text-align: center !important;
+            margin-bottom: 15px;
         }
-
-        .badge-draft { background-color: var(--gray-medium); color: var(--gray-dark); }
-        .badge-pending { background-color: var(--warning); color: white; }
-        .badge-paid { background-color: var(--success); color: white; }
-        .badge-partially_paid { background-color: var(--info); color: white; }
-        .badge-overdue { background-color: var(--error); color: white; }
-        .badge-cancelled { background-color: var(--gray-dark); color: white; }
-        .badge-refunded { background-color: var(--primary-color); color: white; }
-
-        .card {
-            border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
+        .mobile-stack {
+            margin-bottom: 15px;
         }
-
-        .card-header {
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 0.75rem 0.75rem 0 0 !important;
-            padding: 1rem 1.5rem;
-            font-weight: 500;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .price-tag {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .price-tag .currency {
-            font-size: 1.5rem;
-            vertical-align: top;
-            position: relative;
-            top: 0.25rem;
-            margin-right: 0.125rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-medium-dark);
-            border-color: var(--primary-medium-dark);
-        }
-
-        .btn-outline-primary {
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-outline-primary:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-success {
-            background-color: var(--success);
-            border-color: var(--success);
-        }
-
-        .btn-success:hover {
-            background-color: #0DA56F;
-            border-color: #0DA56F;
-        }
-
-        .payment-options {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .payment-option {
-            border: 1px solid var(--gray-medium-light);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            transition: all 0.2s ease;
-        }
-
-        .payment-option:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-        }
-
-        .payment-option-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .payment-option-icon {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-        }
-
-        .payment-option-title {
-            font-weight: 600;
-            font-size: 1.125rem;
-            margin: 0;
-        }
-
-        .payment-option-description {
-            color: var(--gray-medium-dark);
+        .mobile-mb-3 {
             margin-bottom: 1rem;
         }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .table {
+            font-size: 0.9rem;
+            width: 100%;
+        }
+        .card-body {
+            padding: 0.75rem;
+        }
 
-        @media (max-width: 768px) {
-            .invoice-container {
-                margin: 1rem;
-                border-radius: 0.5rem;
+        /* Mobile floating button enhancements */
+        .mobile-float-btn {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
             }
-            
-            .invoice-header {
-                border-radius: 0.5rem 0.5rem 0 0;
-                padding: 1rem;
+            70% {
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
             }
-            
-            .invoice-body {
-                padding: 1rem;
-            }
-            
-            .invoice-footer {
-                border-radius: 0 0 0.5rem 0.5rem;
-                padding: 1rem;
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
             }
         }
-    </style>
-</head>
-<body>
-    <div class="invoice-container">
-        <!-- Invoice Header -->
-        <div class="invoice-header">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h2 class="mb-0">Invoice #{{ invoice.invoice_number }}</h2>
-                    <p class="text-white-50 mb-0">{{ invoice.created_at|date:"F j, Y" }}</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <span class="status-badge badge-{{ invoice.status }}">
-                        {% if invoice.status == 'draft' %}
-                            Draft
-                        {% elif invoice.status == 'pending' %}
-                            Pending
-                        {% elif invoice.status == 'paid' %}
-                            Paid
-                        {% elif invoice.status == 'partially_paid' %}
-                            Partially Paid
-                        {% elif invoice.status == 'overdue' %}
-                            Overdue
-                        {% elif invoice.status == 'cancelled' %}
-                            Cancelled
-                        {% elif invoice.status == 'refunded' %}
-                            Refunded
-                        {% else %}
-                            {{ invoice.status }}
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
+
+        /* Remove conflicting fixed-bottom rule */
+        #payButtonContainer.fixed-bottom {
+            display: none;
+        }
+
+        /* Mobile table improvements */
+        .mobile-table-view {
+            display: block;
+        }
+        .mobile-table-view thead {
+            display: none;
+        }
+        .mobile-table-view tbody,
+        .mobile-table-view tr,
+        .mobile-table-view td {
+            display: block;
+            width: 100%;
+        }
+        .mobile-table-view td {
+            padding: 8px;
+            text-align: left !important;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .mobile-table-view td:before {
+            content: attr(data-label);
+            float: left;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .mobile-table-view td:last-child {
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 16px;
+        }
+        .mobile-label {
+            display: inline-block;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .bill-to-container {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+        }
+        .invoice-summary-row td {
+            padding-top: 12px;
+        }
+        /* Service item improvements for mobile */
+        .service-row td {
+            position: relative;
+            padding-left: 10px;
+        }
+        .service-item-value {
+            display: inline-block;
+        }
+    }
+
+    /* Fix for very small screens */
+    @media (max-width: 480px) {
+        .table th, .table td {
+            padding: 0.5rem;
+        }
+        .header-section img {
+            max-width: 120px;
+        }
+        .invoice-id, .invoice-status {
+            font-size: 1.2rem;
+        }
+    }
+
+    /* Stripe Form */
+    #stripe-card-element {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        min-height: 40px;
+    }
+
+    .stripe-form {
+        margin-bottom: 20px;
+    }
+
+    .payment-method-tabs .nav-link {
+        padding: 8px 16px;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+
+    .payment-method-tabs .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    /* Payment form loading state */
+    .form-loading {
+        position: relative;
+    }
+
+    .form-loading:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .form-loading:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30px;
+        height: 30px;
+        border: 3px solid #cccccc;
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        z-index: 1;
+        animation: spinner 0.8s linear infinite;
+    }
+
+    @keyframes spinner {
+        to {transform: translate(-50%, -50%) rotate(360deg);}
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="invoice-container position-relative">
+    <div class="text-center mb-3">
+        {% if invoice.isPaid %}
+        <div class="payment-badge bg-success text-white">
+            <i class="fas fa-check-circle me-1"></i>Paid
         </div>
-
-        <!-- Invoice Body -->
-        <div class="invoice-body">
-            <div class="row">
-                <!-- Main Invoice Information -->
-                <div class="col-lg-8">
-                    <!-- Business Information -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">From</h5>
-                        </div>
-                        <div class="card-body">
-                            <h5>{{ invoice.booking.business.name }}</h5>
-                            <p class="mb-0">{{ invoice.booking.business.address }}</p>
-                            <p class="mb-0">{{ invoice.booking.business.city }}, {{ invoice.booking.business.state }} {{ invoice.booking.business.zip_code }}</p>
-                            <p class="mb-0">{{ invoice.booking.business.phone_number }}</p>
-                            <p class="mb-0">{{ invoice.booking.business.email }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Client Information -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Bill To</h5>
-                        </div>
-                        <div class="card-body">
-                            <h5>{{ invoice.booking.name }}</h5>
-                            <p class="mb-0">{{ invoice.booking.email }}</p>
-                            <p class="mb-0">{{ invoice.booking.phone_number }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Service Details -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Service Details</h5>
-                        </div>
-                        <div class="card-body">
-                            <!-- Service Summary -->
-                            <div class="mb-4">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <h4>{{ invoice.booking.service_offering.name }}</h4>
-                                        {% if invoice.booking.service_offering.description %}
-                                            <p class="text-muted">{{ invoice.booking.service_offering.description }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4 text-md-end">
-                                        <div class="price-tag">
-                                            <span class="currency">$</span>
-                                            <span class="amount">{{ total_price }}</span>
-                                        </div>
-                                        <div class="small text-muted">Total Price</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Service Items List -->
-                            {% if service_items %}
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Item</th>
-                                                <th class="text-center">Quantity</th>
-                                                <th class="text-end">Price</th>
-                                                <th class="text-end">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for item in service_items %}
-                                                <tr>
-                                                    <td>
-                                                        <div class="fw-bold">{{ item.service_item.name }}</div>
-                                                        {% if item.service_item.description %}
-                                                            <div class="small text-muted">{{ item.service_item.description }}</div>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td class="text-center">{{ item.quantity }}</td>
-                                                    <td class="text-end">${{ item.price_at_booking|divide:item.quantity }}</td>
-                                                    <td class="text-end">${{ item.price_at_booking|floatformat:2 }}</td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                        <tfoot class="table-light">
-                                            <tr>
-                                                <th colspan="3" class="text-end">Total</th>
-                                                <th class="text-end">${{ total_price }}</th>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="p-3 rounded bg-info text-white">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Base Price:</span>
-                                        <span>${{ invoice.booking.service_offering.price }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between fw-bold">
-                                        <span>Total:</span>
-                                        <span>${{ total_price }}</span>
-                                    </div>
-                                </div>
-                            {% endif %}
-
-                            {% if invoice.notes %}
-                                <div class="mt-4">
-                                    <h6 class="fw-bold">Notes</h6>
-                                    <p>{{ invoice.notes }}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Sidebar -->
-                <div class="col-lg-4">
-                    <!-- Invoice Summary -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Invoice Summary</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Invoice Number:</span>
-                                <span class="fw-bold">{{ invoice.invoice_number }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Issue Date:</span>
-                                <span>{{ invoice.created_at|date:"M d, Y" }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Due Date:</span>
-                                <span>{{ invoice.due_date|date:"M d, Y" }}</span>
-                            </div>
-                            <hr>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Total Amount:</span>
-                                <span class="fw-bold">${{ total_price }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Amount Paid:</span>
-                                <span>${{ total_paid }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Balance Due:</span>
-                                <span class="fw-bold {% if balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
-                                    ${{ balance_due }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Payment Options -->
-                    {% if balance_due > 0 and invoice.status != 'cancelled' %}
-                        {% if not request.user.is_authenticated or invoice.booking.business.user != request.user %}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Payment Options</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="payment-options">
-                                    <div class="payment-option">
-                                        <div class="payment-option-header">
-                                            <i class="payment-option-icon fab fa-stripe"></i>
-                                            <h6 class="payment-option-title">Payment Options</h6>
-                                        </div>
-                                        <p class="payment-option-description">Make a secure payment using your credit or debit card</p>
-                                        <div class="form-check mb-3">
-                                            <input class="form-check-input" type="checkbox" id="authorize-toggle">
-                                            <label class="form-check-label" for="authorize-toggle">
-                                                Authorize payment only (charge after service completion)
-                                            </label>
-                                        </div>
-                                        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#paymentModal" id="payment-btn">
-                                            <i class="fas fa-credit-card me-2"></i> <span id="payment-btn-text">Pay Now</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
+        {% elif invoice.payment_details and invoice.payment_details.status == 'AUTHORIZED' %}
+        <div class="payment-badge bg-info text-white">
+            <i class="fas fa-clock me-1"></i>Payment Authorized
         </div>
+        {% endif %}
+    </div>
 
-        <!-- Invoice Footer -->
-        <div class="invoice-footer">
-            <p class="mb-0">&copy; {{ invoice.created_at|date:"Y" }} {{ invoice.booking.business.name }}. All rights reserved.</p>
+    <!-- Header Section -->
+    <div class="row mb-4 header-section">
+        <div class="col-md-6 text-start mobile-stack">
+            <img src="https://img.freepik.com/free-vector/gradient-squeegee-logo-template_23-2150208857.jpg?uid=R23824890&ga=GA1.1.1921205845.1737568792&semt=ais_hybrid" alt="Logo" style="width: 150px;">
+        </div>
+        <div class="col-md-6 text-md-end">
+            <h4 class="mb-0">{{ invoice.booking.business.name }}</h4>
+            <p class="mb-0">{{ invoice.booking.business.address }}</p>
+            <p class="mb-0">{{ invoice.booking.business.phone }}</p>
+            <p class="mb-0">{{ invoice.booking.business.user.email }}</p>
         </div>
     </div>
+
+    <!-- Invoice Details -->
+    <div class="row mb-4">
+        <div class="col-md-6 mobile-mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title fs-6">Invoice Information</h5>
+                    <div class="detail-row">
+                        <span class="invoice-detail-label">Invoice Date:</span>
+                        <span class="fw-normal">{{ invoice.created_at|format_date }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="invoice-detail-label">Due Date:</span>
+                        <span class="fw-normal">232</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 bill-to-container">
+                <div class="card-body">
+                    <h5 class="card-title fs-6">Client Information</h5>
+                    <div class="detail-row">
+                        <span class="invoice-detail-label">Name:</span>
+                        <span class="fw-normal">{{ invoice.booking.firstName }} {{ invoice.booking.lastName }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="invoice-detail-label">Email:</span>
+                        <span class="fw-normal">{{ invoice.booking.email }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="invoice-detail-label">Phone:</span>
+                        <span class="fw-normal">{{ invoice.booking.phoneNumber }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Header -->
+    <div class="row mb-4">
+        <div class="col-6">
+            <h2 class="mb-0 h3 invoice-id">INVOICE #{{ invoice.invoice_number }}</h2>
+        </div>
+        <div class="col-6 text-end">
+            {% if invoice.status == 'paid' %}
+            <h2 class="mb-0 h3 text-success invoice-status">PAID</h2>
+            {% elif invoice.payment_details and invoice.payment_details.stripe.status == 'AUTHORIZED' %}
+            <h2 class="mb-0 h3 text-info invoice-status">AUTHORIZED</h2>
+            {% else %}
+            <h2 class="mb-0 h3 text-danger invoice-status">UNPAID</h2>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Service Details - Mobile Optimized -->
+    <div class="table-responsive mb-4">
+        <table class="table mobile-table-view">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Details</th>
+                    <th>Addons</th>
+                    <th class="text-end">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="service-row">
+                    <td data-label="Service:">
+                        <strong>{{ invoice.booking.service_offering.name|default:"Service" }}</strong>
+                    </td>
+                    <td data-label="Details:">
+                        <div class="service-details">
+                            <div class="detail-row">
+                                <span class="mobile-label">Date:</span>
+                                <span class="service-item-value">{{ invoice.booking.appointment_date|format_date }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="mobile-label">Time:</span>
+                                <span class="service-item-value">{{ invoice.booking.appointment_time|format_time }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="mobile-label">Description:</span>
+                                <span class="service-item-value">{{ invoice.booking.service_offering.description }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Service Items:">
+                        {% if service_items %}
+                            <div class="mb-2">
+                                <strong>Service Items:</strong>
+                                {% for item in service_items %}
+                                    <div class="detail-row">
+                                        <span class="mobile-label">- {{ item.name }}:</span>
+                                        <span class="service-item-value">${{ item.price_at_booking }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            No additional service items
+                        {% endif %}
+                    </td>
+                    <td data-label="Amount:" class="text-end">
+                        <strong id="amount_display">{{ invoice.amount|format_currency }}</strong>
+                    </td>
+                </tr>
+
+                <tr class="invoice-summary-row">
+                    <td colspan="3" data-label="Subtotal:" class="text-end"><strong>Subtotal:</strong></td>
+                    <td data-label="" class="text-end"><strong id="sub_total_display">${{ total_price }}</strong></td>
+                </tr>
+                <tr class="invoice-summary-row">
+                    <td colspan="3" data-label="Amount Paid:" class="text-end"><strong>Amount Paid:</strong></td>
+                    <td data-label="" class="text-end"><strong id="paid_display">${{ total_paid }}</strong></td>
+                </tr>
+                <tr class="invoice-summary-row">
+                    <td colspan="3" data-label="Balance Due:" class="text-end border-bottom"><strong>Balance Due:</strong></td>
+                    <td data-label="" class="text-end border-bottom"><strong id="total_display">${{ balance_due }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Payment Instructions -->
+    <div class="row mb-4">
+        <div class="col-md-6 mobile-mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <strong>Payment Instructions</strong>
+                </div>
+                <div class="card-body">
+                    <strong>Bank Transfer:</strong><br>
+                    Bank: Example Bank<br>
+                    Account Name: CEO Cleaners LLC<br>
+                    Account Number: XXXX-XXXX-XXXX-1234<br>
+                    Routing Number: XXX-XXX-XXX
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <strong>Note</strong>
+                </div>
+                <div class="card-body">
+                    For pre-authorized payment options, the payment will be deducted on the day of service.<br><br>
+                    Please note: Your cleaning appointment will not be fully confirmed until this link is completed.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thank You Note -->
+    <div class="text-center mt-4">
+        <h3 class="h4">Thank You for Your Business!</h3>
+        <p class="text-muted small">If you have any questions about this invoice, please contact us at {{ invoice.booking.business.phone }} or {{ invoice.booking.business.user.email }}</p>
+    </div>
+
+    {% if invoice.booking.business.user == request.user %}
+    <div class="text-center mt-4">
+        <div class="row">
+            <div class="col-sm-6 mb-2 mb-sm-0">
+                <a href="{% url 'invoices:invoice_detail' invoice.id %}" class="btn btn-primary w-100">
+                    <i class="fas fa-download me-2"></i>Save as PDF
+                </a>
+            </div>
+            <div class="col-sm-6">
+                <a href="{% url 'invoices:index' %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if balance_due > 0 and invoice.status != 'paid' and not request.user == invoice.booking.business.user %}
+    <div class="fixed-bottom mb-3 px-3" id="payButtonContainer">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <a href="#" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                        <i class="fas fa-credit-card me-2"></i>Pay Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating button for mobile -->
+    <a href="#" class="btn btn-success mobile-float-btn" data-bs-toggle="modal" data-bs-target="#paymentModal" id="mobilePayBtn">
+        <i class="fas fa-credit-card me-2"></i>Pay Now
+    </a>
+    {% endif %}
 
     <!-- Payment Modal -->
     <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="paymentModalLabel">
-                        <span id="paymentModalTitle">Make Payment</span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Payment Options</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="payment-form-container">
-                        <p id="payment-description">
-                            Please enter your payment details below to complete your payment.
-                        </p>
+                    <div class="mb-4">
+                        <h6 class="mb-3">Amount to Pay: <strong>${{ balance_due }}</strong></h6>
 
-                        <form id="payment-form">
-                            <div class="form-group mb-3">
-                                <label for="name" class="form-label">Name on Card</label>
-                                <input type="text" id="name" class="form-control" value="{{ invoice.booking.name }}" required>
-                            </div>
-                            
-                            <div class="form-group mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" id="email" class="form-control" value="{{ invoice.booking.email }}" required>
-                            </div>
-                            
-                            <div class="form-group mb-4">
-                                <label for="card-element" class="form-label">Credit or Debit Card</label>
-                                <div id="card-element" class="form-control p-3"></div>
-                                <div id="card-errors" role="alert" class="text-danger mt-2 small"></div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary w-100" id="submit-button">
-                                Pay ${{ balance_due }}
+                        {% if invoice.booking.business.default_payment_method == 'square' %}
+                        <!-- Square Payment Form -->
+                        <div id="card-container"></div>
+                        <div id="payment-status-container" class="payment-status-container"></div>
+
+                        <div class="d-grid gap-3 mt-4">
+                            <button id="pay-now-button" class="btn btn-success">
+                                <i class="fas fa-credit-card me-2"></i>Pay Now with Square
                             </button>
-                        </form>
-                    </div>
-
-                    <div id="payment-processing" style="display: none; text-align: center; padding: 2rem;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <button id="authorize-button" class="btn btn-primary">
+                                <i class="fas fa-clock me-2"></i>Authorize Now, Pay After Work
+                            </button>
                         </div>
-                        <p class="mt-3">Processing your payment. Please do not close this page...</p>
-                    </div>
-
-                    <div id="payment-success" style="display: none; text-align: center; padding: 2rem;">
-                        <div class="text-success mb-3">
-                            <i class="fas fa-check-circle fa-4x"></i>
+                        {% elif invoice.booking.business.default_payment_method == 'stripe' %}
+                        <!-- Stripe Payment Form -->
+                        <div class="stripe-form">
+                            <div id="stripe-card-element"></div>
+                            <div id="stripe-payment-status" class="payment-status-container mt-3"></div>
                         </div>
-                        <h3 id="success-title">Payment Successful!</h3>
-                        <p id="success-message">
-                            Your payment has been processed successfully.
+
+                        <div class="d-grid gap-3 mt-4">
+                            <button id="stripe-pay-button" class="btn btn-success">
+                                <i class="fas fa-credit-card me-2"></i>Pay Now with Stripe
+                            </button>
+                            <button id="stripe-authorize-button" class="btn btn-primary">
+                                <i class="fas fa-clock me-2"></i>Authorize Now, Pay After Work
+                            </button>
+                        </div>
+                        {% else %}
+                        <!-- Default payment options if none set -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This business has not set up online payment processing yet. Please contact them directly for payment options.
+                        </div>
+                        {% endif %}
+
+                        <p class="text-muted small text-center mt-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            "Pay Now" processes the payment immediately. "Authorize Now" reserves the funds but only charges after service completion.
                         </p>
-                        <button type="button" class="btn btn-primary mt-3" data-bs-dismiss="modal">
-                            Close
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update display values if needed
+        const sub_total_display = document.getElementById('sub_total_display');
+        const paid_display = document.getElementById('paid_display');
+        const total_display = document.getElementById('total_display');
+        const amount_display = document.getElementById('amount_display');
+        
+        // Make sure all currency values are properly formatted
+        if (amount_display && sub_total_display) {
+            const subTotalText = sub_total_display.innerText.replace(/[^0-9.-]+/g, '');
+            const subTotal = parseFloat(subTotalText) || 0;
+            
+            // Ensure amount display matches the service price
+            amount_display.textContent = `$${subTotal.toFixed(2)}`;
+        }
+
+        // Adjust position of payment button on small screens
+        function adjustPayButton() {
+            const payBtn = document.getElementById('payButtonContainer');
+            const mobileBtn = document.getElementById('mobilePayBtn');
+
+            if (payBtn && mobileBtn) {
+                if (window.innerWidth < 768) {
+                    // Hide the regular button container on mobile
+                    payBtn.style.display = 'none';
+                    // Show the floating button
+                    mobileBtn.style.display = 'inline-block';
+                } else {
+                    // Show regular button container on desktop
+                    payBtn.style.display = 'block';
+                    // Hide the floating button
+                    mobileBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Run on load and resize
+        adjustPayButton();
+        window.addEventListener('resize', adjustPayButton);
+    });
+</script>
+
+{% if invoice.booking.business.default_payment_method == 'square' %}
+    {% if settings.SQUARE_ENVIRONMENT == 'sandbox' %}
+    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    {% else %}
+    <script src="https://web.squarecdn.com/v1/square.js"></script>
+    {% endif %}
+    <script>
+        // Square Payment JS
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update display values if needed
+            const sub_total_display = document.getElementById('sub_total_display');
+            const paid_display = document.getElementById('paid_display');
+            const total_display = document.getElementById('total_display');
+            const amount_display = document.getElementById('amount_display');
+            
+            // Make sure all currency values are properly formatted
+            if (amount_display && sub_total_display) {
+                const subTotalText = sub_total_display.innerText.replace(/[^0-9.-]+/g, '');
+                const subTotal = parseFloat(subTotalText) || 0;
+                
+                // Ensure amount display matches the service price
+                amount_display.textContent = `$${subTotal.toFixed(2)}`;
+            }
+
+            // Adjust position of payment button on small screens
+            function adjustPayButton() {
+                const payBtn = document.getElementById('payButtonContainer');
+                const mobileBtn = document.getElementById('mobilePayBtn');
+
+                if (payBtn && mobileBtn) {
+                    if (window.innerWidth < 768) {
+                        // Hide the regular button container on mobile
+                        payBtn.style.display = 'none';
+                        // Show the floating button
+                        mobileBtn.style.display = 'inline-block';
+                    } else {
+                        // Show regular button container on desktop
+                        payBtn.style.display = 'block';
+                        // Hide the floating button
+                        mobileBtn.style.display = 'none';
+                    }
+                }
+            }
+
+            // Run on load and resize
+            adjustPayButton();
+            window.addEventListener('resize', adjustPayButton);
+        });
+
+        const appId = '{{ settings.SQUARE_APP_ID }}';
+        const square_env = '{{ settings.SQUARE_ENVIRONMENT }}';
+        const square_location_id = '{{ settings.SQUARE_LOCATION_ID }}';
+        let payments;
+
+        async function initializeCard(payments) {
+            const card = await payments.card();
+            await card.attach('#card-container');
+            return card;
+        }
+
+        async function createPayment(token, autoComplete = true) {
+            const bodyData = {
+                sourceId: token,
+                amount: {{ balance_due }},
+                invoiceId: '{{ invoice.id }}',
+                autoComplete: autoComplete
+            };
+
+            const paymentResponse = await fetch('{% url "invoices:public_process_payment" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(bodyData)
+            });
+
+            if (paymentResponse.ok) {
+                return paymentResponse.json();
+            }
+            const errorBody = await paymentResponse.text();
+            throw new Error(errorBody);
+        }
+
+        function displayPaymentResults(status) {
+            const statusContainer = document.getElementById('payment-status-container');
+            const buttons = document.querySelectorAll('#pay-now-button, #authorize-button');
+
+            // Disable buttons during processing
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (status.error) {
+                statusContainer.classList.remove('text-success', 'text-info');
+                statusContainer.classList.add('text-danger');
+                statusContainer.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-circle me-2"></i>${status.error}</div>`;
+                // Re-enable buttons on error
+                buttons.forEach(btn => btn.disabled = false);
+            } else {
+                statusContainer.classList.remove('text-danger');
+                statusContainer.classList.add(status.isAuthorized ? 'text-info' : 'text-success');
+                statusContainer.innerHTML = `<div class="alert alert-${status.isAuthorized ? 'info' : 'success'} mb-0">
+                    <i class="fas fa-${status.isAuthorized ? 'clock' : 'check-circle'} me-2"></i>${status.message}</div>`;
+
+                // Reload page after success
+                setTimeout(() => {
+                    // Force a hard refresh to ensure we get the latest data
+                    window.location.href = window.location.href.split('?')[0] + '?refresh=' + new Date().getTime();
+                }, 1500);
+            }
+        }
+
+        window.addEventListener('load', async function () {
+            payments = window.Square.payments(appId);
+            let card;
+            try {
+                card = await initializeCard(payments);
+            } catch (e) {
+                console.error('Failed to initialize card:', e);
+                displayPaymentResults({ error: 'Failed to initialize payment form. Please try again.' });
+                return;
+            }
+
+            // Pay Now button handler
+            document.getElementById('pay-now-button').addEventListener('click', async function (event) {
+                event.preventDefault();
+                try {
+                    const result = await card.tokenize();
+                    if (result.status === 'OK') {
+                        displayPaymentResults({ message: 'Processing payment...' });
+                        try {
+                            const payment = await createPayment(result.token, true);
+                            displayPaymentResults({
+                                message: 'Payment successful! Redirecting...',
+                                isAuthorized: false
+                            });
+                        } catch (e) {
+                            displayPaymentResults({ error: e.message });
+                        }
+                    }
+                } catch (e) {
+                    displayPaymentResults({ error: e.message });
+                }
+            });
+
+            // Authorize button handler
+            document.getElementById('authorize-button').addEventListener('click', async function (event) {
+                event.preventDefault();
+                try {
+                    const result = await card.tokenize();
+                    if (result.status === 'OK') {
+                        displayPaymentResults({ message: 'Processing authorization...' });
+                        try {
+                            const payment = await createPayment(result.token, false);
+                            displayPaymentResults({
+                                message: 'Authorization successful! Payment will be completed after work.',
+                                isAuthorized: true
+                            });
+                        } catch (e) {
+                            displayPaymentResults({ error: e.message });
+                        }
+                    }
+                } catch (e) {
+                    displayPaymentResults({ error: e.message });
+                }
+            });
+        });
+    </script>
+{% elif invoice.booking.business.default_payment_method == 'stripe' %}
     <!-- Stripe JS -->
     <script src="https://js.stripe.com/v3/"></script>
-    
-    <!-- Payment Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Stripe with the public key
-            const stripe = Stripe('{{ stripe_public_key }}');
+            // Initialize Stripe
+            const stripePublishableKey = '{{ invoice.booking.business.stripe_credentials.stripe_publishable_key }}';
+
+            console.log(stripePublishableKey);
+            if (!stripePublishableKey) {
+                console.error('Stripe publishable key not found');
+                return;
+            }
+
+            const stripe = Stripe(stripePublishableKey);
             const elements = stripe.elements();
-            
-            // Create card element
-            const cardElement = elements.create('card', {
+
+            // Create and mount the Stripe card element
+            const card = elements.create('card', {
                 style: {
                     base: {
-                        color: '#32325d',
-                        fontFamily: '"Outfit", sans-serif',
-                        fontSmoothing: 'antialiased',
                         fontSize: '16px',
+                        color: '#32325d',
+                        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                        fontSmoothing: 'antialiased',
                         '::placeholder': {
                             color: '#aab7c4'
                         }
                     },
                     invalid: {
-                        color: '#EF4444',
-                        iconColor: '#EF4444'
+                        color: '#fa755a',
+                        iconColor: '#fa755a'
                     }
                 }
             });
-            
+
             // Mount the card element
-            cardElement.mount('#card-element');
-            
+            card.mount('#stripe-card-element');
+
             // Handle real-time validation errors
-            cardElement.on('change', function(event) {
-                const displayError = document.getElementById('card-errors');
-                if (event.error) {
-                    displayError.textContent = event.error.message;
-                } else {
-                    displayError.textContent = '';
+            card.on('change', function(event) {
+                const displayError = document.getElementById('stripe-payment-status');
+                if (displayError) {
+                    if (event.error) {
+                        displayError.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-circle me-2"></i>${event.error.message}</div>`;
+                    } else {
+                        displayError.innerHTML = '';
+                    }
                 }
             });
-            
-            // Set up payment type buttons
-            const paymentBtn = document.getElementById('payment-btn');
-            const authorizeToggle = document.getElementById('authorize-toggle');
-            const paymentBtnText = document.getElementById('payment-btn-text');
-            const paymentForm = document.getElementById('payment-form');
-            const submitButton = document.getElementById('submit-button');
-            const processingDiv = document.getElementById('payment-processing');
-            const formContainer = document.getElementById('payment-form-container');
-            const successDiv = document.getElementById('payment-success');
-            const modalTitle = document.getElementById('paymentModalTitle');
-            const paymentDescription = document.getElementById('payment-description');
-            const successTitle = document.getElementById('success-title');
-            const successMessage = document.getElementById('success-message');
-            
-            let paymentType = 'instant';
-            let clientSecret = '';
-            let customerId = '';
-            
-            // Handle authorize toggle change
-            if (authorizeToggle) {
-                authorizeToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        paymentType = 'authorize';
-                        paymentBtnText.textContent = 'Authorize Payment';
-                    } else {
-                        paymentType = 'instant';
-                        paymentBtnText.textContent = 'Pay Now';
+
+            // Display payment result
+            function displayStripePaymentResult(result) {
+                const statusContainer = document.getElementById('stripe-payment-status');
+                const buttons = document.querySelectorAll('#stripe-pay-button, #stripe-authorize-button');
+
+                if (!statusContainer) return;
+
+                // Disable buttons during processing
+                buttons.forEach(btn => btn.disabled = true);
+
+                if (result.error) {
+                    statusContainer.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-circle me-2"></i>${result.error}</div>`;
+                    // Re-enable buttons on error
+                    buttons.forEach(btn => btn.disabled = false);
+                } else {
+                    statusContainer.innerHTML = `<div class="alert alert-${result.isAuthorized ? 'info' : 'success'} mb-0">
+                        <i class="fas fa-${result.isAuthorized ? 'clock' : 'check-circle'} me-2"></i>${result.message}</div>`;
+
+                    // Reload page after success
+                    setTimeout(() => {
+                        // Force a hard refresh to ensure we get the latest data
+                        window.location.href = window.location.href.split('?')[0] + '?refresh=' + new Date().getTime();
+                    }, 1500);
+                }
+            }
+
+            // Process the payment
+            async function processStripePayment(autoComplete = true) {
+                const statusContainer = document.getElementById('stripe-payment-status');
+
+                if (!statusContainer) return;
+
+                // Show processing message
+                statusContainer.innerHTML = `<div class="alert alert-info mb-0"><i class="fas fa-spinner fa-spin me-2"></i>Processing payment...</div>`;
+
+                try {
+                    const { paymentMethod, error } = await stripe.createPaymentMethod({
+                        type: 'card',
+                        card: card,
+                    });
+
+                    if (error) {
+                        // Show error
+                        displayStripePaymentResult({ error: error.message });
+                        return;
                     }
+
+                    // Send payment method ID to server
+                    const response = await fetch('/invoices/public/process-stripe-payment/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            payment_method_id: paymentMethod.id,
+                            invoice_id: '{{ invoice.id }}',
+                            amount: {{ balance_due }},
+                            auto_complete: autoComplete
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        displayStripePaymentResult({
+                            message: autoComplete ? 'Payment successful! Redirecting...' : 'Authorization successful! Payment will be completed after work.',
+                            isAuthorized: !autoComplete
+                        });
+                    } else {
+                        displayStripePaymentResult({ error: result.error || 'Payment failed. Please try again.' });
+                    }
+                } catch (err) {
+                    displayStripePaymentResult({ error: 'An unexpected error occurred. Please try again.' });
+                    console.error('Stripe payment error:', err);
+                }
+            }
+
+            // Set up event listeners
+            const payButton = document.getElementById('stripe-pay-button');
+            if (payButton) {
+                payButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    processStripePayment(true);
                 });
             }
-            
-            if (paymentBtn) {
-                paymentBtn.addEventListener('click', function() {
-                    // Clear previous errors
-                    document.getElementById('card-errors').textContent = '';
-                    
-                    if (paymentType === 'instant') {
-                        modalTitle.textContent = 'Make Payment';
-                        paymentDescription.textContent = 'Please enter your payment details below to complete your payment.';
-                        submitButton.textContent = 'Pay ${{ balance_due }}';
-                        
-                        // Get client secret for payment intent
-                        fetch('{% url "invoices:get_payment_intent" invoice.id %}')
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Failed to create payment intent');
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-                                clientSecret = data.client_secret;
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                document.getElementById('card-errors').textContent = error.message || 'Failed to create payment intent. Please try again.';
-                            });
-                    } else {
-                        modalTitle.textContent = 'Authorize Payment';
-                        paymentDescription.textContent = 'Please enter your payment details below to authorize a payment for later. Your card will not be charged until the service is completed.';
-                        submitButton.textContent = 'Authorize Payment';
-                        
-                        // Get client secret for setup intent
-                        fetch('{% url "invoices:get_setup_intent" invoice.id %}')
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Failed to create setup intent');
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-                                clientSecret = data.client_secret;
-                                customerId = data.customer_id;
-                                console.log('Setup intent created with customer ID:', customerId);
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                document.getElementById('card-errors').textContent = error.message || 'Failed to create setup intent. Please try again.';
-                            });
-                    }
+
+            // Authorize button handler
+            const authorizeButton = document.getElementById('stripe-authorize-button');
+            if (authorizeButton) {
+                authorizeButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    processStripePayment(false);
                 });
             }
-            
-            // Handle form submission
-            paymentForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                
-                // Clear previous errors
-                document.getElementById('card-errors').textContent = '';
-                
-                // Check if client secret is available
-                if (!clientSecret) {
-                    document.getElementById('card-errors').textContent = 'Payment setup is not complete. Please try again.';
-                    return;
-                }
-                
-                // Disable the submit button to prevent multiple submissions
-                submitButton.disabled = true;
-                
-                // Show processing state
-                formContainer.style.display = 'none';
-                processingDiv.style.display = 'block';
-                
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
-                
-                // Create billing details object
-                const billingDetails = {
-                    name: name,
-                    email: email
-                };
-                
-                if (paymentType === 'instant') {
-                    // Handle payment intent confirmation
-                    stripe.confirmCardPayment(clientSecret, {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: billingDetails
-                        }
-                    }).then(function(result) {
-                        if (result.error) {
-                            // Show error to customer
-                            handlePaymentError(result.error.message);
-                        } else {
-                            // Payment successful - Create payment record on server
-                            fetch('{% url "invoices:get_payment_intent" invoice.id %}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': getCsrfToken()
-                                },
-                                body: JSON.stringify({
-                                    payment_intent_id: result.paymentIntent.id,
-                                    amount: {{ balance_due|floatformat:2 }}
-                                })
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.json().then(data => {
-                                        throw new Error(data.error || 'Failed to record payment');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-                                
-                                // Payment record created successfully
-                                showSuccessMessage('Payment Successful!', 'Your payment has been processed successfully.');
-                                
-                                // Reload the page after 3 seconds to show updated payment status
-                                setTimeout(function() {
-                                    window.location.reload();
-                                }, 3000);
-                            })
-                            .catch(error => {
-                                console.error('Error creating payment record:', error);
-                                
-                                // Show a warning that payment was processed but recording failed
-                                showSuccessMessage(
-                                    'Payment Processed', 
-                                    'Your payment was processed by Stripe, but we encountered an issue recording it in our system. Please contact support if your payment does not appear shortly.'
-                                );
-                                
-                                setTimeout(function() {
-                                    window.location.reload();
-                                }, 5000);
-                            });
-                        }
-                    });
-                } else {
-                    // Handle setup intent confirmation
-                    stripe.confirmCardSetup(clientSecret, {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: billingDetails
-                        }
-                    }).then(function(result) {
-                        if (result.error) {
-                            // Show error to customer
-                            handlePaymentError(result.error.message);
-                        } else {
-                            console.log('Setup intent confirmed:', result.setupIntent);
-                            
-                            // Setup successful - Update invoice on server
-                            fetch('{% url "invoices:get_setup_intent" invoice.id %}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': getCsrfToken()
-                                },
-                                body: JSON.stringify({
-                                    setup_intent_id: result.setupIntent.id,
-                                    payment_method_id: result.setupIntent.payment_method
-                                })
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.json().then(data => {
-                                        throw new Error(data.error || 'Failed to update invoice');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.error) {
-                                    throw new Error(data.error);
-                                }
-                                
-                                // Invoice updated successfully
-                                showSuccessMessage(
-                                    'Payment Method Authorized!', 
-                                    'Your payment method has been saved and authorized successfully. Your card will not be charged until the service is completed.'
-                                );
-                                
-                                // Reload the page after 3 seconds to show updated status
-                                setTimeout(function() {
-                                    window.location.reload();
-                                }, 3000);
-                            })
-                            .catch(error => {
-                                console.error('Error updating invoice:', error);
-                                handlePaymentError(error.message || 'Failed to update invoice. Please try again or contact support.');
-                            });
-                        }
-                    });
-                }
-            });
-            
-            // Helper function to handle payment errors
-            function handlePaymentError(errorMessage) {
-                const errorElement = document.getElementById('card-errors');
-                errorElement.textContent = errorMessage || 'An error occurred during payment processing';
-                
-                // Reset UI
-                submitButton.disabled = false;
-                formContainer.style.display = 'block';
-                processingDiv.style.display = 'none';
-                successDiv.style.display = 'none';
-            }
-            
-            // Helper function to show success message
-            function showSuccessMessage(title, message) {
-                processingDiv.style.display = 'none';
-                successDiv.style.display = 'block';
-                successTitle.textContent = title;
-                successMessage.textContent = message;
-            }
-            
-            // Reset modal when it's hidden
-            const paymentModal = document.getElementById('paymentModal');
-            paymentModal.addEventListener('hidden.bs.modal', function() {
-                submitButton.disabled = false;
-                formContainer.style.display = 'block';
-                processingDiv.style.display = 'none';
-                successDiv.style.display = 'none';
-                document.getElementById('card-errors').textContent = '';
-            });
         });
-        
-        // Function to get CSRF token from cookies
-        function getCsrfToken() {
-            const name = 'csrftoken';
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
     </script>
-</body>
-</html>
+
+{% elif invoice.booking.business.defaultPaymentMethod == 'paypal' %}
+<!-- PayPal SDK with Sandbox-specific configuration -->
+<script>
+    // Log PayPal integration status to console for debugging
+    console.log('Loading PayPal SDK with client ID:', '{{ invoice.booking.business.paypal_credentials.paypal_client_id }}');
+</script>
+
+<!-- Load the PayPal SDK with specific parameters for Sandbox environment -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ invoice.booking.business.paypal_credentials.paypal_client_id }}&currency=USD&intent=capture"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the invoice amount from the page
+        const totalText = document.getElementById('total_display').innerText.replace(/[^0-9.-]+/g, '');
+        const invoiceAmount = parseFloat(totalText) || 0;
+
+        // Format for PayPal (2 decimal places)
+        const formattedAmount = invoiceAmount.toFixed(2);
+
+        // Function to manually process PayPal payment when capture fails or times out
+        function processPayPalPaymentManually(orderID) {
+            console.log('Manually processing PayPal payment for order:', orderID);
+            const paypalContainer = document.getElementById('paypal-button-container');
+            
+            // Send the payment details directly to our server
+            return fetch('{% url "invoices:process_paypal_payment" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    orderID: orderID,
+                    invoiceId: '{{ invoice.id }}',
+                    manualVerification: true
+                })
+            })
+            .then(response => {
+                console.log('Manual verification server response received', response);
+                if (!response.ok) {
+                    console.error('Manual verification server response not OK', response.status, response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Manual verification server response parsed', data);
+                if (data.success) {
+                    console.log('Manual verification successful, preparing to redirect');
+                    // Show success message
+                    paypalContainer.innerHTML = '<div class="alert alert-success text-center"><i class="fas fa-check-circle me-2"></i>Payment successful! Redirecting...</div>';
+
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        console.log('Reloading page after manual verification...');
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    console.error('Manual verification failed', data.error);
+                    // Show error message
+                    paypalContainer.innerHTML = `<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>${data.error || 'Payment processing failed. Please try again.'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error during manual verification:', error);
+                paypalContainer.innerHTML = `<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>Payment verification failed. Please contact support.</div>`;
+            });
+        }
+        
+        // Initialize PayPal buttons if SDK is loaded
+        if (typeof paypal !== 'undefined') {
+            console.log('PayPal SDK is available, initializing buttons');
+            
+            // Initialize PayPal buttons with enhanced configuration for Sandbox
+            paypal.Buttons({
+                // Enable the PayPal buttons
+                env: 'sandbox', // Force sandbox mode for testing
+                style: {
+                    layout: 'vertical',
+                    color: 'gold',  // Using gold for better visibility
+                    shape: 'rect',
+                    label: 'pay'
+                },
+
+            // Set up the transaction
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: formattedAmount,
+                            currency_code: 'USD'
+                        },
+                        description: 'Payment for Invoice #{{ invoice.invoice_number }}'
+                    }]
+                });
+            },
+
+            // Handle approved transactions
+            onApprove: function(data, actions) {
+                console.log('PayPal onApprove triggered', data);
+                // Show processing message
+                const paypalContainer = document.getElementById('paypal-button-container');
+                paypalContainer.innerHTML = '<div class="alert alert-info text-center"><i class="fas fa-spinner fa-spin me-2"></i>Processing your payment...</div>';
+
+                // Set a timeout to handle cases where the capture process hangs
+                const captureTimeout = setTimeout(function() {
+                    console.log('PayPal capture timeout - proceeding with manual verification');
+                    // If capture is taking too long, try to process with just the order ID
+                    processPayPalPaymentManually(data.orderID);
+                }, 10000); // 10 second timeout
+                
+                // Capture the funds
+                console.log('Starting PayPal order capture...');
+                try {
+                    return actions.order.capture().then(function(orderData) {
+                        // Clear the timeout since capture succeeded
+                        clearTimeout(captureTimeout);
+                        console.log('PayPal order captured successfully', orderData);
+                        // Send the payment details to our server
+                        console.log('Sending payment details to server...', {
+                            orderID: orderData.id,
+                            invoiceId: '{{ invoice.id }}'
+                        });
+                        return fetch('{% url "invoices:process_paypal_payment" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                orderID: orderData.id,
+                                invoiceId: '{{ invoice.id }}'
+                            })
+                        })
+                    .then(response => {
+                        console.log('Server response received', response);
+                        if (!response.ok) {
+                            console.error('Server response not OK', response.status, response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Server response parsed', data);
+                        if (data.success) {
+                            console.log('Payment successful, preparing to redirect');
+                            // Show success message
+                            paypalContainer.innerHTML = '<div class="alert alert-success text-center"><i class="fas fa-check-circle me-2"></i>Payment successful! Redirecting...</div>';
+
+                            // Reload the page after a short delay
+                            setTimeout(() => {
+                                console.log('Reloading page...');
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            console.error('Payment failed', data.error);
+                            // Show error message
+                            paypalContainer.innerHTML = `<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>${data.error || 'Payment processing failed. Please try again.'}</div>`;
+                            // Log detailed error information
+                            console.error('Payment failed with error:', data.error);
+                            console.error('Payment failed with error details:', {
+                                message: data.error.message,
+                                stack: data.error.stack,
+                                name: data.error.name
+                            });
+                            // Re-render the PayPal buttons after a delay
+                            setTimeout(() => {
+                                console.log('Initializing new PayPal buttons');
+                                paypal.Buttons({
+                                    // Re-initialize with the same options
+                                    // This is a simplified version - in production you'd want to reuse the full configuration
+                                }).render('#paypal-button-container');
+                            }, 3000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Payment processing error:', error);
+                        paypalContainer.innerHTML = '<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>An error occurred while processing your payment. Please try again.</div>';
+
+                        // Re-render the PayPal buttons after a delay
+                        setTimeout(() => {
+                            paypal.Buttons({
+                                // Re-initialize with the same options
+                            }).render('#paypal-button-container');
+                        }, 3000);
+                    });
+                }).catch(function(error) {
+                    // Clear the timeout since we got a response (even if it's an error)
+                    clearTimeout(captureTimeout);
+                    
+                    console.error('Error during PayPal payment processing:', error);
+                    
+                    // Check if this is the specific 'Target window is closed' error
+                    if (error && error.message && error.message.includes('Target window is closed')) {
+                        console.log('Detected PayPal window closed error - attempting manual verification');
+                        // This is a common error when the PayPal popup is closed but payment might have been processed
+                        // Try to process with just the order ID
+                        processPayPalPaymentManually(data.orderID);
+                        return;
+                    }
+                    
+                    // For other errors, show error message
+                    paypalContainer.innerHTML = `<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>Payment processing failed. Please try again.</div>`;
+                    // Log detailed error information
+                    console.error('PayPal payment error details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        name: error.name
+                    });
+                });
+                } catch (e) {
+                    // Clear the timeout since we caught an exception
+                    clearTimeout(captureTimeout);
+                    
+                    console.error('Exception during PayPal capture:', e);
+                    // Try to process with just the order ID
+                    processPayPalPaymentManually(data.orderID);
+                }
+            },
+
+            // Handle errors
+            onError: function(err) {
+                console.error('PayPal error:', err);
+                const paypalContainer = document.getElementById('paypal-button-container');
+                paypalContainer.innerHTML = '<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>An error occurred with PayPal. Please try again.</div>';
+
+                // Re-render the PayPal buttons after a delay
+                setTimeout(() => {
+                    paypal.Buttons({
+                        // Re-initialize with the same options
+                    }).render('#paypal-button-container');
+                }, 3000);
+            }
+        }).render('#paypal-button-container');
+        } else {
+            console.error('PayPal SDK not loaded properly');
+            // Display error message to user
+            const paypalContainer = document.getElementById('paypal-button-container');
+            if (paypalContainer) {
+                paypalContainer.innerHTML = '<div class="alert alert-danger text-center"><i class="fas fa-exclamation-circle me-2"></i>Unable to load PayPal checkout. Please refresh the page or try again later.</div>';
+            }
+        }
+    });
+</script>
+
+
+{% endif %}
+{% endblock %}

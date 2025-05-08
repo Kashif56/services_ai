@@ -73,22 +73,55 @@ def invoice_detail(request, invoice_id):
     # Get service items from the booking
     service_items = BookingServiceItem.objects.filter(booking=invoice.booking)
     
-    # Calculate total price from service items or use base price if no items
+    services_total = 0
     if service_items.exists():
-        total_price = sum(item.price_at_booking * item.quantity for item in service_items)
-    else:
-        total_price = invoice.booking.service_offering.price if invoice.booking.service_offering else 0
+        services_total = sum(item.price_at_booking for item in service_items)
+    
+    total = invoice.booking.service_offering.price + services_total
+
     
     # Calculate payment totals
     total_paid = sum(payment.amount for payment in payments if not payment.is_refunded)
-    balance_due = total_price - total_paid
-    
+    balance_due = total - total_paid
+
+
     return render(request, 'invoices/invoice_detail.html', {
         'title': f'Invoice #{invoice.invoice_number}',
         'invoice': invoice,
         'payments': payments,
         'service_items': service_items,
-        'total_price': total_price,
+        'total_price': total,
         'total_paid': total_paid,
         'balance_due': balance_due
     })
+
+
+
+def public_invoice_detail(request, invoice_id):
+    from django.conf import settings
+    
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    service_items = invoice.booking.service_items.all()
+    
+    services_total = 0
+    if service_items.exists():
+        services_total = sum(item.price_at_booking for item in service_items)
+    
+    total = invoice.booking.service_offering.price + services_total
+
+    payments = Payment.objects.filter(invoice=invoice, is_refunded=False)
+    # Calculate payment totals
+    total_paid = sum(payment.amount for payment in payments if not payment.is_refunded)
+    balance_due = total - total_paid
+    
+    context = {
+        'invoice': invoice,
+        'payments': payments,
+        'service_items': service_items,
+        'total_price': total,
+        'total_paid': total_paid,
+        'balance_due': balance_due,
+        'settings': settings,
+    }
+    
+    return render(request, 'invoices/public_invoice_detail.html', context)

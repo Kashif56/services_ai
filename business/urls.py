@@ -52,6 +52,12 @@ urlpatterns = [
     path('api/register/', views.register_business, name='api_register_business'),
     path('api/smtp/test/', views.test_smtp_config, name='api_test_smtp'),
     
+    # Payment gateway management
+    path('payment-gateways/', views.payment_gateways, name='payment_gateways'),
+    path('payment-gateways/stripe/', views.save_stripe_credentials, name='save_stripe_credentials'),
+    path('payment-gateways/square/', views.save_square_credentials, name='save_square_credentials'),
+    path('payment-gateways/set-default/', views.set_default_payment_gateway, name='set_default_payment_gateway'),
+    
     # Staff management
     path('staff/', views.staff_management, name='staff'),
     path('staff/add/', views.add_staff, name='add_staff'),

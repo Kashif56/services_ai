@@ -1,0 +1,213 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Payment Gateways - Services AI{% endblock %}
+
+{% block page_title %}Payment Gateways{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/payment_gateways.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Payment Gateway Integration</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Connect your business with payment gateways to collect payments from your clients.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stripe Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 gateway-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fab fa-stripe fa-3x me-3 text-primary"></i>
+                    <h5 class="card-title mb-0">Stripe</h5>
+                    {% if business.stripe_credentials %}
+                        {% if business.default_payment_method == 'stripe' %}
+                            <span class="badge bg-success ms-auto">Default</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <p class="card-text">Accept credit card payments with Stripe's secure payment processing.</p>
+                
+                <div class="mt-4">
+                    {% if business.stripe_credentials %}
+                        <div class="d-flex mb-3">
+                            <div class="text-muted">Status:</div>
+                            <div class="ms-auto"><span class="badge bg-success">Connected</span></div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <div class="text-muted">Connected on:</div>
+                            <div class="ms-auto">{{ business.stripe_credentials.created_at|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="d-flex">
+                            {% if business.default_payment_method == 'stripe' %}
+                                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#stripeModal">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success me-2" id="setStripeDefaultBtn" data-gateway="stripe">
+                                    Set as Default
+                                </button>
+                                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#stripeModal">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#stripeModal">
+                            <i class="fas fa-plug me-2"></i>Connect with Stripe
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Square Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 gateway-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fab fa-square fa-3x me-3 text-primary"></i>
+                    <h5 class="card-title mb-0">Square</h5>
+                    {% if business.square_credentials %}
+                        {% if business.default_payment_method == 'square' %}
+                            <span class="badge bg-success ms-auto">Default</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <p class="card-text">Process payments with Square's reliable payment platform.</p>
+                
+                <div class="mt-4">
+                    {% if business.square_credentials %}
+                        <div class="d-flex mb-3">
+                            <div class="text-muted">Status:</div>
+                            <div class="ms-auto"><span class="badge bg-success">Connected</span></div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <div class="text-muted">Connected on:</div>
+                            <div class="ms-auto">{{ business.square_credentials.created_at|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="d-flex">
+                            {% if business.default_payment_method == 'square' %}
+                                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#squareModal">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success me-2" id="setSquareDefaultBtn" data-gateway="square">
+                                    Set as Default
+                                </button>
+                                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#squareModal">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#squareModal">
+                            <i class="fas fa-plug me-2"></i>Connect with Square
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stripe Modal -->
+<div class="modal fade" id="stripeModal" tabindex="-1" aria-labelledby="stripeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stripeModalLabel">
+                    {% if business.stripe_credentials %}
+                        Edit Stripe Credentials
+                    {% else %}
+                        Connect with Stripe
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="stripeForm" method="post" action="{% url 'business:save_stripe_credentials' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="stripeSecretKey" class="form-label">Stripe Secret Key</label>
+                        <input type="text" class="form-control" id="stripeSecretKey" name="stripe_secret_key" 
+                            value="{% if business.stripe_credentials %}{{ business.stripe_credentials.stripe_secret_key }}{% endif %}" required>
+                        <div class="form-text">Your Stripe Secret Key from the Stripe Dashboard.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stripePublishableKey" class="form-label">Stripe Publishable Key</label>
+                        <input type="text" class="form-control" id="stripePublishableKey" name="stripe_publishable_key" 
+                            value="{% if business.stripe_credentials %}{{ business.stripe_credentials.stripe_publishable_key }}{% endif %}" required>
+                        <div class="form-text">Your Stripe Publishable Key from the Stripe Dashboard.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Square Modal -->
+<div class="modal fade" id="squareModal" tabindex="-1" aria-labelledby="squareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="squareModalLabel">
+                    {% if business.square_credentials %}
+                        Edit Square Credentials
+                    {% else %}
+                        Connect with Square
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="squareForm" method="post" action="{% url 'business:save_square_credentials' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="squareAccessToken" class="form-label">Square Access Token</label>
+                        <input type="text" class="form-control" id="squareAccessToken" name="access_token" 
+                            value="{% if business.square_credentials %}{{ business.square_credentials.access_token }}{% endif %}" required>
+                        <div class="form-text">Your Square Access Token from the Square Developer Dashboard.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="squareAppId" class="form-label">Square Application ID</label>
+                        <input type="text" class="form-control" id="squareAppId" name="app_id" 
+                            value="{% if business.square_credentials %}{{ business.square_credentials.app_id }}{% endif %}" required>
+                        <div class="form-text">Your Square Application ID from the Square Developer Dashboard.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="squareLocationId" class="form-label">Square Location ID</label>
+                        <input type="text" class="form-control" id="squareLocationId" name="location_id" 
+                            value="{% if business.square_credentials %}{{ business.square_credentials.location_id }}{% endif %}" required>
+                        <div class="form-text">Your Square Location ID from the Square Developer Dashboard.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/payment_gateways.js' %}"></script>
+{% endblock %}
