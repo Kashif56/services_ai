@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'integration.apps.IntegrationConfig',
     'dashboard.apps.DashboardConfig',
+    'notifications.apps.NotificationsConfig',
 ]
 
 MIDDLEWARE = [

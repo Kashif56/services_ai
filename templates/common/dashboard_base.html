@@ -27,6 +27,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="dashboard-body">
+    {% csrf_token %}
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -148,50 +149,19 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-bell"></i>
-                                <span class="badge bg-danger rounded-pill">3</span>
+                                <span class="badge bg-danger rounded-pill notification-badge">0</span>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown">
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown" id="notificationDropdownContent">
+                                <!-- Notification content will be loaded here via AJAX -->
                                 <div class="dropdown-header">
                                     Notifications
                                 </div>
                                 <div class="dropdown-item">
                                     <div class="notification">
-                                        <div class="notification-icon bg-primary">
-                                            <i class="fas fa-calendar-check"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">New Booking</div>
-                                            <div class="notification-text">John Doe booked a cleaning service</div>
-                                            <div class="notification-time">2 hours ago</div>
+                                        <div class="notification-content text-center py-3">
+                                            <div class="notification-text">Loading notifications...</div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="dropdown-item">
-                                    <div class="notification">
-                                        <div class="notification-icon bg-success">
-                                            <i class="fas fa-user-plus"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">New Lead</div>
-                                            <div class="notification-text">New lead generated from website</div>
-                                            <div class="notification-time">5 hours ago</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="dropdown-item">
-                                    <div class="notification">
-                                        <div class="notification-icon bg-info">
-                                            <i class="fas fa-robot"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">AI Agent Update</div>
-                                            <div class="notification-text">Your AI agent has been updated</div>
-                                            <div class="notification-time">Yesterday</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="dropdown-footer">
-                                    <a href="/notifications/">View all notifications</a>
                                 </div>
                             </div>
                         </li>
@@ -262,7 +232,101 @@
                     toast.show();
                 });
             }
+            
+            // Load notifications
+            loadNotifications();
+            
+            // Set up notification refresh interval (every 60 seconds)
+            setInterval(loadNotifications, 60000);
+            
+            // Setup notification dropdown event
+            const notificationsDropdown = document.getElementById('notificationsDropdown');
+            if (notificationsDropdown) {
+                notificationsDropdown.addEventListener('show.bs.dropdown', loadNotifications);
+            }
+            
+            // Setup event delegation for mark as read buttons
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.closest('.mark-read-btn')) {
+                    const btn = e.target.closest('.mark-read-btn');
+                    const notificationId = btn.dataset.notificationId;
+                    markAsRead(notificationId);
+                }
+                
+                if (e.target && e.target.closest('#mark-all-read')) {
+                    e.preventDefault();
+                    markAllAsRead();
+                }
+            });
         });
+        
+        function loadNotifications() {
+            fetch('/notifications/get-notifications/')
+                .then(response => response.json())
+                .then(data => {
+                    // Update notification badge
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        badge.textContent = data.unread_count;
+                        if (data.unread_count > 0) {
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                    
+                    // Update dropdown content
+                    const dropdownContent = document.getElementById('notificationDropdownContent');
+                    if (dropdownContent) {
+                        dropdownContent.innerHTML = data.html;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                });
+        }
+        
+        function markAsRead(notificationId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(`/notifications/mark-as-read/${notificationId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    loadNotifications();
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+        }
+        
+        function markAllAsRead() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch('/notifications/mark-all-as-read/', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    loadNotifications();
+                }
+            })
+            .catch(error => {
+                console.error('Error marking all notifications as read:', error);
+            });
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

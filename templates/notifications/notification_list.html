@@ -1,0 +1,189 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Notifications</h2>
+        <form method="post" action="{% url 'notifications:mark_all_as_read' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-check-double me-2"></i> Mark All as Read
+            </button>
+        </form>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="card">
+        <div class="card-header custom-card-header">
+            <h5 class="mb-0">All Notifications</h5>
+        </div>
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="list-group notification-list">
+                    {% for notification in page_obj %}
+                        <div class="list-group-item list-group-item-action {% if not notification.is_read %}unread-notification{% endif %}">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div class="notification-item">
+                                    <div class="notification-icon 
+                                        {% if notification.notification_type == 'lead_created' %}bg-success
+                                        {% elif notification.notification_type == 'booking_created' %}bg-primary
+                                        {% elif notification.notification_type == 'booking_status_changed' %}bg-info
+                                        {% elif notification.notification_type == 'invoice_paid' %}bg-warning
+                                        {% elif notification.notification_type == 'staff_added' %}bg-secondary
+                                        {% elif notification.notification_type == 'staff_availability_changed' %}bg-dark
+                                        {% endif %}">
+                                        {% if notification.notification_type == 'lead_created' %}
+                                            <i class="fas fa-user-plus"></i>
+                                        {% elif notification.notification_type == 'booking_created' %}
+                                            <i class="fas fa-calendar-check"></i>
+                                        {% elif notification.notification_type == 'booking_status_changed' %}
+                                            <i class="fas fa-calendar-alt"></i>
+                                        {% elif notification.notification_type == 'invoice_paid' %}
+                                            <i class="fas fa-file-invoice-dollar"></i>
+                                        {% elif notification.notification_type == 'staff_added' %}
+                                            <i class="fas fa-user"></i>
+                                        {% elif notification.notification_type == 'staff_availability_changed' %}
+                                            <i class="fas fa-clock"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="notification-content">
+                                        <h5 class="mb-1">{{ notification.title }}</h5>
+                                        <p class="mb-1">{{ notification.message }}</p>
+                                        <small class="text-muted">{{ notification.get_time_since }}</small>
+                                    </div>
+                                </div>
+                                <div class="notification-actions">
+                                    {% if not notification.is_read %}
+                                        <form method="post" action="{% url 'notifications:mark_as_read' notification.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-check"></i> Mark as Read
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">Read</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Notification pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No notifications found.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-list .list-group-item {
+        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .notification-list .unread-notification {
+        border-left-color: var(--primary-indigo);
+        background-color: rgba(79, 70, 229, 0.05);
+    }
+    
+    .notification-item {
+        display: flex;
+        align-items: flex-start;
+        flex: 1;
+    }
+    
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .notification-content {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any JavaScript functionality here
+    });
+</script>
+{% endblock %}

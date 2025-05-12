@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'common/dashboard_base.html' %}
 {% load static %}
 
 {% block content %}
@@ -21,7 +21,7 @@
                         <button type="submit" class="btn btn-danger">
                             <i class="fas fa-trash me-1"></i>Yes, Delete Integration
                         </button>
-                        <a href="{% url 'integration_list' %}" class="btn btn-secondary">
+                        <a href="{% url 'integration:integration_list' %}" class="btn btn-secondary">
                             <i class="fas fa-times me-1"></i>Cancel
                         </a>
                     </form>

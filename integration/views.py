@@ -637,41 +637,23 @@ def send_booking_data_to_integration(booking_data, integration):
             
         else:  # direct_api
             # Process booking data to ensure it's in the right format for mapping
-            from datetime import date, time
-            import json
+            processed_data = {}
             
-            # Helper function to recursively process data and handle date/time objects
-            def process_data(data):
-                if isinstance(data, dict):
-                    return {k: process_data(v) for k, v in data.items()}
-                elif isinstance(data, list):
-                    return [process_data(item) for item in data]
-                elif isinstance(data, Decimal):
-                    return float(data)
-                elif isinstance(data, datetime):
-                    return data.isoformat()
-                elif isinstance(data, date):
-                    return data.isoformat()
-                elif isinstance(data, time):
-                    return data.isoformat()
+            for key, value in booking_data.items():
+                # Handle special types
+                if isinstance(value, Decimal):
+                    processed_data[key] = float(value)
+                elif isinstance(value, datetime):
+                    processed_data[key] = value.isoformat()
                 else:
-                    return data
-            
-            # Process all data recursively
-            processed_data = process_data(booking_data)
+                    processed_data[key] = value
                     
             # Use the create_mapped_payload function from utils.py
-            from .utils import create_mapped_payload
             payload = create_mapped_payload(processed_data, integration)
             print("Payload:", payload)
             
-            # Start with default headers
-            headers = {"Content-Type": "application/json"}
-            
-            # Add custom headers from integration
-            if integration.headers:
-                headers.update(integration.headers)
-            
+            # Use integration headers directly
+            headers = integration.headers
             print("Headers:", headers)
             
             try:

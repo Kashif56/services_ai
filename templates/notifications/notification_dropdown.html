@@ -1,0 +1,58 @@
+{% if notifications %}
+    <div class="dropdown-header">
+        Notifications
+    </div>
+    {% for notification in notifications %}
+        <div class="dropdown-item {% if not notification.is_read %}unread-notification{% endif %}">
+            <div class="notification">
+                <div class="notification-icon 
+                    {% if notification.notification_type == 'lead_created' %}bg-success
+                    {% elif notification.notification_type == 'booking_created' %}bg-primary
+                    {% elif notification.notification_type == 'booking_status_changed' %}bg-info
+                    {% elif notification.notification_type == 'invoice_paid' %}bg-warning
+                    {% elif notification.notification_type == 'staff_added' %}bg-secondary
+                    {% elif notification.notification_type == 'staff_availability_changed' %}bg-dark
+                    {% endif %}">
+                    {% if notification.notification_type == 'lead_created' %}
+                        <i class="fas fa-user-plus"></i>
+                    {% elif notification.notification_type == 'booking_created' %}
+                        <i class="fas fa-calendar-check"></i>
+                    {% elif notification.notification_type == 'booking_status_changed' %}
+                        <i class="fas fa-calendar-alt"></i>
+                    {% elif notification.notification_type == 'invoice_paid' %}
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    {% elif notification.notification_type == 'staff_added' %}
+                        <i class="fas fa-user"></i>
+                    {% elif notification.notification_type == 'staff_availability_changed' %}
+                        <i class="fas fa-clock"></i>
+                    {% endif %}
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">{{ notification.title }}</div>
+                    <div class="notification-text">{{ notification.message }}</div>
+                    <div class="notification-time">{{ notification.get_time_since }}</div>
+                </div>
+                <div class="notification-actions">
+                    <button class="btn btn-sm btn-link mark-read-btn" data-notification-id="{{ notification.id }}" title="Mark as read">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    <div class="dropdown-footer d-flex justify-content-between">
+        <a href="{% url 'notifications:notification_list' %}">View all</a>
+        <a href="#" id="mark-all-read">Mark all as read</a>
+    </div>
+{% else %}
+    <div class="dropdown-header">
+        Notifications
+    </div>
+    <div class="dropdown-item">
+        <div class="notification">
+            <div class="notification-content text-center py-3">
+                <div class="notification-text">No notifications yet</div>
+            </div>
+        </div>
+    </div>
+{% endif %}
