@@ -3,12 +3,6 @@ from business.models import Business
 import json
 
 class PlatformIntegration(models.Model):
-    AUTH_TYPE_CHOICES = (
-        ('none', 'No Authentication'),
-        ('token', 'Token Authentication'),
-        ('basic', 'Basic Authentication'),
-    )
-
     PLATFORM_TYPE_CHOICES = (
         ('direct_api', 'Direct API Integration'),
         ('workflow', 'Workflow Automation Platform'),
@@ -19,14 +13,14 @@ class PlatformIntegration(models.Model):
     name = models.CharField(max_length=255)
     base_url = models.URLField(help_text="Base URL for the API endpoint", blank=True, null=True)
     webhook_url = models.URLField(help_text="Webhook URL for workflow platforms", blank=True, null=True)
-    auth_type = models.CharField(max_length=20, choices=AUTH_TYPE_CHOICES, default='none')
-    auth_data = models.JSONField(default=dict, blank=True, help_text="Authentication credentials")
+   
+    headers = models.JSONField(default=dict, blank=True, help_text="Custom HTTP headers for API requests")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} - {self.business.businessName}"
+        return f"{self.name} - {self.business.name}"
 
 class DataMapping(models.Model):
     FIELD_TYPES = (

@@ -43,15 +43,22 @@ def add_integration(request):
         }
 
         if platform_type == 'direct_api':
+            # Process custom headers if provided
+            headers = {}
+            header_keys = request.POST.getlist('header_key')
+            header_values = request.POST.getlist('header_value')
+            
+            for i in range(len(header_keys)):
+                if header_keys[i] and header_values[i]:  # Only add non-empty headers
+                    headers[header_keys[i]] = header_values[i]
+            
             integration_data.update({
                 'base_url': request.POST.get('api_url'),
-                'auth_type': 'token',  # Default to token auth for now
-                'auth_data': {'token': request.POST.get('api_key')}
+                'headers': headers
             })
         else:  # workflow platform
             integration_data.update({
                 'webhook_url': request.POST.get('webhook_url'),
-                'auth_type': 'none'
             })
 
         # Create new integration
@@ -66,6 +73,43 @@ def add_integration(request):
     context = {
         'platform_types': dict(PlatformIntegration.PLATFORM_TYPE_CHOICES),
         'integration': None
+    }
+    
+    return render(request, 'integrations/add_integration.html', context)
+
+@login_required
+def edit_integration(request, platform_id):
+    integration = get_object_or_404(PlatformIntegration, id=platform_id, business=request.user.business)
+    
+    if request.method == 'POST':
+        # Update basic information
+        integration.name = request.POST.get('serviceName')
+        
+        # Update platform-specific information
+        if integration.platform_type == 'direct_api':
+            integration.base_url = request.POST.get('api_url')
+            
+            # Process custom headers
+            headers = {}
+            header_keys = request.POST.getlist('header_key')
+            header_values = request.POST.getlist('header_value')
+            
+            for i in range(len(header_keys)):
+                if header_keys[i] and header_values[i]:  # Only add non-empty headers
+                    headers[header_keys[i]] = header_values[i]
+            
+            integration.headers = headers
+        else:  # workflow
+            integration.webhook_url = request.POST.get('webhook_url')
+        
+        integration.save()
+        messages.success(request, 'Integration updated successfully!')
+        return redirect('integration:integration_list')
+    
+    context = {
+        'platform_types': dict(PlatformIntegration.PLATFORM_TYPE_CHOICES),
+        'integration': integration,
+        'headers': integration.headers or {}
     }
     
     return render(request, 'integrations/add_integration.html', context)
@@ -336,11 +380,25 @@ def preview_mapping(request, platform_id):
     # Get all available fields for the dropdown
     available_fields = list(sample_data.keys())
 
+    # Create the mapped payload
+    mapped_data = create_mapped_payload(sample_data, platform)
+    
+    # Group mappings by parent_path
+    grouped_mappings = {
+        'Nested': [m for m in mappings if m.parent_path],
+        'Flat': [m for m in mappings if not m.parent_path]
+    }
+    
+    # Get headers for display
+    headers = platform.headers or {}
+    
     context = {
         'platform': platform,
-        'mapped_data': mapped_data,
-        'sample_data': sample_data,
+        'mappings': mappings,
         'grouped_mappings': grouped_mappings,
+        'sample_data': sample_data,
+        'mapped_data': mapped_data,
+        'headers': headers,
         'required_fields': required_fields,
         'available_fields': available_fields
     }
@@ -607,9 +665,14 @@ def send_booking_data_to_integration(booking_data, integration):
             payload = create_mapped_payload(processed_data, integration)
             print("Payload:", payload)
             
+            # Start with default headers
             headers = {"Content-Type": "application/json"}
-            if integration.auth_type == 'token' and integration.auth_data.get('token'):
-                headers['Authorization'] = f"Bearer {integration.auth_data['token']}"
+            
+            # Add custom headers from integration
+            if integration.headers:
+                headers.update(integration.headers)
+            
+            print("Headers:", headers)
             
             try:
                 response = requests.post(
@@ -618,6 +681,8 @@ def send_booking_data_to_integration(booking_data, integration):
                     headers=headers,
                     timeout=30
                 )
+
+                print("Response:", response)
 
                 # Safely parse JSON response
                 response_data = None
