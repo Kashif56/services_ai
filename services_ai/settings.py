@@ -152,3 +152,20 @@ BASE_URL = 'http://127.0.0.1:8000'
 
 # OPENAI
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+
+
+Q_CLUSTER = {
+    'name': 'services_ai',
+    'workers': 8,
+    'recycle': 500,
+    'timeout': 300,
+    'retry': 3600,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 4,
+    'label': 'Django Q2',
+    'orm': 'default',
+    'max_attempts': 3,
+}
