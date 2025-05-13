@@ -1,294 +1,290 @@
-{% extends 'base.html' %}
+{% extends 'common/dashboard_base.html' %}
 {% load static %}
 
-{% block title %}Chat Details - {{ chat.client_name|default:"Anonymous" }}{% endblock %}
+{% block title %}Chat Details - {{ business.name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6>Chat with {{ chat.client_name|default:"Anonymous" }}</h6>
-                    <a href="{% url 'ai_agent:chat_list' %}" class="btn btn-sm btn-outline-primary">Back to Chats</a>
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Conversation Details</h6>
+                    <a href="{% url 'ai_agent:chat_list' %}" class="btn btn-sm btn-outline-primary">Back to Conversations</a>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="card">
-                                <div class="card-header pb-0">
-                                    <h6 class="mb-0">Conversation</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div id="chat-messages" class="chat-container" style="height: 500px; overflow-y: auto; border: 1px solid #eee; padding: 15px; border-radius: 5px;">
-                                        {% for message in messages %}
-                                            {% if message.role == 'user' %}
-                                                <div class="user-message" style="margin-bottom: 15px; margin-left: auto; max-width: 80%; background-color: #007bff; color: white; padding: 10px; border-radius: 5px; word-wrap: break-word;">
-                                                    <div class="message-content">{{ message.content }}</div>
-                                                    <div class="message-time text-xs" style="text-align: right; opacity: 0.8;">{{ message.created_at|time:"H:i" }}</div>
-                                                </div>
-                                            {% elif message.role == 'assistant' %}
-                                                {% if message.tool_call_id %}
-                                                    <div class="tool-message" style="margin-bottom: 15px; margin-right: auto; max-width: 80%; background-color: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 5px; word-wrap: break-word;">
-                                                        <div class="message-header" style="margin-bottom: 5px; font-weight: bold; color: #6c757d;">Tool Result</div>
-                                                        <div class="message-content">
-                                                            <pre style="white-space: pre-wrap; margin-bottom: 0;">{{ message.content }}</pre>
-                                                        </div>
-                                                        <div class="message-time text-xs" style="text-align: right; color: #6c757d;">{{ message.created_at|time:"H:i" }}</div>
-                                                    </div>
-                                                {% else %}
-                                                    <div class="assistant-message" style="margin-bottom: 15px; margin-right: auto; max-width: 80%; background-color: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 5px; word-wrap: break-word;">
-                                                        <div class="message-content">{{ message.content }}</div>
-                                                        <div class="message-time text-xs" style="text-align: right; color: #6c757d;">{{ message.created_at|time:"H:i" }}</div>
-                                                    </div>
-                                                {% endif %}
-                                            {% elif message.role == 'system' %}
-                                                <div class="system-message" style="margin-bottom: 15px; margin-right: auto; max-width: 80%; background-color: #f8f9fa; border: 1px dashed #ddd; padding: 10px; border-radius: 5px; word-wrap: break-word; color: #6c757d;">
-                                                    <div class="message-content">{{ message.content }}</div>
-                                                    <div class="message-time text-xs" style="text-align: right; color: #6c757d;">{{ message.created_at|time:"H:i" }}</div>
-                                                </div>
-                                            {% endif %}
-                                        {% empty %}
-                                            <div class="text-center py-4">
-                                                <p class="text-muted mb-0">No messages in this conversation yet.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Chat Conversation (Left) -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <h6 class="mb-0">Conversation History</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="conversation-container">
+                        {% for message in chat_messages %}
+                            <div class="message-wrapper {% if message.role == 'assistant' %}message-assistant{% else %}message-user{% endif %}">
+                                <div class="message-bubble">
+                                    <div class="message-header">
+                                        <span class="badge bg-{% if message.role == 'assistant' %}primary{% elif message.role == 'system' %}info{% else %}secondary{% endif %} mb-2">
+                                            {{ message.role|title }}
+                                        </span>
+                                        <small class="text-xs opacity-7">{{ message.created_at|date:"M d, Y" }} at {{ message.created_at|time:"H:i" }}</small>
+                                    </div>
+                                    <div class="message-content">
+                                        {{ message.content|linebreaksbr }}
+                                    </div>
+                                    {% if message.tool_calls %}
+                                        <div class="tool-calls mt-2">
+                                            <small class="text-xs opacity-7">Tool Calls:</small>
+                                            <div class="tool-calls-content">
+                                                <pre class="text-xs"><code>{{ message.tool_calls|stringformat:"s" }}</code></pre>
                                             </div>
-                                        {% endfor %}
-                                    </div>
-                                    
-                                    <div class="mt-3">
-                                        <form id="reply-form" class="d-flex">
-                                            <input type="text" id="message-input" class="form-control me-2" placeholder="Type a message to reply...">
-                                            <button type="submit" class="btn btn-primary">Send</button>
-                                        </form>
-                                    </div>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
+                        {% empty %}
+                            <div class="text-center py-5">
+                                <p class="text-muted mb-0">No messages in this conversation.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Client Info and Summary (Right) -->
+        <div class="col-lg-4">
+            <!-- Client Information -->
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6 class="mb-0">Client Information</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-shape bg-gradient-primary shadow text-center border-radius-md me-3">
+                            <i class="fa fa-user text-white opacity-10"></i>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card mb-4">
-                                <div class="card-header pb-0">
-                                    <h6 class="mb-0">Client Information</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <h6>Name</h6>
-                                        <p>{{ chat.client_name|default:"Not provided" }}</p>
-                                    </div>
-                                    <div class="mb-3">
-                                        <h6>Phone Number</h6>
-                                        <p>{{ chat.phone_number|default:"Not provided" }}</p>
-                                    </div>
-                                    <div class="mb-3">
-                                        <h6>First Contact</h6>
-                                        <p>{{ chat.created_at|date:"F d, Y" }} at {{ chat.created_at|time:"H:i" }}</p>
-                                    </div>
-                                    <div class="mb-3">
-                                        <h6>Last Activity</h6>
-                                        <p>{{ chat.updated_at|date:"F d, Y" }} at {{ chat.updated_at|time:"H:i" }}</p>
-                                    </div>
-                                    <div class="mb-3">
-                                        <h6>Total Messages</h6>
-                                        <p>{{ messages|length }}</p>
-                                    </div>
-                                    <div class="mb-3">
-                                        <h6>Status</h6>
-                                        <p>
-                                            <span class="badge bg-{% if chat.is_active %}success{% else %}secondary{% endif %}">
-                                                {% if chat.is_active %}Active{% else %}Inactive{% endif %}
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="card">
-                                <div class="card-header pb-0">
-                                    <h6 class="mb-0">Chat Summary</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
-                                        <pre class="mb-0" style="white-space: pre-wrap;">{{ chat.summary|default:"No summary available"|safe }}</pre>
-                                    </div>
-                                </div>
-                            </div>
+                        <div>
+                            <h6 class="mb-0">{{ chat.phone_number|default:"Anonymous" }}</h6>
+                            <p class="text-xs opacity-7 mb-0">
+                                Started: {{ chat.created_at|date:"M d, Y" }} at {{ chat.created_at|time:"H:i" }}
+                            </p>
                         </div>
                     </div>
+                    <div class="d-flex align-items-center">
+                        <div class="icon-shape bg-gradient-success shadow text-center border-radius-md me-3">
+                            <i class="fa fa-comments text-white opacity-10"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ chat_messages.count }} Messages</h6>
+                            <p class="text-xs opacity-7 mb-0">
+                                Last activity: {{ chat.updated_at|date:"M d, Y" }} at {{ chat.updated_at|time:"H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conversation Summary -->
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6 class="mb-0">Conversation Summary</h6>
+                </div>
+                <div class="card-body p-3">
+                    {% if chat.summary %}
+                        <div class="summary-container">
+                            {% for key, value in chat.summary.items %}
+                                <div class="summary-item">
+                                    <div class="summary-label">
+                                        {{ key|cut:"_"|title }}
+                                    </div>
+                                    <div class="summary-value">
+                                        {% if key|lower == 'first_message' or key|lower == 'last_message' %}
+                                            {% with timestamp=value|stringformat:"s" %}
+                                                {% if timestamp|length > 19 %}
+                                                    <span class="formatted-dat">{{ timestamp|slice:":10" }}</span> <span class="formatted-time">{{ timestamp|slice:"11:19" }}</span>
+                                                {% else %}
+                                                    {{ timestamp }}
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% elif key|lower == 'duration_seconds' %}
+                                            <span class="duration-value">{{ value|floatformat:0 }}</span> seconds
+                                        {% elif 'time' in key|lower or 'date' in key|lower %}
+                                            {% with timestamp=value|stringformat:"s" %}
+                                                {% if timestamp|length > 10 %}
+                                                    <span class="formatted-date">{{ timestamp|slice:":10" }}</span> <span class="formatted-time">{{ timestamp|slice:"11:19" }}</span>
+                                                {% else %}
+                                                    {{ timestamp }}
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% elif value|stringformat:"s"|length > 100 %}
+                                            <span data-bs-toggle="tooltip" title="{{ value }}">
+                                                {{ value|stringformat:"s"|truncatechars:100 }}
+                                            </span>
+                                        {% elif value|stringformat:"s" == "True" %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% elif value|stringformat:"s" == "False" %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% else %}
+                                            {{ value|stringformat:"s" }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="text-center py-3">
+                                    <p class="opacity-7 mb-0">No summary information available.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="opacity-7 mb-0">No summary information available.</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<style>
+    /* Dark mode compatible styles */
+    .conversation-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 1rem 0;
+    }
+    
+    .message-wrapper {
+        display: flex;
+        width: 100%;
+    }
+    
+    .message-user {
+        justify-content: flex-end;
+    }
+    
+    .message-assistant {
+        justify-content: flex-start;
+    }
+    
+    .message-bubble {
+        max-width: 85%;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .message-user .message-bubble {
+        background-color: rgba(52, 71, 103, 0.1);
+        border-top-right-radius: 0;
+    }
+    
+    .message-assistant .message-bubble {
+        background-color: rgba(33, 150, 243, 0.1);
+        border-top-left-radius: 0;
+    }
+    
+    .message-content {
+        word-break: break-word;
+    }
+    
+    .tool-calls-content {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        margin-top: 0.25rem;
+        overflow-x: auto;
+    }
+    
+    .tool-calls-content pre {
+        margin-bottom: 0;
+    }
+    
+    /* Make cards height consistent */
+    .card.h-100 {
+        height: 100% !important;
+    }
+    
+    /* Dark mode compatibility for text */
+    .opacity-7 {
+        opacity: 0.7 !important;
+    }
+    
+    /* Summary container styles */
+    .summary-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .summary-item {
+        background-color: rgba(52, 71, 103, 0.05);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .summary-item:hover {
+        background-color: rgba(52, 71, 103, 0.1);
+    }
+    
+    .summary-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+        color: var(--bs-primary);
+    }
+    
+    .summary-value {
+        font-size: 0.875rem;
+        word-break: break-word;
+    }
+    
+    /* Formatted date and time styles */
+    .formatted-date {
+        font-weight: 500;
+        color: var(--bs-primary);
+    }
+    
+    .formatted-time {
+        font-weight: 400;
+        opacity: 0.8;
+    }
+    
+    .duration-value {
+        font-weight: 600;
+        color: var(--bs-info);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .conversation-container {
+            max-height: 50vh;
+        }
+        
+        .summary-container {
+            gap: 0.5rem;
+        }
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const chatMessages = document.getElementById('chat-messages');
-        const messageInput = document.getElementById('message-input');
-        const replyForm = document.getElementById('reply-form');
-        
-        // Scroll to bottom of chat on load
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Handle reply form submission
-        replyForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const message = messageInput.value.trim();
-            if (!message) return;
-            
-            // Clear input
-            messageInput.value = '';
-            
-            // Add message to chat (optimistic UI update)
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'user-message';
-            messageDiv.style.marginBottom = '15px';
-            messageDiv.style.marginLeft = 'auto';
-            messageDiv.style.maxWidth = '80%';
-            messageDiv.style.backgroundColor = '#007bff';
-            messageDiv.style.color = 'white';
-            messageDiv.style.padding = '10px';
-            messageDiv.style.borderRadius = '5px';
-            messageDiv.style.wordWrap = 'break-word';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            contentDiv.textContent = message;
-            
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'message-time text-xs';
-            timeDiv.style.textAlign = 'right';
-            timeDiv.style.opacity = '0.8';
-            
-            const now = new Date();
-            timeDiv.textContent = now.getHours().toString().padStart(2, '0') + ':' + 
-                                 now.getMinutes().toString().padStart(2, '0');
-            
-            messageDiv.appendChild(contentDiv);
-            messageDiv.appendChild(timeDiv);
-            chatMessages.appendChild(messageDiv);
-            
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Show loading indicator
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'assistant-message loading';
-            loadingDiv.style.marginBottom = '15px';
-            loadingDiv.style.marginRight = 'auto';
-            loadingDiv.style.maxWidth = '80%';
-            loadingDiv.style.backgroundColor = '#f8f9fa';
-            loadingDiv.style.border = '1px solid #ddd';
-            loadingDiv.style.padding = '10px';
-            loadingDiv.style.borderRadius = '5px';
-            loadingDiv.style.wordWrap = 'break-word';
-            loadingDiv.textContent = 'Thinking...';
-            chatMessages.appendChild(loadingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Send message to API
-            fetch('{% url "ai_agent:process_message" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    business_id: {{ business.id }},
-                    message: message,
-                    {% if chat.phone_number %}
-                    phone_number: "{{ chat.phone_number }}",
-                    {% else %}
-                    session_key: "{{ chat.session_key }}",
-                    {% endif %}
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Remove loading indicator
-                chatMessages.removeChild(loadingDiv);
-                
-                if (data.success) {
-                    // Add assistant response to chat
-                    const responseDiv = document.createElement('div');
-                    responseDiv.className = 'assistant-message';
-                    responseDiv.style.marginBottom = '15px';
-                    responseDiv.style.marginRight = 'auto';
-                    responseDiv.style.maxWidth = '80%';
-                    responseDiv.style.backgroundColor = '#f8f9fa';
-                    responseDiv.style.border = '1px solid #ddd';
-                    responseDiv.style.padding = '10px';
-                    responseDiv.style.borderRadius = '5px';
-                    responseDiv.style.wordWrap = 'break-word';
-                    
-                    const responseContentDiv = document.createElement('div');
-                    responseContentDiv.className = 'message-content';
-                    responseContentDiv.textContent = data.response;
-                    
-                    const responseTimeDiv = document.createElement('div');
-                    responseTimeDiv.className = 'message-time text-xs';
-                    responseTimeDiv.style.textAlign = 'right';
-                    responseTimeDiv.style.color = '#6c757d';
-                    
-                    const responseNow = new Date();
-                    responseTimeDiv.textContent = responseNow.getHours().toString().padStart(2, '0') + ':' + 
-                                                 responseNow.getMinutes().toString().padStart(2, '0');
-                    
-                    responseDiv.appendChild(responseContentDiv);
-                    responseDiv.appendChild(responseTimeDiv);
-                    chatMessages.appendChild(responseDiv);
-                    
-                    // Scroll to bottom
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                    
-                    // Refresh the page after a short delay to show any tool calls
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    // Show error
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'system-message error';
-                    errorDiv.style.marginBottom = '15px';
-                    errorDiv.style.marginRight = 'auto';
-                    errorDiv.style.maxWidth = '80%';
-                    errorDiv.style.backgroundColor = '#f8d7da';
-                    errorDiv.style.color = '#721c24';
-                    errorDiv.style.border = '1px solid #f5c6cb';
-                    errorDiv.style.padding = '10px';
-                    errorDiv.style.borderRadius = '5px';
-                    errorDiv.style.wordWrap = 'break-word';
-                    errorDiv.textContent = 'Error: ' + (data.error || 'Unknown error occurred');
-                    chatMessages.appendChild(errorDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            })
-            .catch(error => {
-                // Remove loading indicator
-                chatMessages.removeChild(loadingDiv);
-                
-                // Show error
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'system-message error';
-                errorDiv.style.marginBottom = '15px';
-                errorDiv.style.marginRight = 'auto';
-                errorDiv.style.maxWidth = '80%';
-                errorDiv.style.backgroundColor = '#f8d7da';
-                errorDiv.style.color = '#721c24';
-                errorDiv.style.border = '1px solid #f5c6cb';
-                errorDiv.style.padding = '10px';
-                errorDiv.style.borderRadius = '5px';
-                errorDiv.style.wordWrap = 'break-word';
-                errorDiv.textContent = 'Network error: Could not connect to the server';
-                chatMessages.appendChild(errorDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                
-                console.error('Error:', error);
-            });
-        });
-        
-        // Focus input on page load
-        messageInput.focus();
+        // Scroll to bottom of conversation
+        const conversationContainer = document.querySelector('.conversation-container');
+        if (conversationContainer) {
+            conversationContainer.scrollTop = conversationContainer.scrollHeight;
+        }
     });
 </script>
 {% endblock %}

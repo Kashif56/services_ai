@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils import timezone
 import json
+import threading
 
 from business.models import Business
 from .models import Chat, Message, AgentConfig
@@ -69,12 +70,12 @@ def chat_detail(request, chat_id):
     """
     business = request.user.business
     chat = get_object_or_404(Chat, id=chat_id, business=business)
-    messages = chat.messages.all().order_by('created_at')
+    chat_messages = chat.messages.all().order_by('created_at')
     
     context = {
         'business': business,
         'chat': chat,
-        'messages': messages,
+        'chat_messages': chat_messages,
     }
     
     return render(request, 'ai_agent/chat_detail.html', context)
@@ -160,55 +161,107 @@ def process_message(request):
 
 @csrf_exempt
 @require_POST
-def twilio_webhook(request):
+def twilio_webhook(request, business_id):
     """
     Webhook for receiving SMS messages from Twilio.
+    Immediately acknowledges receipt with an empty TwiML response,
+    then processes the message in a background thread.
+    """
+    # Extract message data from Twilio webhook
+    from_number = request.POST.get('From')
+    body = request.POST.get('Body')
+    to_number = request.POST.get('To')
+    
+    # Immediately return an empty TwiML response to acknowledge receipt
+    empty_response = MessagingResponse()
+    
+    # Start processing in background only if we have the required parameters
+    if from_number and body and to_number:
+        # Create a copy of the data we need for background processing
+        process_data = {
+            'business_id': business_id,
+            'from_number': from_number,
+            'body': body,
+            'to_number': to_number
+        }
+        
+        # Start background thread to process the message
+        thread = threading.Thread(
+            target=process_twilio_message_in_background,
+            args=(process_data,)
+        )
+        thread.daemon = True  # Allow the thread to exit when main thread exits
+        thread.start()
+    
+    # Return the empty response immediately
+    return HttpResponse(str(empty_response), content_type='text/xml')
+
+
+def process_twilio_message_in_background(data):
+    """
+    Process Twilio message in a background thread and send response via Twilio API.
+    
+    Args:
+        data: Dictionary containing business_id, from_number, body, and to_number
     """
     try:
-        # Extract message data from Twilio webhook
-        from_number = request.POST.get('From')
-        body = request.POST.get('Body')
-        to_number = request.POST.get('To')
+        business_id = data['business_id']
+        from_number = data['from_number']
+        body = data['body']
+        to_number = data['to_number']
         
-        if not from_number or not body or not to_number:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required Twilio parameters'
-            }, status=400)
-        
-        # Find the business associated with this Twilio number
         try:
-            # Get business by Twilio phone number from BusinessConfiguration
-            business = Business.objects.filter(
-                businessconfiguration__twilio_phone_number=to_number
-            ).first()
-            
+            business = Business.objects.get(id=business_id)
             if not business:
-                return JsonResponse({
-                    'success': False,
-                    'error': f'No business found for Twilio number {to_number}'
-                }, status=404)
+                print(f"No business found for business_id {business_id}")
+                return
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'Error finding business: {str(e)}'
-            }, status=500)
+            print(f"Error finding business: {str(e)}")
+            return
         
-        # Process the message using LangChain agent
+        # Process the message
         response = process_sms_with_langchain(business.id, from_number, body)
         
-        # Return TwiML response
-        twiml_response = MessagingResponse()
-        twiml_response.message(response)
-        
-        return HttpResponse(str(twiml_response), content_type='text/xml')
+        # Send the response back via Twilio API
+        send_twilio_response(business, to_number, from_number, response)
         
     except Exception as e:
-        print(f"Error processing Twilio webhook: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        print(f"Error in background processing of Twilio message: {e}")
+
+
+def send_twilio_response(business, from_number, to_number, message):
+    """
+    Send SMS response using Twilio API directly instead of TwiML.
+    
+    Args:
+        business: Business object
+        from_number: Twilio number to send from
+        to_number: Customer number to send to
+        message: Message content
+    """
+    try:
+        # Import Twilio client here to avoid circular imports
+        from twilio.rest import Client
+        
+        business_config = business.businessconfiguration
+        account_sid = business_config.twilio_sid
+        auth_token = business_config.twilio_auth_token
+        
+        # Initialize Twilio client
+        client = Client(account_sid, auth_token)
+        
+        # Send message
+        client.messages.create(
+            body=message,
+            from_=from_number,
+            to=to_number
+        )
+        
+    except Exception as e:
+        print(f"Error sending Twilio response: {e}")
+
+
+
 
 @require_GET
 def chat_widget(request, business_id):

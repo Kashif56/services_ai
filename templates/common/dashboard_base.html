@@ -81,10 +81,25 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/ai-agent/" class="nav-link {% if '/ai_agent/' in request.path %}active{% endif %}">
+                        <a class="nav-link {% if '/ai-agent/' in request.path %}active{% endif %}" href="#aiAgentSubmenu" data-bs-toggle="collapse" aria-expanded="{% if '/ai_agent/' in request.path %}true{% else %}false{% endif %}">
                             <i class="fas fa-robot"></i>
                             <span>AI Agent</span>
+                            <i class="fas fa-angle-down ms-auto"></i>
                         </a>
+                        <ul class="collapse {% if '/ai-agent/' in request.path %}show{% endif %} nav flex-column submenu" id="aiAgentSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link ps-5 py-2 submenu-item {% if '/ai-agent/' == request.path %}active{% endif %}" href="/ai-agent/">
+                                    <i class="fas fa-comment-dots me-2"></i>
+                                    <span>SMS Agent</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link ps-5 py-2 submenu-item {% if '/ai-agent/chats/' in request.path %}active{% endif %}" href="/ai-agent/chats/">
+                                    <i class="fas fa-comments me-2"></i>
+                                    <span>SMS Conversations</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a href="/voice-agent/" class="nav-link {% if '/voice-agent/' in request.path %}active{% endif %}">

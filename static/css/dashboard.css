@@ -295,6 +295,23 @@
     background-color: var(--color-background);
 }
 
+/* Sidebar Submenu */
+.sidebar-nav .submenu {
+    padding-left: 0;
+    margin-top: 0;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-nav .submenu-item {
+    font-size: 0.85rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.sidebar-nav .submenu-item i {
+    font-size: 0.85rem;
+}
+
 /* Responsive Sidebar */
 body.sidebar-collapsed .sidebar {
     width: 70px;

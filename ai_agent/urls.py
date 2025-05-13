@@ -13,10 +13,10 @@ urlpatterns = [
     
     # API endpoints
     path('api/process-message/', views.process_message, name='process_message'),
-    path('api/twilio-webhook/', views.twilio_webhook, name='twilio_webhook'),
+    path('api/twilio-webhook/<str:business_id>/', views.twilio_webhook, name='twilio_webhook'),
     
     # Chat widget for embedding
-    path('widget/<int:business_id>/', views.chat_widget, name='chat_widget'),
+    path('widget/<str:business_id>/', views.chat_widget, name='chat_widget'),
     
     # Retell API endpoints
     path('api/retell/check-availability/', api_views.check_availability, name='retell_check_availability'),

@@ -177,21 +177,26 @@
     
     <!-- Recent Leads -->
     <div class="col-lg-4 mb-4">
-        <div class="card h-100">
+        <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-user-plus me-2"></i> Recent Leads
                 </h5>
                 <a href="/leads/" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush lead-list">
+            <div class="card-body py-2 px-3">
+                <div class="lead-list">
                     {% if new_leads %}
                         {% for lead in new_leads %}
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
+                            <div class="lead-item p-2 mb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start">
                                     <div class="lead-info">
-                                        <h6 class="mb-1">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                        <div class="d-flex align-items-center">
+                                            <div class="lead-avatar me-2">
+                                                <i class="fas fa-user-circle text-secondary"></i>
+                                            </div>
+                                            <h6 class="mb-1 fw-bold">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                        </div>
                                         <p class="mb-0 small text-muted">
                                             {% if lead.source == 'phone' %}
                                                 <i class="fas fa-phone-alt me-1"></i>
@@ -209,11 +214,11 @@
                                             {{ lead.get_source_display }}
                                         </p>
                                     </div>
-                                    <div class="lead-time">
+                                    <div class="lead-status text-end">
                                         <span class="badge bg-{% if lead.status == 'new' %}success{% elif lead.status == 'contacted' %}info{% elif lead.status == 'qualified' %}primary{% elif lead.status == 'lost' %}danger{% else %}warning{% endif %}">
                                             {{ lead.get_status_display }}
                                         </span>
-                                        <div class="small text-muted">
+                                        <div class="small text-muted mt-1">
                                             {% if lead.created_at.date == today %}
                                                 Today
                                             {% elif lead.created_at.date == yesterday %}
@@ -224,14 +229,14 @@
                                         </div>
                                     </div>
                                 </div>
-                            </li>
+                            </div>
                         {% endfor %}
                     {% else %}
-                        <li class="list-group-item text-center py-4">
+                        <div class="text-center py-4">
                             <p class="text-muted mb-0">No recent leads</p>
-                        </li>
+                        </div>
                     {% endif %}
-                </ul>
+                </div>
             </div>
         </div>
     </div>

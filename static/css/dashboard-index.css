@@ -111,19 +111,23 @@
 }
 
 /* Lead List */
-.lead-list .list-group-item {
-    border-left: none;
-    border-right: none;
-    padding: 1rem 1.25rem;
+.lead-list {
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.lead-item {
     transition: background-color 0.3s ease;
+    border-radius: 0.5rem;
 }
 
-.lead-list .list-group-item:first-child {
-    border-top: none;
-}
-
-.lead-list .list-group-item:hover {
+.lead-item:hover {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+.lead-avatar {
+    font-size: 1.25rem;
+    color: var(--color-text-secondary);
 }
 
 .lead-info h6 {
@@ -131,8 +135,13 @@
     margin-bottom: 0.25rem;
 }
 
-.lead-time {
-    text-align: right;
+.lead-status {
+    min-width: 80px;
+}
+
+.lead-status .badge {
+    padding: 0.35em 0.65em;
+    font-weight: 500;
 }
 
 /* AI Agent Performance */
