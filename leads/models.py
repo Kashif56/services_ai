@@ -6,7 +6,9 @@ from services_ai.utils import generate_id
 
 class LeadStatus(models.TextChoices):
     NEW = 'new', 'New'
-    CONTACTED = 'contacted', 'Contacted'
+    CONTACTED_BY_PHONE = 'contacted_by_phone', 'Contacted By Phone'
+    CONTACTED_BY_SMS = 'contacted_by_sms', 'Contacted By SMS'
+
     QUALIFIED = 'qualified', 'Qualified'
     APPOINTMENT_SCHEDULED = 'appointment_scheduled', 'Appointment Scheduled'
     CONVERTED = 'converted', 'Converted'
@@ -37,7 +39,7 @@ class Lead(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     last_contacted = models.DateTimeField(blank=True, null=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -47,11 +49,11 @@ class Lead(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.business.name}"
     
-    def mark_contacted(self):
+    def mark_contacted(self, contact_method):
         """
         Mark the lead as contacted and update the last_contacted timestamp.
         """
-        self.status = LeadStatus.CONTACTED
+        self.status = LeadStatus.CONTACTED_BY_PHONE if contact_method == 'phone' else LeadStatus.CONTACTED_BY_SMS
         self.last_contacted = timezone.now()
         self.save(update_fields=['status', 'last_contacted', 'updated_at'])
     

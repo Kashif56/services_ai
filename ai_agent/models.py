@@ -33,6 +33,9 @@ class Chat(models.Model):
     session_key = models.CharField(max_length=100, blank=True, null=True)
   
     summary = models.JSONField(default=dict, blank=True, null=True)
+
+    response_received = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
