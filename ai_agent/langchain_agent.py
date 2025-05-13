@@ -369,7 +369,7 @@ class LangChainAgent:
             # Return a user-friendly error message
             return "I'm sorry, I encountered an error processing your request. Please try again later."
     
-    def update_chat_summary(self) -> None:
+    def update_chat_summary(self, booking_id: Optional[str] = None) -> None:
         """
         Update the chat summary with key information extracted from the conversation.
         This is useful for analytics and quick reference.
@@ -391,6 +391,7 @@ class LangChainAgent:
             'first_message': first_message_time.isoformat(),
             'last_message': last_message_time.isoformat(),
             'duration_seconds': (last_message_time - first_message_time).total_seconds(),
+            'booking_id': booking_id or '',
         }
         
         # Update the chat summary

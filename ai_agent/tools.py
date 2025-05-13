@@ -575,6 +575,8 @@ class BookAppointmentTool(BaseTool):
                     response += f"\nTotal Price: ${total_price}"
                 
                 response += f"\nStaff: {staff_name}\n\nBooking ID: {booking.id}"
+
+                self.update_chat_summary(booking.id)
                 
                 return response
             

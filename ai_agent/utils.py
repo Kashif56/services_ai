@@ -365,3 +365,5 @@ def process_web_chat_with_langchain(business_id, session_key, message_text):
     except Exception as e:
         print(f"[UTIL] Error processing web chat with LangChain: {e}")
         return "Sorry, we're experiencing technical difficulties. Please try again later."
+
+
