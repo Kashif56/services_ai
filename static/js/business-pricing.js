@@ -13,6 +13,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Service icon preview
     const serviceIcon = document.getElementById('serviceIcon');
     const serviceColor = document.getElementById('serviceColor');
+    const serviceIsFree = document.getElementById('serviceIsFree');
+    const servicePrice = document.getElementById('servicePrice');
+    
+    // Handle free service toggle
+    if (serviceIsFree && servicePrice) {
+        serviceIsFree.addEventListener('change', function() {
+            if (this.checked) {
+                servicePrice.value = '0.00';
+                servicePrice.disabled = true;
+            } else {
+                servicePrice.disabled = false;
+            }
+        });
+        
+        // Initialize on page load
+        if (serviceIsFree.checked) {
+            servicePrice.value = '0.00';
+            servicePrice.disabled = true;
+        }
+    }
     
     if (serviceIcon && serviceColor) {
         // Create preview element if it doesn't exist
@@ -223,7 +243,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Populate form fields with service data
                     document.getElementById('serviceName').value = data.name;
                     document.getElementById('serviceDescription').value = data.description;
-                    document.getElementById('servicePrice').value = data.price;
+                    
+                    // Handle is_free checkbox and price field
+                    const isFreeCheckbox = document.getElementById('serviceIsFree');
+                    const priceField = document.getElementById('servicePrice');
+                    
+                    if (isFreeCheckbox && priceField) {
+                        isFreeCheckbox.checked = data.is_free;
+                        priceField.value = data.price;
+                        
+                        // If service is free, disable the price field
+                        if (data.is_free) {
+                            priceField.disabled = true;
+                        } else {
+                            priceField.disabled = false;
+                        }
+                    } else {
+                        // Fallback if elements don't exist
+                        document.getElementById('servicePrice').value = data.price;
+                    }
+                    
                     document.getElementById('serviceDuration').value = data.duration;
                     document.getElementById('serviceIcon').value = data.icon;
                     document.getElementById('serviceColor').value = data.color;
@@ -237,10 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Error loading service details. Please try again.');
                 });
         }
-        
-        // In a real implementation, you would populate the form with service data here
-        // For now, we'll just show the modal
-        modal.show();
     }
     
     // Perform bulk action

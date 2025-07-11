@@ -74,12 +74,14 @@
                             <span>Leads</span>
                         </a>
                     </li>
+                    {% if request.user.business.configuration.invoice_enabled %}
                     <li class="nav-item">
                         <a href="/invoices/" class="nav-link {% if '/invoices/' in request.path %}active{% endif %}">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <span>Invoices</span>
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link {% if '/ai-agent/' in request.path %}active{% endif %}" href="#aiAgentSubmenu" data-bs-toggle="collapse" aria-expanded="{% if '/ai_agent/' in request.path %}true{% else %}false{% endif %}">
                             <i class="fas fa-robot"></i>
@@ -168,6 +170,19 @@
                     </div>
                     
                     <ul class="navbar-nav ms-auto">
+                        {% if has_active_licence %}
+                        <li class="nav-item me-3">
+                            <a href="{% url 'licence:licence_status' %}" class="nav-link">
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Premium</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="nav-item me-3">
+                            <a href="{% url 'licence:purchase_licence' %}" class="nav-link">
+                                <span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i> Upgrade to Premium</span>
+                            </a>
+                        </li>
+                        {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-bell"></i>

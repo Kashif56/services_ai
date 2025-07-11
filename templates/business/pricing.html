@@ -70,7 +70,13 @@
                                             </div>
                                         </td>
                                         <td>{{ service.duration }} min</td>
-                                        <td>${{ service.price }}</td>
+                                        <td>
+                                            {% if service.is_free %}
+                                            <span class="badge bg-success">Free</span>
+                                            {% else %}
+                                            ${{ service.price }}
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if service.is_active %}
                                             <span class="badge bg-success">Active</span>
@@ -283,6 +289,11 @@
                         <label for="serviceDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="serviceDescription" name="description" rows="3"></textarea>
                     </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="serviceIsFree" name="is_free">
+                        <label class="form-check-label" for="serviceIsFree">Free Service</label>
+                        <small class="form-text text-muted d-block">Check this if the service is free (no payment required)</small>
+                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="servicePrice" class="form-label">Price ($)</label>
@@ -349,12 +360,30 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
+                            <label for="fieldType" class="form-label">Field Type</label>
+                            <select class="form-select" id="fieldType" name="field_type">
+                                <option value="text">Text Input</option>
+                                <option value="textarea">Text Area</option>
+                                <option value="number">Number Input</option>
+                                <option value="boolean">Yes/No Checkbox</option>
+                                <option value="select">Dropdown Select</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="fieldOptionsContainer" style="display: none;">
+                            <label for="fieldOptions" class="form-label">Field Options</label>
+                            <input type="text" class="form-control" id="fieldOptions" name="field_options" placeholder="Option1, Option2, Option3">
+                            <small class="text-muted">Comma separated options for dropdown</small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
                             <label for="priceType" class="form-label">Price Type</label>
                             <select class="form-select" id="priceType" name="price_type" required>
                                 <option value="fixed">Fixed Price</option>
                                 <option value="percentage">Percentage of Base Price</option>
                                 <option value="hourly">Hourly Rate</option>
                                 <option value="per_unit">Per Unit</option>
+                                <option value="free">Free</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -416,12 +445,30 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
+                            <label for="editFieldType" class="form-label">Field Type</label>
+                            <select class="form-select" id="editFieldType" name="field_type">
+                                <option value="text">Text Input</option>
+                                <option value="textarea">Text Area</option>
+                                <option value="number">Number Input</option>
+                                <option value="boolean">Yes/No Checkbox</option>
+                                <option value="select">Dropdown Select</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="editFieldOptionsContainer" style="display: none;">
+                            <label for="editFieldOptions" class="form-label">Field Options</label>
+                            <input type="text" class="form-control" id="editFieldOptions" name="field_options" placeholder="Option1, Option2, Option3">
+                            <small class="text-muted">Comma separated options for dropdown</small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
                             <label for="editPriceType" class="form-label">Price Type</label>
                             <select class="form-select" id="editPriceType" name="price_type" required>
                                 <option value="fixed">Fixed Price</option>
                                 <option value="percentage">Percentage of Base Price</option>
                                 <option value="hourly">Hourly Rate</option>
                                 <option value="per_unit">Per Unit</option>
+                                <option value="free">Free</option>
                             </select>
                         </div>
                         <div class="col-md-6">

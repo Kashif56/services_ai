@@ -351,22 +351,32 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let html = '<div class="row">';
         items.forEach(item => {
+            // Determine if this is a free item or not
+            const isFreeItem = item.price_type === 'free';
+            
+            // Determine if this item should show quantity controls
+            // 1. Don't show quantity for text input types (text, textarea, select, boolean) when free
+            // 2. Don't show quantity for number field type when NOT free (as the number input itself serves as the quantity)
+            const shouldShowQuantity = item.max_quantity > 1 && 
+                                      !((item.price_type === 'free' && ['text', 'textarea', 'select', 'boolean'].includes(item.field_type)) || 
+                                        (item.price_type !== 'free' && item.field_type === 'number'));
+            
             html += `
                 <div class="col-md-6 mb-3">
                     <div class="card h-100 bg-dark">
                         <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title">${item.name}</h5>
-                            <span class="text-primary ${item.is_optional ? 'text-success' : 'text-danger'}">${item.is_optional ? 'Optional' : 'Required'}</span>
-                        </div>
-                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">${item.name}</h5>
+                                <span class="text-primary ${item.is_optional ? 'text-success' : 'text-danger'}">${ item.is_optional ? 'Optional' : 'Required'}</span>
+                            </div>
                             
                             <p class="card-text">${item.description || ''}</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-primary fw-bold">$${item.price_value}</span>
-                            ${parseInt(item.duration_minutes) > 0 ? `<span class="text-info"><i class="bi bi-clock"></i> +${item.duration_minutes} mins</span>` : ''}
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-primary fw-bold">${item.price_type !== 'free' ? '$' + item.price_value : 'Free'}</span>
+                                ${parseInt(item.duration_minutes) > 0 ? `<span class="text-info"><i class="bi bi-clock"></i> +${item.duration_minutes} mins</span>` : ''}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input service-item-checkbox" 
                                            type="checkbox" 
@@ -374,14 +384,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                            name="service_items[]" 
                                            value="${item.id}"
                                            data-price="${item.price_value}"
-                                       data-duration="${item.duration_minutes || 0}"
+                                           data-duration="${item.duration_minutes || 0}"
+                                           data-field-type="${item.field_type}"
+                                           data-price-type="${item.price_type}"
                                            ${item.is_optional ? '' : 'checked disabled'}>
                                     <label class="form-check-label" for="item_${item.id}">
                                         ${item.is_optional ? 'Add' : 'Required'}
                                     </label>
                                 </div>
                             </div>
-                            ${item.max_quantity > 1 ? `
+                            
+                            <!-- Field input based on field_type and price_type -->
+                            <div class="mt-3 item-field-container ${item.is_optional ? 'd-none' : ''}" id="field_container_${item.id}">
+                                ${renderItemField(item)}
+                            </div>
+                            
+                            ${shouldShowQuantity ? `
                             <div class="mt-2 quantity-control ${item.is_optional && !selectedItems[item.id] ? 'd-none' : ''}">
                                 <label for="quantity_${item.id}">Quantity:</label>
                                 <div class="input-group input-group-sm">
@@ -405,12 +423,125 @@ document.addEventListener('DOMContentLoaded', function() {
         
         serviceItemsContainer.innerHTML = html;
         
+        // Helper function to render the appropriate field based on field_type and price_type
+        function renderItemField(item) {
+            // For non-free items (fixed, percentage, hourly, per_unit), field type is always forced to be 'number'
+            if (item.price_type !== 'free') {
+                // For number field type when not free, this input represents the quantity
+                // so we don't need a separate quantity control
+                const label = item.field_type === 'number' ? 'Quantity:' : 'Value:';
+                const placeholder = item.field_type === 'number' ? 'Enter quantity' : 'Enter value';
+                
+                return `
+                    <div class="form-group">
+                        <label for="field_${item.id}">${label}</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="field_${item.id}" 
+                               name="item_field_${item.id}" 
+                               placeholder="${placeholder}"
+                               min="1">
+                    </div>
+                `;
+            }
+            
+            // For free items, users can select any field type
+            switch(item.field_type) {
+                case 'text':
+                    return `
+                        <div class="form-group">
+                            <label for="field_${item.id}">Value:</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="field_${item.id}" 
+                                   name="item_field_${item.id}" 
+                                   placeholder="Enter text">
+                        </div>
+                    `;
+                case 'textarea':
+                    return `
+                        <div class="form-group">
+                            <label for="field_${item.id}">Value:</label>
+                            <textarea class="form-control" 
+                                      id="field_${item.id}" 
+                                      name="item_field_${item.id}" 
+                                      rows="3" 
+                                      placeholder="Enter details"></textarea>
+                        </div>
+                    `;
+                case 'number':
+                    return `
+                        <div class="form-group">
+                            <label for="field_${item.id}">Value:</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="field_${item.id}" 
+                                   name="item_field_${item.id}" 
+                                   placeholder="Enter number">
+                        </div>
+                    `;
+                case 'boolean':
+                    return `
+                        <div class="form-group">
+                            <label>Select an option:</label>
+                            <div class="form-check">
+                                <input type="radio" 
+                                       class="form-check-input" 
+                                       id="field_${item.id}_yes" 
+                                       name="item_field_${item.id}" 
+                                       value="true">
+                                <label class="form-check-label" for="field_${item.id}_yes">Yes</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" 
+                                       class="form-check-input" 
+                                       id="field_${item.id}_no" 
+                                       name="item_field_${item.id}" 
+                                       value="false">
+                                <label class="form-check-label" for="field_${item.id}_no">No</label>
+                            </div>
+                        </div>
+                    `;
+                case 'select':
+                    // Field options are only shown and required when field type is 'select'
+                    let options = '';
+                    if (item.field_options && Array.isArray(item.field_options)) {
+                        item.field_options.forEach(option => {
+                            options += `<option value="${option}">${option}</option>`;
+                        });
+                    }
+                    return `
+                        <div class="form-group">
+                            <label for="field_${item.id}">Select an option:</label>
+                            <select class="form-select" 
+                                    id="field_${item.id}" 
+                                    name="item_field_${item.id}">
+                                <option value="">Choose...</option>
+                                ${options}
+                            </select>
+                        </div>
+                    `;
+                default:
+                    return `
+                        <div class="form-group">
+                            <label for="field_${item.id}">Value:</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="field_${item.id}" 
+                                   name="item_field_${item.id}" 
+                                   placeholder="Enter value">
+                        </div>
+                    `;
+            }
+        }
+        
         // Add event listeners to checkboxes
         document.querySelectorAll('.service-item-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const itemId = this.value;
                 const price = parseFloat(this.dataset.price);
                 const item = serviceItems.find(i => i.id === itemId);
+                const fieldContainer = document.getElementById(`field_container_${itemId}`);
                 
                 if (this.checked) {
                     const itemData = serviceItems.find(i => i.id === itemId);
@@ -419,6 +550,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         quantity: 1,
                         duration: itemData ? parseInt(itemData.duration_minutes || 0) : 0
                     };
+                    
+                    // Show field container
+                    if (fieldContainer) {
+                        fieldContainer.classList.remove('d-none');
+                    }
                     
                     // Show quantity control if max_quantity > 1
                     if (item && item.max_quantity > 1) {
@@ -429,6 +565,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } else {
                     delete selectedItems[itemId];
+                    
+                    // Hide field container
+                    if (fieldContainer) {
+                        fieldContainer.classList.add('d-none');
+                    }
                     
                     // Hide quantity control
                     const quantityControl = this.closest('.card-body').querySelector('.quantity-control');
@@ -624,17 +765,127 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         let valid = true;
         form.querySelectorAll('[required]').forEach(function(input) {
-            if (!input.value) {
-                input.classList.add('is-invalid');
+            if (!input.value.trim()) {
                 valid = false;
+                input.classList.add('is-invalid');
             } else {
                 input.classList.remove('is-invalid');
             }
         });
         
+        // First, check all service items with values and ensure their checkboxes are checked
+        // This ensures that items with values are included in the form submission
+        document.querySelectorAll('.service-item-checkbox').forEach(function(checkbox) {
+            const itemId = checkbox.value;
+            const fieldType = checkbox.dataset.fieldType;
+            const priceType = checkbox.dataset.priceType;
+            let hasValue = false;
+            
+            // Check if this item has a value
+            if (fieldType === 'boolean' && priceType === 'free') {
+                const yesRadio = document.getElementById(`field_${itemId}_yes`);
+                const noRadio = document.getElementById(`field_${itemId}_no`);
+                if ((yesRadio && yesRadio.checked) || (noRadio && noRadio.checked)) {
+                    hasValue = true;
+                }
+            } else {
+                const fieldInput = document.getElementById(`field_${itemId}`);
+                if (fieldInput && fieldInput.value.trim()) {
+                    hasValue = true;
+                }
+            }
+            
+            // If the item has a value and is not disabled (required items), check it
+            if (hasValue && !checkbox.disabled) {
+                checkbox.checked = true;
+            }
+        });
+        
+        // Now validate all checked items
+        document.querySelectorAll('.service-item-checkbox:checked').forEach(function(checkbox) {
+            const itemId = checkbox.value;
+            const fieldType = checkbox.dataset.fieldType;
+            const priceType = checkbox.dataset.priceType;
+            
+            // Handle different field types differently
+            if (fieldType === 'boolean' && priceType === 'free') {
+                // For boolean fields, check if either Yes or No is selected
+                const yesRadio = document.getElementById(`field_${itemId}_yes`);
+                const noRadio = document.getElementById(`field_${itemId}_no`);
+                if (!yesRadio.checked && !noRadio.checked) {
+                    valid = false;
+                    yesRadio.closest('.form-group').classList.add('is-invalid');
+                }
+            } else if (fieldType === 'select' && priceType === 'free') {
+                // For select fields, ensure an option is selected
+                const fieldInput = document.getElementById(`field_${itemId}`);
+                if (fieldInput && !fieldInput.value) {
+                    valid = false;
+                    fieldInput.classList.add('is-invalid');
+                }
+            } else if (priceType !== 'free') {
+                // For non-free items, ensure a number is entered
+                const fieldInput = document.getElementById(`field_${itemId}`);
+                if (fieldInput && (!fieldInput.value || isNaN(parseFloat(fieldInput.value)))) {
+                    valid = false;
+                    fieldInput.classList.add('is-invalid');
+                }
+            } else {
+                // For other free items (text, textarea), just check if they're not empty
+                const fieldInput = document.getElementById(`field_${itemId}`);
+                if (fieldInput && !fieldInput.value.trim()) {
+                    valid = false;
+                    fieldInput.classList.add('is-invalid');
+                }
+            }
+        });
+        
+        // Create a hidden input for each selected service item's field value
+        if (valid) {
+            const selectedItemsData = {};
+            
+            document.querySelectorAll('.service-item-checkbox:checked').forEach(function(checkbox) {
+                const itemId = checkbox.value;
+                const fieldType = checkbox.dataset.fieldType;
+                const priceType = checkbox.dataset.priceType;
+                const quantityInput = document.getElementById(`quantity_${itemId}`);
+                let fieldValue = '';
+                
+                // Handle different field types
+                if (fieldType === 'boolean' && priceType === 'free') {
+                    // For boolean fields, check which radio button is selected
+                    const yesRadio = document.getElementById(`field_${itemId}_yes`);
+                    const noRadio = document.getElementById(`field_${itemId}_no`);
+                    if (yesRadio && yesRadio.checked) {
+                        fieldValue = 'true';
+                    } else if (noRadio && noRadio.checked) {
+                        fieldValue = 'false';
+                    }
+                } else {
+                    // For other field types
+                    const fieldInput = document.getElementById(`field_${itemId}`);
+                    if (fieldInput) {
+                        fieldValue = fieldInput.value;
+                    }
+                }
+                
+                selectedItemsData[itemId] = {
+                    value: fieldValue,
+                    quantity: quantityInput ? parseInt(quantityInput.value) : 1
+                };
+            });
+            
+            // Add the selected items data as a hidden input
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'selected_items_data';
+            hiddenInput.value = JSON.stringify(selectedItemsData);
+            form.appendChild(hiddenInput);
+        }
+        
         if (!valid) {
             e.preventDefault();
-            // Scroll to first invalid field
+            alert('Please fill in all required fields.');
             const firstInvalid = form.querySelector('.is-invalid');
             if (firstInvalid) {
                 firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -9,8 +9,8 @@ from .models import Booking, BookingField, BookingServiceItem, BookingStatus, St
 from leads.models import Lead
 from django.utils import timezone
 import json
+import datetime
 from .availability import check_timeslot_availability
-from datetime import datetime
 
 # Create your views here.
 @login_required
@@ -205,20 +205,75 @@ def create_booking(request):
         
         # Save service items
         service_items = request.POST.getlist('service_items[]')
-        for item_id in service_items:
+        selected_items_data = {}
+        
+        print("Service items:", service_items)
+        
+        # Check if we have the JSON data for selected items
+        if request.POST.get('selected_items_data'):
+            try:
+                selected_items_data = json.loads(request.POST.get('selected_items_data'))
+                print("Selected items data:", selected_items_data)
+            except json.JSONDecodeError:
+                # If JSON is invalid, continue with empty dict
+                pass
+        
+        # Combine service_items list with any additional items in selected_items_data
+        # This ensures we process all items that have values, even if they weren't checked
+        all_service_items = set(service_items)
+        for item_id in selected_items_data.keys():
+            if item_id not in all_service_items and selected_items_data[item_id].get('value'):
+                all_service_items.add(item_id)
+        
+        print("All service items to process:", all_service_items)
+        
+        for item_id in all_service_items:
             try:
                 service_item = ServiceItem.objects.get(id=item_id, business=business)
-                quantity = int(request.POST.get(f'item_quantity_{item_id}', 1))
+                
+                # Get quantity and field value from the selected_items_data
+                quantity = 1
+                field_value = ''
+                
+                if item_id in selected_items_data:
+                    item_data = selected_items_data[item_id]
+                    
+                    # For non-free items with field_type='number', use the field value as the quantity
+                    # since we're displaying only one input field in the UI
+                    if service_item.price_type != 'free' and service_item.field_type == 'number':
+                        # If there's a value, use it as the quantity
+                        if 'value' in item_data and item_data['value']:
+                            try:
+                                quantity = int(float(item_data['value']))
+                                # Store the same value as field_value for consistency
+                                field_value = str(quantity)
+                            except (ValueError, TypeError):
+                                # If conversion fails, keep default quantity
+                                pass
+                    else:
+                        # For all other cases, use the standard quantity field
+                        quantity = int(item_data.get('quantity', 1))
+                        field_value = item_data.get('value', '')
+                else:
+                    # Fallback to the old method if JSON data is not available
+                    quantity = int(request.POST.get(f'item_quantity_{item_id}', 1))
                 
                 # Calculate price at booking time
                 price_at_booking = service_item.calculate_price(base_price=service_offering.price, quantity=quantity)
+
+                print(f"price_at_booking: {price_at_booking}")
                 
-                BookingServiceItem.objects.create(
+                # Create the booking service item
+                booking_service_item = BookingServiceItem.objects.create(
                     booking=booking,
                     service_item=service_item,
                     quantity=quantity,
                     price_at_booking=price_at_booking
                 )
+                
+                # Set the appropriate field value based on field type
+                booking_service_item.set_response_value(field_value)
+                booking_service_item.save()
             except (ServiceItem.DoesNotExist, ValueError):
                 # Log this but don't fail the booking
                 pass
@@ -272,14 +327,23 @@ def booking_detail(request, booking_id):
         # Get service items
         service_items = booking.service_items.all()
         
-        # Calculate service items total separately
-        service_items_total = 0
+        # Separate free and paid service items
+        paid_service_items = []
+        free_service_items = []
         for item in service_items:
-           
-            service_items_total += item.price_at_booking
+            if item.service_item.price_type == 'free':
+                free_service_items.append(item)
+            else:
+                paid_service_items.append(item)
         
-        # Calculate total price
-        total_price = booking.service_offering.price + service_items_total
+        # Calculate paid service items total
+        paid_service_items_total = sum(item.price_at_booking for item in paid_service_items)
+        
+        # Check if there are any paid items
+        has_paid_items = len(paid_service_items) > 0
+        
+        # Calculate total price (base price + paid items only)
+        total_price = booking.service_offering.price + paid_service_items_total
         
         # Create a timeline of booking events
         timeline = [
@@ -315,7 +379,10 @@ def booking_detail(request, booking_id):
             'business_fields': business_fields,
             'industry_fields': industry_fields,
             'service_items': service_items,
-            'service_items_total': service_items_total,
+            'free_service_items': free_service_items,
+            'paid_service_items': paid_service_items,
+            'paid_service_items_total': paid_service_items_total,
+            'has_paid_items': has_paid_items,
             'total_price': total_price,
             'timeline': timeline
         })
@@ -363,6 +430,8 @@ def get_service_items(request, service_id):
                 'description': service_item.description,
                 'price_type': service_item.price_type,
                 'price_value': float(service_item.price_value),
+                'field_type': service_item.field_type,
+                'field_options': service_item.field_options,
                 'is_required': is_required,
                 'is_optional': service_item.is_optional,
                 'max_quantity': service_item.max_quantity,
@@ -450,7 +519,7 @@ def check_availability(request):
         duration_minutes = int(duration_minutes)
     except ValueError:
         return JsonResponse({'error': 'Duration must be a valid integer'}, status=400)
-    
+    from datetime import datetime
     # Convert date and time strings to datetime object
     try:
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()

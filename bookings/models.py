@@ -5,7 +5,7 @@ from leads.models import Lead, LeadStatus
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from services_ai.utils import generate_id
 
 
@@ -657,11 +657,26 @@ class BookingServiceItem(models.Model):
     """
     Associates service items with bookings.
     Allows tracking which specific service items were selected for a booking.
+    
+    Different field types have separate fields to store their values:
+    - text_value: For text input fields
+    - textarea_value: For textarea fields
+    - number_value: For number fields and non-free items
+    - boolean_value: For boolean fields (yes/no)
+    - select_value: For dropdown select fields
     """
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='service_items')
     service_item = models.ForeignKey(ServiceItem, on_delete=models.CASCADE, related_name='booking_items')
     quantity = models.PositiveIntegerField(default=1)
     price_at_booking = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price of the item at the time of booking")
+    
+    # Separate fields for different field types
+    text_value = models.CharField(max_length=255, blank=True, null=True, help_text="Value for text input fields")
+    textarea_value = models.TextField(blank=True, null=True, help_text="Value for textarea fields")
+    number_value = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Value for number fields and non-free items")
+    boolean_value = models.BooleanField(blank=True, null=True, help_text="Value for boolean fields (yes/no)")
+    select_value = models.CharField(max_length=255, blank=True, null=True, help_text="Selected option for dropdown fields")
+    
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -673,6 +688,67 @@ class BookingServiceItem(models.Model):
     
     def __str__(self):
         return f"{self.booking} - {self.service_item.name} (x{self.quantity})"
+        
+    def get_response_value(self):
+        """Get the response value based on the service item's field type"""
+        field_type = self.service_item.field_type
+        price_type = self.service_item.price_type
+        
+        # For non-free items, always use number_value
+        if price_type != 'free':
+            return self.number_value
+            
+        # For free items, use the appropriate field based on field_type
+        if field_type == 'text':
+            return self.text_value
+        elif field_type == 'textarea':
+            return self.textarea_value
+        elif field_type == 'number':
+            return self.number_value
+        elif field_type == 'boolean':
+            return self.boolean_value
+        elif field_type == 'select':
+            return self.select_value
+        
+        return None
+        
+    def set_response_value(self, value):
+        """Set the response value based on the service item's field type"""
+        field_type = self.service_item.field_type
+        price_type = self.service_item.price_type
+        
+        # Clear all values first
+        self.text_value = None
+        self.textarea_value = None
+        self.number_value = None
+        self.boolean_value = None
+        self.select_value = None
+        
+        # For non-free items, always use number_value
+        if price_type != 'free':
+            try:
+                self.number_value = Decimal(str(value)) if value else None
+            except (ValueError, TypeError, InvalidOperation):
+                pass
+            return
+            
+        # For free items, use the appropriate field based on field_type
+        if field_type == 'text':
+            self.text_value = str(value) if value else None
+        elif field_type == 'textarea':
+            self.textarea_value = str(value) if value else None
+        elif field_type == 'number':
+            try:
+                self.number_value = Decimal(str(value)) if value else None
+            except (ValueError, TypeError, InvalidOperation):
+                pass
+        elif field_type == 'boolean':
+            if isinstance(value, str):
+                self.boolean_value = value.lower() == 'true'
+            else:
+                self.boolean_value = bool(value) if value is not None else None
+        elif field_type == 'select':
+            self.select_value = str(value) if value else None
     
     def save(self, *args, **kwargs):
         # If price_at_booking is not set, calculate it based on the service item's pricing rules

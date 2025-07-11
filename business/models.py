@@ -188,6 +188,7 @@ class BusinessConfiguration(models.Model):
     voice_enabled = models.BooleanField(default=True)
     initial_response_delay = models.PositiveIntegerField(default=5, help_text="Delay in minutes before first contact")
 
+    invoice_enabled = models.BooleanField(default=True)
 
     # Twilio Configuration for SMS
     twilio_phone_number = models.CharField(max_length=20, blank=True, null=True)
@@ -215,6 +216,7 @@ class ServiceOffering(models.Model):
     name = models.CharField(max_length=100)
     identifier = models.SlugField(max_length=120, blank=True, help_text="Unique identifier for this service (e.g., number_of_bedrooms)")
     description = models.TextField(blank=True, null=True)
+    is_free = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
     icon = models.CharField(max_length=50, default="concierge-bell", help_text="FontAwesome icon name")
@@ -278,12 +280,23 @@ class ServiceItem(models.Model):
         ('percentage', 'Percentage of Base Price'),
         ('hourly', 'Hourly Rate'),
         ('per_unit', 'Per Unit'),
+        ('free', 'Free'),
+    )
+    
+    FIELD_TYPE_CHOICES = (
+        ('text', 'Text Input'),
+        ('textarea', 'Text Area'),
+        ('number', 'Number Input'),
+        ('boolean', 'Yes/No Checkbox'),
+        ('select', 'Dropdown Select'),
     )
     
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_items')
     name = models.CharField(max_length=100)
     identifier = models.SlugField(max_length=120, blank=True, help_text="Unique identifier for this service item (e.g., number_of_bedrooms)")
     description = models.TextField(blank=True, null=True)
+    field_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES, default='text', help_text="Type of field to display for this item")
+    field_options = models.JSONField(blank=True, null=True, help_text="Options for select fields, stored as JSON array")
     price_type = models.CharField(max_length=20, choices=PRICE_TYPE_CHOICES, default='fixed')
     price_value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     is_optional = models.BooleanField(default=True, help_text="Whether this item is optional or required by default")
@@ -324,6 +337,8 @@ class ServiceItem(models.Model):
             return self.price_value * hours * quantity
         elif self.price_type == 'per_unit':
             return self.price_value * quantity
+        elif self.price_type == 'free':
+            return Decimal('0.00')
         return Decimal('0.00')
 
 

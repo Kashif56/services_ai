@@ -1,0 +1,231 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}Purchase License{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center" style="height: 100vh;">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 py-2">Purchase License</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>Services AI Premium License</h4>
+                        <p class="lead">One-time payment for full access to all premium features</p>
+                        <div class="pricing-amount bg-success text-white p-2 rounded">
+                            <span class="display-4">${{ licence_amount }}</span>
+                        </div>
+                        <p class="text-muted">Lifetime access with no recurring fees</p>
+                    </div>
+                    
+                    <div class="features mb-4">
+                        <h5>Features included:</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Full access to all AI agents</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Unlimited bookings and appointments</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Advanced lead management</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Premium support</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> All future updates</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button id="checkout-button" class="btn btn-primary btn-lg">
+                            <i class="fas fa-lock me-2"></i> Proceed to Secure Checkout
+                        </button>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <small class="text-muted py-2">Secure payment powered by <i class="fab fa-stripe"></i> Stripe</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/licence/licence.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stripe = Stripe('{{ stripe_public_key }}');
+        const checkoutButton = document.getElementById('checkout-button');
+        const licenceAmount = "{{ licence_amount|default:'99.99' }}";
+        
+        checkoutButton.addEventListener('click', function() {
+            // Show loading state
+            checkoutButton.disabled = true;
+            checkoutButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            // Create payment intent on the server
+            fetch('{% url "licence:purchase_licence" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Handle the payment with Stripe Elements
+                const elements = stripe.elements();
+                const style = {
+                    base: {
+                        color: '#32325d',
+                        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                        fontSmoothing: 'antialiased',
+                        fontSize: '16px',
+                        '::placeholder': {
+                            color: '#aab7c4'
+                        }
+                    },
+                    invalid: {
+                        color: '#fa755a',
+                        iconColor: '#fa755a'
+                    }
+                };
+                
+                // Create a payment form modal
+                const modal = document.createElement('div');
+                modal.className = 'payment-modal';
+                modal.innerHTML = `
+                    <div class="payment-modal-content bg-dark text-white">
+                        <span class="payment-modal-close">&times;</span>
+                        <h4>Complete Your Purchase</h4>
+                        <p>Amount: $${licenceAmount}</p>
+                        <form id="payment-form">
+                            <div id="card-element"></div>
+                            <div id="card-errors" class="text-danger mt-2" role="alert"></div>
+                            <button type="submit" class="btn btn-primary btn-block mt-3">
+                                <i class="fas fa-lock me-2"></i> Pay Now
+                            </button>
+                        </form>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Close modal when clicking the close button
+                const closeBtn = modal.querySelector('.payment-modal-close');
+                closeBtn.onclick = function() {
+                    modal.style.display = 'none';
+                    checkoutButton.disabled = false;
+                    checkoutButton.innerHTML = '<i class="fas fa-lock me-2"></i> Proceed to Secure Checkout';
+                }
+                
+                // Show the modal
+                modal.style.display = 'block';
+                
+                // Create card element
+                const cardElement = elements.create('card', {style: style});
+                cardElement.mount('#card-element');
+                
+                // Handle form submission
+                const form = document.getElementById('payment-form');
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    // Disable the submit button to prevent repeated clicks
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                    
+                    // Complete payment when the submit button is clicked
+                    stripe.confirmCardPayment(data.clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                email: '{{ request.user.email }}'
+                            }
+                        }
+                    }).then(function(result) {
+                        if (result.error) {
+                            // Show error to your customer
+                            const errorElement = document.getElementById('card-errors');
+                            errorElement.textContent = result.error.message;
+                            submitButton.disabled = false;
+                            submitButton.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Now';
+                        } else {
+                            // The payment succeeded!
+                            window.location.href = '{% url "licence:payment_success" %}?payment_intent=' + result.paymentIntent.id;
+                        }
+                    });
+                });
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                checkoutButton.disabled = false;
+                checkoutButton.innerHTML = '<i class="fas fa-lock me-2"></i> Proceed to Secure Checkout';
+            });
+        });
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+<style>
+    .payment-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .payment-modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 5px;
+        width: 50%;
+        max-width: 500px;
+    }
+    
+    .payment-modal-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .payment-modal-close:hover {
+        color: black;
+    }
+    
+    #card-element {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+</style>
+<script src="{% static 'js/licence/purchase.js' %}"></script>
+{% endblock %}

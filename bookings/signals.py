@@ -20,6 +20,10 @@ def create_invoice_for_booking(sender, instance, created, **kwargs):
         else:
             due_date = timezone.now().date() + timedelta(days=7)
         
+        if not instance.business.configuration.invoice_enabled:
+            print("Invoice not enabled for this business")
+            return
+        
         Invoice.objects.create(
             booking=instance,
             status=InvoiceStatus.PENDING,

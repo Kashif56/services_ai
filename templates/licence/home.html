@@ -1,0 +1,44 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}License Management{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="height: 50vh;">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">License Management</h3>
+                </div>
+                <div class="card-body">
+                    {% if has_licence %}
+                        <div class="alert alert-success">
+                            <h4 class="alert-heading">You have an active license!</h4>
+                            <p>Thank you for purchasing a license for Services AI. You have full access to all premium features.</p>
+                        </div>
+                        <a href="{% url 'licence:licence_status' %}" class="btn btn-info">View License Details</a>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <h4 class="alert-heading">No Active License</h4>
+                            <p>You don't have an active license for Services AI. Purchase a license to unlock all premium features.</p>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'licence:purchase_licence' %}" class="btn btn-primary">Purchase License</a>
+                            <a href="{% url 'licence:activate_licence' %}" class="btn btn-outline-secondary">Activate License Key</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/licence/licence.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/licence/home.js' %}"></script>
+{% endblock %}

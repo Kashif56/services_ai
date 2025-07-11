@@ -1,0 +1,126 @@
+/**
+ * License System CSS
+ * 
+ * This file contains styles for the license system pages.
+ */
+
+/* License Card Styles */
+.licence-card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.licence-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* License Key Display */
+.licence-key {
+    font-family: monospace;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    word-break: break-all;
+}
+
+/* License Status Indicators */
+.licence-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.licence-status.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.licence-status.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Purchase Page Styles */
+.pricing-amount {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+}
+
+.features .list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.features .list-group-item:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.features .list-group-item:last-child {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Confetti Animation for Success Page */
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.confetti {
+    position: fixed;
+    top: -10px;
+    z-index: 999;
+    border-radius: 0;
+    animation: confetti-fall 3s ease-in-out forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pricing-amount .display-4 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Form styling */
+.form-control-lg {
+    border-radius: 10px;
+}
+
+/* Button styling */
+.btn-lg {
+    border-radius: 10px;
+    padding: 12px 24px;
+}
+
+/* Card styling */
+.card.shadow {
+    border: none;
+    border-radius: 15px;
+}
+
+.card-header {
+    border-top-left-radius: 15px !important;
+    border-top-right-radius: 15px !important;
+}
+
+.card-footer {
+    border-bottom-left-radius: 15px !important;
+    border-bottom-right-radius: 15px !important;
+}

@@ -1,0 +1,62 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}Activate License{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Activate License</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Enter your license key to activate premium features</p>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" action="{% url 'licence:activate_licence' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="licence_key" class="form-label">License Key</label>
+                            <input type="text" class="form-control form-control-lg" id="licence_key" name="licence_key" 
+                                   placeholder="Enter your license key" required>
+                            <div class="form-text">Your license key should be in the format: XXXX-XXXX-XXXX-XXXX</div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-key me-2"></i> Activate License
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'licence:licence_home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Back
+                        </a>
+                        <a href="{% url 'licence:purchase_licence' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-shopping-cart me-2"></i> Purchase New License
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/licence/licence.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/licence/activate.js' %}"></script>
+{% endblock %}

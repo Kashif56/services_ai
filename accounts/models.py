@@ -65,3 +65,8 @@ class EmailVerification(models.Model):
         self.attempts = 0
         self.save()
         return self.otp
+
+
+
+
+

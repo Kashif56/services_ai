@@ -270,16 +270,14 @@
                             option.dataset.name = lead.name;
                             leadSelect.appendChild(option);
                             
-                            {% if selected_lead %}
-                            // If there's a selected lead from the URL, select it
-                            if (lead.id === '{{ selected_lead.id }}') {
+                            // Handle selected lead if present
+                            const selectedLeadId = '{% if selected_lead %}{{ selected_lead.id }}{% else %}{% endif %}';
+                            if (selectedLeadId && lead.id === selectedLeadId) {
                                 option.selected = true;
-                                // Also populate the client fields
                                 clientNameInput.value = lead.name;
                                 clientEmailInput.value = lead.email;
                                 clientPhoneInput.value = lead.phone;
                             }
-                            {% endif %}
                         });
                     }
                 })

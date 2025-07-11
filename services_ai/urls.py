@@ -33,6 +33,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('notifications/', include('notifications.urls')),
     path('plugins/', include('plugins.urls')),
+    path('licence/', include('licence.urls')),
 ]
 
 # Serve media files in development

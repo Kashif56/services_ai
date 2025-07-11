@@ -23,20 +23,102 @@ document.addEventListener('DOMContentLoaded', function() {
     const editPricePrefix = document.getElementById('editPricePrefix');
     const editPriceSuffix = document.getElementById('editPriceSuffix');
     
+    // Field type handling
+    const fieldType = document.getElementById('fieldType');
+    const fieldOptionsContainer = document.getElementById('fieldOptionsContainer');
+    const fieldOptions = document.getElementById('fieldOptions');
+    
+    // Edit field type elements
+    const editFieldType = document.getElementById('editFieldType');
+    const editFieldOptionsContainer = document.getElementById('editFieldOptionsContainer');
+    const editFieldOptions = document.getElementById('editFieldOptions');
+    
     // Update price input based on price type
     if (priceType && priceValue && pricePrefix && priceSuffix) {
         priceType.addEventListener('change', function() {
             updatePriceInput(this.value, pricePrefix, priceSuffix);
+            
+            // Update field type based on price type
+            if (fieldType) {
+                if (this.value === 'free') {
+                    // Enable field type selection for free items
+                    fieldType.disabled = false;
+                    document.querySelector('label[for="fieldType"]').classList.remove('text-muted');
+                } else {
+                    // Force number field type for non-free items
+                    fieldType.value = 'number';
+                    fieldType.disabled = true;
+                    document.querySelector('label[for="fieldType"]').classList.add('text-muted');
+                    
+                    // Update field options visibility
+                    if (fieldOptionsContainer) {
+                        updateFieldOptionsVisibility('number', fieldOptionsContainer);
+                    }
+                }
+            }
         });
         
         // Set initial state
         updatePriceInput(priceType.value, pricePrefix, priceSuffix);
+        
+        // Set initial field type state based on price type
+        if (fieldType) {
+            if (priceType.value === 'free') {
+                fieldType.disabled = false;
+                document.querySelector('label[for="fieldType"]').classList.remove('text-muted');
+            } else {
+                fieldType.value = 'number';
+                fieldType.disabled = true;
+                document.querySelector('label[for="fieldType"]').classList.add('text-muted');
+                
+                // Update field options visibility
+                if (fieldOptionsContainer) {
+                    updateFieldOptionsVisibility('number', fieldOptionsContainer);
+                }
+            }
+        }
     }
     
     // Update edit form price input based on price type
     if (editPriceType && editPriceValue && editPricePrefix && editPriceSuffix) {
         editPriceType.addEventListener('change', function() {
             updatePriceInput(this.value, editPricePrefix, editPriceSuffix);
+            
+            // Update field type based on price type
+            if (editFieldType) {
+                if (this.value === 'free') {
+                    // Enable field type selection for free items
+                    editFieldType.disabled = false;
+                    document.querySelector('label[for="editFieldType"]').classList.remove('text-muted');
+                } else {
+                    // Force number field type for non-free items
+                    editFieldType.value = 'number';
+                    editFieldType.disabled = true;
+                    document.querySelector('label[for="editFieldType"]').classList.add('text-muted');
+                    
+                    // Update field options visibility
+                    if (editFieldOptionsContainer) {
+                        updateFieldOptionsVisibility('number', editFieldOptionsContainer);
+                    }
+                }
+            }
+        });
+    }
+    
+    // Handle field type changes in add form
+    if (fieldType && fieldOptionsContainer) {
+        fieldType.addEventListener('change', function() {
+            updateFieldOptionsVisibility(this.value, fieldOptionsContainer);
+        });
+        
+        // Set initial state
+        updateFieldOptionsVisibility(fieldType.value, fieldOptionsContainer);
+    }
+    
+    // Handle field type changes in edit form
+    if (editFieldType && editFieldOptionsContainer) {
+        editFieldType.addEventListener('change', function() {
+            updateFieldOptionsVisibility(this.value, editFieldOptionsContainer);
         });
     }
     
@@ -81,26 +163,73 @@ document.addEventListener('DOMContentLoaded', function() {
      * Update price input based on price type
      */
     function updatePriceInput(type, prefixElement, suffixElement) {
+        // Get the price value input element
+        const priceValueInput = prefixElement.parentElement.querySelector('input');
+        
+        // Handle different price types
         switch(type) {
             case 'fixed':
                 prefixElement.textContent = '$';
                 suffixElement.textContent = '';
+                priceValueInput.disabled = false;
+                priceValueInput.required = true;
+                priceValueInput.parentElement.style.display = 'flex';
                 break;
             case 'percentage':
                 prefixElement.textContent = '';
                 suffixElement.textContent = '%';
+                priceValueInput.disabled = false;
+                priceValueInput.required = true;
+                priceValueInput.parentElement.style.display = 'flex';
                 break;
             case 'hourly':
                 prefixElement.textContent = '$';
                 suffixElement.textContent = '/hr';
+                priceValueInput.disabled = false;
+                priceValueInput.required = true;
+                priceValueInput.parentElement.style.display = 'flex';
                 break;
             case 'per_unit':
                 prefixElement.textContent = '$';
                 suffixElement.textContent = '/unit';
+                priceValueInput.disabled = false;
+                priceValueInput.required = true;
+                priceValueInput.parentElement.style.display = 'flex';
+                break;
+            case 'free':
+                // For free items, hide the price value input and set it to 0
+                priceValueInput.value = '0';
+                priceValueInput.disabled = true;
+                priceValueInput.required = false;
+                // Optional: Hide the entire price value input group
+                // priceValueInput.parentElement.style.display = 'none';
                 break;
             default:
                 prefixElement.textContent = '$';
                 suffixElement.textContent = '';
+                priceValueInput.disabled = false;
+                priceValueInput.required = true;
+                priceValueInput.parentElement.style.display = 'flex';
+        }
+    }
+    
+    /**
+     * Update field options visibility based on field type
+     */
+    function updateFieldOptionsVisibility(fieldType, optionsContainer) {
+        // Only show options for select field type
+        if (fieldType === 'select') {
+            optionsContainer.style.display = 'block';
+            const optionsInput = optionsContainer.querySelector('input');
+            if (optionsInput) {
+                optionsInput.required = true;
+            }
+        } else {
+            optionsContainer.style.display = 'none';
+            const optionsInput = optionsContainer.querySelector('input');
+            if (optionsInput) {
+                optionsInput.required = false;
+            }
         }
     }
     
@@ -129,6 +258,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editMaxQuantity').value = data.max_quantity;
                 document.getElementById('editItemOptional').checked = data.is_optional;
                 document.getElementById('editItemActive').checked = data.is_active;
+                
+                // Set field type and options
+                if (data.field_type) {
+                    document.getElementById('editFieldType').value = data.field_type;
+                }
+                
+                // Handle field options for select type
+                if (data.field_options && Array.isArray(data.field_options)) {
+                    document.getElementById('editFieldOptions').value = data.field_options.join(', ');
+                } else if (data.field_options && typeof data.field_options === 'string') {
+                    document.getElementById('editFieldOptions').value = data.field_options;
+                }
+                
+                // Update field options visibility
+                updateFieldOptionsVisibility(data.field_type || 'text', editFieldOptionsContainer);
+                
+                // Set field type state based on price type
+                if (data.price_type === 'free') {
+                    // Enable field type selection for free items
+                    document.getElementById('editFieldType').disabled = false;
+                    document.querySelector('label[for="editFieldType"]').classList.remove('text-muted');
+                } else {
+                    // Force number field type for non-free items
+                    document.getElementById('editFieldType').value = 'number';
+                    document.getElementById('editFieldType').disabled = true;
+                    document.querySelector('label[for="editFieldType"]').classList.add('text-muted');
+                }
                 
                 // Update price input display
                 updatePriceInput(data.price_type, editPricePrefix, editPriceSuffix);

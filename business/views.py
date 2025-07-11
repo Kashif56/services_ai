@@ -268,12 +268,19 @@ def add_service(request):
     business = request.user.business
     
     try:
+        # Check if service is free
+        is_free = 'is_free' in request.POST
+        
+        # If service is free, set price to 0
+        price = Decimal('0.00') if is_free else Decimal(request.POST.get('price', '0.00'))
+        
         # Create new service
         service = ServiceOffering.objects.create(
             business=business,
             name=request.POST.get('name'),
             description=request.POST.get('description', ''),
-            price=request.POST.get('price'),
+            is_free=is_free,
+            price=price,
             duration=request.POST.get('duration'),
             icon=request.POST.get('icon', 'concierge-bell'),
             color=request.POST.get('color', '#6366f1'),
@@ -310,10 +317,17 @@ def update_service(request):
         # Get service and verify it belongs to this business
         service = get_object_or_404(ServiceOffering, id=service_id, business=business)
         
+        # Check if service is free
+        is_free = 'is_free' in request.POST
+        
+        # If service is free, set price to 0
+        price = Decimal('0.00') if is_free else Decimal(request.POST.get('price', '0.00'))
+        
         # Update service fields
         service.name = request.POST.get('name')
         service.description = request.POST.get('description', '')
-        service.price = request.POST.get('price')
+        service.is_free = is_free
+        service.price = price
         service.duration = request.POST.get('duration')
         service.icon = request.POST.get('icon', 'concierge-bell')
         service.color = request.POST.get('color', '#6366f1')
@@ -396,14 +410,28 @@ def add_service_item(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         price_type = request.POST.get('price_type')
-        price_value = request.POST.get('price_value')
+        price_value = request.POST.get('price_value', '0')
         duration_minutes = request.POST.get('duration_minutes', 0)
         max_quantity = request.POST.get('max_quantity', 1)
         is_optional = 'is_optional' in request.POST
         is_active = 'is_active' in request.POST
         
+        # For free items, set price_value to 0 and allow custom field type
+        if price_type == 'free':
+            price_value = '0'
+            field_type = request.POST.get('field_type', 'text')
+        else:
+            # For non-free items, field type must be number
+            field_type = 'number'
+        
+        # Process field options for select type
+        field_options = None
+        if field_type == 'select' and request.POST.get('field_options'):
+            # Convert comma-separated string to list
+            field_options = [option.strip() for option in request.POST.get('field_options').split(',')]
+        
         # Validate required fields
-        if not name or not price_type or not price_value:
+        if not name or not price_type or (price_type != 'free' and not price_value):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('business:pricing')
         
@@ -412,6 +440,8 @@ def add_service_item(request):
             business=business,
             name=name,
             description=description,
+            field_type=field_type,
+            field_options=field_options,
             price_type=price_type,
             price_value=Decimal(price_value),
             duration_minutes=int(duration_minutes),
@@ -447,14 +477,28 @@ def edit_service_item(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         price_type = request.POST.get('price_type')
-        price_value = request.POST.get('price_value')
+        price_value = request.POST.get('price_value', '0')
         duration_minutes = request.POST.get('duration_minutes', 0)
         max_quantity = request.POST.get('max_quantity', 1)
         is_optional = 'is_optional' in request.POST
         is_active = 'is_active' in request.POST
         
+        # For free items, set price_value to 0 and allow custom field type
+        if price_type == 'free':
+            price_value = '0'
+            field_type = request.POST.get('field_type', 'text')
+        else:
+            # For non-free items, field type must be number
+            field_type = 'number'
+        
+        # Process field options for select type
+        field_options = None
+        if field_type == 'select' and request.POST.get('field_options'):
+            # Convert comma-separated string to list
+            field_options = [option.strip() for option in request.POST.get('field_options').split(',')]
+        
         # Validate required fields
-        if not item_id or not name or not price_type or not price_value:
+        if not item_id or not name or not price_type or (price_type != 'free' and not price_value):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('business:pricing')
         
@@ -467,6 +511,8 @@ def edit_service_item(request):
         # Update service item
         service_item.name = name
         service_item.description = description
+        service_item.field_type = field_type
+        service_item.field_options = field_options
         service_item.price_type = price_type
         service_item.price_value = Decimal(price_value)
         service_item.duration_minutes = int(duration_minutes)
@@ -582,7 +628,7 @@ def get_service_details(request, service_id):
     """
     # Check if user has a business
     if not hasattr(request.user, 'business'):
-        return JsonResponse({'error': 'Please register your business first'}, status=403)
+        return JsonResponse({'error': 'No business found'}, status=403)
     
     business = request.user.business
     
@@ -592,10 +638,11 @@ def get_service_details(request, service_id):
         
         # Return service data as JSON
         return JsonResponse({
-            'id': str(service.id),
+            'id': service.id,
             'name': service.name,
             'description': service.description or '',
-            'price': float(service.price),
+            'is_free': service.is_free,
+            'price': str(service.price),
             'duration': service.duration,
             'icon': service.icon,
             'color': service.color,

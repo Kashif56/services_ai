@@ -1,0 +1,51 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}Payment Cancelled{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i> Payment Cancelled</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-times-circle text-warning" style="font-size: 5rem;"></i>
+                    </div>
+                    
+                    <h4>Payment Process Cancelled</h4>
+                    <p class="lead">Your payment was not completed and you have not been charged.</p>
+                    <p>If you encountered any issues during the payment process, please try again or contact support.</p>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'licence:purchase_licence' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-redo me-2"></i> Try Again
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'licence:licence_home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Back to License Home
+                        </a>
+                        <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/licence/licence.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/licence/payment_cancel.js' %}"></script>
+{% endblock %}
