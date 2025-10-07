@@ -14,7 +14,7 @@
 </div>
 
 <div class="auth-card-body">
-    <form method="post" action="{% url 'accounts:login' %}" class="needs-validation" novalidate>
+    <form method="post" action="{% url 'accounts:login' %}" class="needs-validation">
         {% csrf_token %}
         
         {% if next %}
@@ -65,7 +65,7 @@
         {% endif %}
         
         <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary auth-btn">
+        <button type="submit" class="btn btn-primary w-100">
             <span>Log In</span>
         </button>
     </form>

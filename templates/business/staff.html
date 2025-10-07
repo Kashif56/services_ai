@@ -16,7 +16,7 @@
             <p class="text-muted">Manage your team members and their availability</p>
         </div>
         <div>
-            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#manageRolesModal">
+            <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#manageRolesModal">
                 <i class="fas fa-tags me-2"></i>Manage Roles
             </button>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal">
@@ -32,7 +32,10 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Team Members</h5>
-                    <span class="badge">{{ staff_members|length }} Members</span>
+                    <div>
+                       
+                        <a href="{% url 'business:staff_accounts' %}" class="btn btn-secondary">Manage Accounts</a>
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if staff_members %}
@@ -56,6 +59,8 @@
                                         {% for role in staff.roles.all %}
                                         {% if not forloop.first %} | {% endif %}
                                         {{ role.name }}
+                                        {% empty %}
+                                        No Role
                                         {% endfor %}
                                     </p>
                                     <p class="card-text small mb-3">
@@ -65,7 +70,7 @@
                                         {% endif %}
                                     </p>
                                     <div class="staff-card-footer">
-                                        <a href="{% url 'business:staff_detail' staff.id %}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{% url 'business:staff_detail' staff.id %}" class="btn btn-sm btn-outline-secondary">
                                             <i class="fas fa-user-cog me-1"></i> Manage
                                         </a>
                                     </div>
@@ -77,12 +82,7 @@
                                             {{ booking_count }} Booking{{ booking_count|pluralize }}
                                             {% endwith %}
                                         </small>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input toggle-staff-status" type="checkbox" 
-                                                   id="staffStatus{{ staff.id }}" 
-                                                   data-staff-id="{{ staff.id }}" 
-                                                   {% if staff.is_active %}checked{% endif %}>
-                                        </div>
+                                       
                                     </div>
                                 </div>
                             </div>

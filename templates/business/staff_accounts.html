@@ -1,0 +1,376 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Staff Accounts | {{ business.name }} | Services AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/business-staff-accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <a href="{% url 'business:staff' %}" class="btn">
+                    <i class="fas fa-arrow-left me-1"></i>
+                </a>
+                Staff Accounts Management</h1>
+            <p class="text-muted mb-0">Create and manage login accounts for your staff members</p>
+        </div>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary text-muted" id="listViewBtn">
+                <i class="fas fa-list"></i> List
+            </button>
+            <button type="button" class="btn btn-outline-secondary text-muted active" id="cardViewBtn">
+                <i class="fas fa-th-large"></i> Cards
+            </button>
+        </div>
+            
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Staff Accounts:</strong> Create login accounts for staff members to access their bookings and schedules. 
+        Staff users have limited access and can only view their assigned bookings.
+    </div>
+
+    <!-- Card View -->
+    <div id="cardView" class="row">
+        {% for item in staff_with_accounts %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card staff-card h-100 {% if item.has_account %}has-account{% endif %}">
+                <div class="card-body">
+                    <a href="{% url 'business:staff_detail' item.staff.id %}" class="text-decoration-none">
+                        <div class="d-flex align-items-start mb-3">
+                        
+                            <div class="staff-avatar me-3">
+                                {% if item.staff.profile_image %}
+                                <img src="{{ item.staff.profile_image.url }}" alt="{{ item.staff.get_full_name }}" class="rounded-circle" width="60" height="60">
+                                {% else %}
+                                <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: #e9ecef;">
+                                    <i class="fas fa-user fa-2x text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="">
+                                <h5 class="card-title mb-1">{{ item.staff.get_full_name }}</h5>
+                                <p class="text-muted small mb-2">
+                                    {% for role in item.staff.roles.all %}
+                                        {% if not forloop.first %} | {% endif %}
+                                        {{ role.name }}
+                                    {% empty %}
+                                        No role assigned
+                                    {% endfor %}
+                                </p>
+                                <!-- {% if item.has_account %}
+                                <span class="badge">
+                                    <i class="fas fa-check-circle me-1 text-success"></i>Has Account
+                                </span>
+                                {% else %}
+                                <span class="badge">
+                                    <i class="fas fa-times-circle me-1"></i>No Account
+                                </span>
+                                {% endif %} -->
+
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-envelope me-1"></i>{{ item.staff.email }}
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-phone me-1"></i>{{ item.staff.phone|default:"N/A" }}
+                                    </small>
+                                </div>
+                            </div>
+
+                           
+            
+                        </div>
+                    </a>
+
+                   
+
+                    {% if item.has_account %}
+                    <div class="card mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>
+                                <strong>Username:</strong> {{ item.user.username }}
+                            </small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-circle me-1 {% if item.profile.is_active and item.user.is_active %}text-success{% else %}text-danger{% endif %}"></i>
+                                <strong>Status:</strong> 
+                                {% if item.profile.is_active and item.user.is_active %}
+                                    Active
+                                {% else %}
+                                    Inactive
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-secondary reset-password-btn" 
+                                data-staff-id="{{ item.staff.id }}"
+                                data-staff-name="{{ item.staff.get_full_name }}">
+                            <i class="fas fa-key me-1"></i>Reset Password
+                        </button>
+                        <div class="btn-group gap-3" role="group">
+                            <button class="btn btn-sm btn-outline-secondary toggle-status-btn" 
+                                    data-staff-id="{{ item.staff.id }}"
+                                    data-staff-name="{{ item.staff.get_full_name }}"
+                                    data-is-active="{% if item.profile.is_active and item.user.is_active %}true{% else %}false{% endif %}">
+                                <i class="fas fa-toggle-{% if item.profile.is_active and item.user.is_active %}on{% else %}off{% endif %} me-1"></i>
+                                {% if item.profile.is_active and item.user.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-account-btn" 
+                                    data-staff-id="{{ item.staff.id }}"
+                                    data-staff-name="{{ item.staff.get_full_name }}">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="d-grid">
+                        <button class="btn btn-primary create-account-btn" 
+                                data-staff-id="{{ item.staff.id }}"
+                                data-staff-name="{{ item.staff.get_full_name }}"
+                                data-staff-email="{{ item.staff.email }}">
+                            <i class="fas fa-plus-circle me-1"></i>Create Account
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Staff Members Found</h5>
+                    <p class="text-muted">Add staff members first before creating accounts.</p>
+                    <a href="{% url 'business:staff' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Staff Member
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- List View -->
+    <div id="listView" class="d-none">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Staff Member</th>
+                                <th>Email</th>
+                                <th>Roles</th>
+                                <th>Account Status</th>
+                                <th>Username</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in staff_with_accounts %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.staff.profile_image %}
+                                        <img src="{{ item.staff.profile_image.url }}" alt="{{ item.staff.get_full_name }}" class="rounded-circle me-2" width="40" height="40">
+                                        {% else %}
+                                        <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px; background: #e9ecef;">
+                                            <i class="fas fa-user text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <strong>{{ item.staff.get_full_name }}</strong>
+                                    </div>
+                                </td>
+                                <td>{{ item.staff.email }}</td>
+                                <td>
+                                    {% for role in item.staff.roles.all %}
+                                        {% if not forloop.first %}, {% endif %}
+                                        {{ role.name }}
+                                    {% empty %}
+                                        <span class="text-muted">-</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% if item.has_account %}
+                                    <span class="badge">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        <span>Has Account</span>
+                                    </span>
+                                    {% if item.profile.is_active and item.user.is_active %}
+                                    <span class="badge">Active</span>
+                                    {% else %}
+                                    <span class="badge">Inactive</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="badge">
+                                        <i class="fas fa-times-circle me-1"></i>No Account
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.has_account %}
+                                        {{ item.user.username }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.has_account %}
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary reset-password-btn" 
+                                                data-staff-id="{{ item.staff.id }}"
+                                                data-staff-name="{{ item.staff.get_full_name }}"
+                                                title="Reset Password">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning toggle-status-btn" 
+                                                data-staff-id="{{ item.staff.id }}"
+                                                data-staff-name="{{ item.staff.get_full_name }}"
+                                                data-is-active="{% if item.profile.is_active and item.user.is_active %}true{% else %}false{% endif %}"
+                                                title="{% if item.profile.is_active and item.user.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                            <i class="fas fa-toggle-{% if item.profile.is_active and item.user.is_active %}on{% else %}off{% endif %}"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-account-btn" 
+                                                data-staff-id="{{ item.staff.id }}"
+                                                data-staff-name="{{ item.staff.get_full_name }}"
+                                                title="Delete Account">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success create-account-btn" 
+                                            data-staff-id="{{ item.staff.id }}"
+                                            data-staff-name="{{ item.staff.get_full_name }}"
+                                            data-staff-email="{{ item.staff.email }}">
+                                        <i class="fas fa-plus-circle me-1"></i>Create Account
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
+                                    <h5 class="text-muted">No Staff Members Found</h5>
+                                    <p class="text-muted">Add staff members first before creating accounts.</p>
+                                    <a href="{% url 'business:staff' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add Staff Member
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Account Modal -->
+<div class="modal fade" id="createAccountModal" tabindex="-1" aria-labelledby="createAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createAccountModalLabel">Create Staff Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createAccountForm">
+                    <input type="hidden" id="createStaffId" name="staff_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Staff Member:</strong></label>
+                        <p class="form-control-plaintext" id="createStaffName"></p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="createUsername" class="form-label">Username <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="createUsername" name="username" required>
+                        <small class="form-text text-muted">Username for login</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="createPassword" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="createPassword" name="password" required minlength="8">
+                        <small class="form-text text-muted">Minimum 8 characters</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="createConfirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="createConfirmPassword" name="confirm_password" required minlength="8">
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        The staff member will be able to login with these credentials and access their bookings.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmCreateAccount">
+                    <i class="fas fa-plus-circle me-1"></i>Create Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resetPasswordForm">
+                    <input type="hidden" id="resetStaffId" name="staff_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Staff Member:</strong></label>
+                        <p class="form-control-plaintext" id="resetStaffName"></p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="newPassword" name="new_password" required minlength="8">
+                        <small class="form-text text-muted">Minimum 8 characters</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirmNewPassword" class="form-label">Confirm New Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="confirmNewPassword" name="confirm_password" required minlength="8">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmResetPassword">
+                    <i class="fas fa-key me-1"></i>Reset Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/business-staff-accounts.js' %}"></script>
+{% endblock %}

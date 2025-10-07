@@ -1,4 +1,5 @@
 {% load static %}
+{% load user_groups %}
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -31,11 +32,25 @@
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     
     {% block extra_css %}{% endblock %}
+    
+    <!-- Staff User Full Width CSS -->
+    {% if request.user|has_group:"staff" %}
+    <style>
+        .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+        }
+        .dashboard-container {
+            padding-left: 0 !important;
+        }
+    </style>
+    {% endif %}
 </head>
 <body class="dashboard-body">
     {% csrf_token %}
     <div class="dashboard-container">
         <!-- Sidebar -->
+        {% if not request.user|has_group:"staff" %}
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="/dashboard/" class="sidebar-brand d-flex align-items-center">
@@ -79,14 +94,7 @@
                             <span>Leads</span>
                         </a>
                     </li>
-                    {% if request.user.business.configuration.invoice_enabled %}
-                    <li class="nav-item">
-                        <a href="/invoices/" class="nav-link {% if '/invoices/' in request.path %}active{% endif %}">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <span>Invoices</span>
-                        </a>
-                    </li>
-                    {% endif %}
+                  
                     <li class="nav-item">
                         <a class="nav-link {% if '/ai-agent/' in request.path %}active{% endif %}" href="#aiAgentSubmenu" data-bs-toggle="collapse" aria-expanded="{% if '/ai_agent/' in request.path %}true{% else %}false{% endif %}">
                             <i class="fas fa-robot"></i>
@@ -140,9 +148,22 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{% url 'business:staff_accounts' %}" class="nav-link {% if '/business/staff_accounts/' in request.path %}active{% endif %}">
+                            <i class="fas fa-user"></i>
+                            <span>Staff Accounts</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="/business/payment-gateways/" class="nav-link {% if '/business/payment-gateways/' in request.path %}active{% endif %}">
                             <i class="fas fa-building"></i>
                             <span>Payment Gateways</span>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a href="/business/booking-preferences/" class="nav-link {% if '/business/booking-preferences/' in request.path %}active{% endif %}">
+                            <i class="fas fa-building"></i>
+                            <span>Booking Preferences</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -160,21 +181,25 @@
                 </a>
             </div>
         </aside>
+        {% endif %}
         
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Navbar -->
             <nav class="navbar bg-secondary navbar-expand top-navbar">
                 <div class="container-fluid">
+                    {% if not request.user|has_group:"staff" %}
                     <button class="btn sidebar-toggle d-none d-lg-block" id="sidebarCollapse">
                         <i class="fas fa-bars"></i>
                     </button>
+                    {% endif %}
                     
                     <div class="page-title">
                         {% block page_title %}Dashboard{% endblock %}
                     </div>
                     
                     <ul class="navbar-nav ms-auto">
+                        {% if not request.user|has_group:"staff" %}
                         {% if has_active_licence %}
                         <li class="nav-item me-3">
                             <a href="{% url 'licence:licence_status' %}" class="nav-link">
@@ -207,6 +232,7 @@
                                 </div>
                             </div>
                         </li>
+                        {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user-circle"></i>
@@ -215,6 +241,7 @@
                                 <div class="dropdown-header">
                                     {{ request.user.get_full_name|default:request.user.username }}
                                 </div>
+                                {% if not request.user|has_group:"staff" %}
                                 <a class="dropdown-item" href="/accounts/profile/">
                                     <i class="fas fa-user-cog me-2"></i> Profile
                                 </a>
@@ -222,6 +249,7 @@
                                     <i class="fas fa-building me-2"></i> Business Settings
                                 </a>
                                 <div class="dropdown-divider"></div>
+                                {% endif %}
                                 <a class="dropdown-item" href="/accounts/logout/">
                                     <i class="fas fa-sign-out-alt me-2"></i> Logout
                                 </a>

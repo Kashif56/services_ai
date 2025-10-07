@@ -21,6 +21,11 @@ urlpatterns = [
     path('configuration/', views.business_configuration, name='configuration'),
     path('configuration/update/', views.update_business_configuration, name='update_configuration'),
     
+    # Booking preferences
+    path('booking-preferences/', views.booking_preferences, name='booking_preferences'),
+    path('event-type/<int:event_type_id>/update/', views.update_event_type, name='update_event_type'),
+    path('reminder-type/<int:reminder_type_id>/update/', views.update_reminder_type, name='update_reminder_type'),
+    
     # Custom fields management
     path('custom-fields/', views.custom_fields, name='custom_fields'),
     path('custom-field/add/', views.add_custom_field, name='add_custom_field'),
@@ -69,17 +74,24 @@ urlpatterns = [
     path('staff/update-status/', staff_views.update_staff_status, name='update_staff_status'),
     path('staff/<staff_id>/add-availability/', staff_views.add_staff_availability, name='add_staff_availability'),
     path('staff/<staff_id>/update-availability/', staff_views.update_staff_availability, name='update_staff_availability'),
-    path('staff/delete-availability/', staff_views.delete_staff_availability, name='delete_staff_availability'),
+    path('staff/delete/availability/', staff_views.delete_staff_availability, name='delete_staff_availability'),
     path('staff/<str:staff_id>/add-off-day/', staff_views.add_staff_off_day, name='add_staff_off_day'),
     path('staff/<str:staff_id>/update-weekly-off-days/', staff_views.update_weekly_off_days, name='update_weekly_off_days'),
     
     # Staff service assignment management
     path('staff/<str:staff_id>/add-service-assignment/', staff_views.add_service_assignment, name='add_service_assignment'),
     path('staff/<str:staff_id>/update-service-assignment/', staff_views.update_service_assignment, name='update_service_assignment'),
-    path('staff/<str:staff_id>/delete-service-assignment/', staff_views.delete_service_assignment, name='delete_service_assignment'),
+    path('staff/delete/service-assignment/', staff_views.delete_service_assignment, name='delete_service_assignment'),
     
     # Staff role management
-    path('staff-role/add/', views.add_staff_role, name='add_staff_role'),
-    path('staff-role/update/', views.update_staff_role, name='update_staff_role'),
-    path('staff-role/delete/', views.delete_staff_role, name='delete_staff_role'),
+    path('staff-role/add/', staff_views.add_staff_role, name='add_staff_role'),
+    path('staff-role/update/', staff_views.update_staff_role, name='update_staff_role'),
+    path('staff-role/delete/', staff_views.delete_staff_role, name='delete_staff_role'),
+    
+    # Staff account management
+    path('staff-accounts/', staff_views.staff_accounts, name='staff_accounts'),
+    path('staff-accounts/create/', staff_views.create_staff_account, name='create_staff_account'),
+    path('staff-accounts/delete/', staff_views.delete_staff_account, name='delete_staff_account'),
+    path('staff-accounts/toggle-status/', staff_views.toggle_staff_account_status, name='toggle_staff_account_status'),
+    path('staff-accounts/reset-password/', staff_views.reset_staff_account_password, name='reset_staff_account_password'),
 ]

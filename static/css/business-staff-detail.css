@@ -7,23 +7,21 @@
 }
 
 #staffDetailTabs .nav-link {
-    color: var(--color-text-secondary);
+    color: var(--text-muted);
     border: none;
     border-bottom: 3px solid transparent;
     padding: 0.75rem 1.5rem;
-    font-weight: 500;
     transition: all 0.3s ease;
 }
 
 #staffDetailTabs .nav-link:hover {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary-light);
+    color: var(--text-light);
 }
 
 #staffDetailTabs .nav-link.active {
-    color: var(--color-primary);
-    background-color: transparent;
-    border-bottom-color: var(--color-primary);
+    color: var(--text-light);
+    font-weight: 600 !important;
+    background-color: var(--secondary);
 }
 
 #staffDetailTabs .nav-link i {
@@ -132,88 +130,7 @@
     border-bottom: 2px solid #4F46E5;
 }
 
-/* Table styles */
-.table {
-    color: #E2E8F0; /* Light text for dark background */
-}
 
-.table th {
-    font-weight: 600;
-    background-color: #1E293B; /* Dark header background */
-    border-color: #475569; /* Darker border */
-}
-
-.table td {
-    vertical-align: middle;
-    border-color: #475569; /* Darker border */
-}
-
-/* Card styles */
-.card {
-    border: none;
-    background-color: #1E293B; /* Dark card background */
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
-    margin-bottom: 1.5rem;
-}
-
-.card-header {
-    background-color: #0F172A; /* Darker header background */
-    border-bottom: 1px solid #475569; /* Darker border */
-    font-weight: 500;
-    color: #E2E8F0; /* Light text */
-}
-
-/* Form styles */
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    color: #E2E8F0; /* Light text */
-}
-
-.form-control {
-    background-color: #1E293B; /* Dark input background */
-    border-color: #475569; /* Darker border */
-    color: #E2E8F0; /* Light text */
-}
-
-.form-control:focus {
-    background-color: #1E293B;
-    border-color: #4F46E5;
-    color: #E2E8F0;
-}
-
-.form-control:disabled {
-    background-color: #0F172A; /* Darker background when disabled */
-    opacity: 0.8;
-    color: #CBD5E1; /* Slightly dimmed text */
-}
-
-.form-check-input {
-    background-color: #1E293B;
-    border-color: #475569;
-}
-
-.form-check-input:checked {
-    background-color: #4F46E5;
-    border-color: #4F46E5;
-}
-
-/* Modal styles */
-.modal-content {
-    background-color: #1E293B; /* Dark modal background */
-    border-color: #475569; /* Darker border */
-}
-
-.modal-header {
-    background-color: #0F172A; /* Darker header background */
-    border-bottom: 1px solid #475569; /* Darker border */
-    color: #E2E8F0; /* Light text */
-}
-
-.modal-footer {
-    background-color: #0F172A; /* Darker footer background */
-    border-top: 1px solid #475569; /* Darker border */
-}
 
 /* Off days card */
 .list-group-item {
@@ -223,6 +140,64 @@
     background-color: #1E293B; /* Dark background */
     border-color: #475569; /* Darker border */
     color: #E2E8F0; /* Light text */
+}
+
+/* Weekly Calendar Styles */
+.list-group-item.bg-light {
+    background-color: rgba(var(--primary-rgb), 0.05) !important;
+    border-left: 3px solid var(--primary);
+}
+
+.list-group-item {
+    padding: 1rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(var(--primary-rgb), 0.03);
+}
+
+/* Service Radio Button Styles */
+.service-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.service-radio-item {
+    position: relative;
+}
+
+.service-radio-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.service-radio-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0;
+}
+
+.service-radio-label:hover {
+    transform: translateX(4px);
+}
+
+.service-radio-input:checked + .service-radio-label {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--text-light) !important;
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.4);
+}
+
+.service-radio-input:focus + .service-radio-label {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 /* Responsive adjustments */

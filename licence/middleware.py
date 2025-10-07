@@ -47,6 +47,14 @@ class LicenceMiddleware:
         
         # Check if the user is authenticated
         if request.user.is_authenticated:
+            # Skip licence check for staff and customer users
+            try:
+                user_groups = request.user.groups.values_list('name', flat=True)
+                if 'staff' in user_groups or 'customer' in user_groups:
+                    return self.get_response(request)
+            except Exception:
+                pass
+            
             # Skip check for exempt paths
             for path in exempt_paths:
                 if request.path in path:

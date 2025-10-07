@@ -36,8 +36,7 @@
     color: var(--text-light) !important;
 }
 .btn-secondary:hover, .btn-secondary:focus {
-    background-color: var(--secondary-dark) !important;
-    border-color: var(--secondary-dark) !important;
+    color: white !important;
 }
 .btn-outline-secondary{
     color: var(--text-light) !important;

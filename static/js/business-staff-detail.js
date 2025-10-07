@@ -1,5 +1,38 @@
 // Staff Detail Page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle tab navigation with URL hash
+    const handleTabHash = function() {
+        const hash = window.location.hash;
+        if (hash) {
+            // Find the tab button with matching data-bs-target
+            const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (tabButton) {
+                // Trigger Bootstrap tab
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        }
+    };
+    
+    // Handle hash on page load
+    handleTabHash();
+    
+    // Add hash to URL when tab is clicked
+    const tabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function(event) {
+            // Get the target tab pane id
+            const targetId = event.target.getAttribute('data-bs-target');
+            if (targetId) {
+                // Update URL hash without scrolling
+                history.replaceState(null, null, targetId);
+            }
+        });
+    });
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('hashchange', handleTabHash);
+    
     // Edit profile functionality
     const editStaffBtn = document.getElementById('editStaffBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
@@ -141,7 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const specificFields = document.getElementById('specificFields');
     const weekdayInput = document.getElementById('weekday');
     const weekdayDisplayInput = document.getElementById('weekdayDisplay');
-    const specificDateInput = document.getElementById('specificDate');
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
     const addModalTitle = document.getElementById('addAvailabilityModalLabel');
     
     // Initialize Bootstrap modal instance
@@ -171,8 +205,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 weekdayInput.value = weekdayNum;
                 weekdayDisplayInput.value = weekdayName;
                 
-                // Make specific date not required
-                specificDateInput.required = false;
+                // Make date fields not required for weekly, time fields required
+                if (fromDateInput) fromDateInput.required = false;
+                if (toDateInput) toDateInput.required = false;
+                const startTimeField = document.getElementById('startTime');
+                const endTimeField = document.getElementById('endTime');
+                if (startTimeField) startTimeField.required = true;
+                if (endTimeField) endTimeField.required = true;
                 
                 // Reset form
                 addAvailabilityForm.reset();
@@ -192,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addSpecificDateBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 // Reset modal title
-                addModalTitle.textContent = 'Add Specific Date Availability';
+                addModalTitle.textContent = 'Add Holiday/Off Day';
                 
                 // Set availability type to specific
                 availabilityType.value = 'specific';
@@ -201,8 +240,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 weeklyFields.style.display = 'none';
                 specificFields.style.display = 'block';
                 
-                // Make specific date required
-                specificDateInput.required = true;
+                // Make from_date and to_date required, time fields not required
+                if (fromDateInput) fromDateInput.required = true;
+                if (toDateInput) toDateInput.required = true;
+                const startTimeField = document.getElementById('startTime');
+                const endTimeField = document.getElementById('endTime');
+                if (startTimeField) startTimeField.required = false;
+                if (endTimeField) endTimeField.required = false;
                 
                 // Reset form
                 addAvailabilityForm.reset();
@@ -241,30 +285,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Set form values
                 editAvailId.value = availId;
                 
+                const editWeeklyTimeFields = document.getElementById('editWeeklyTimeFields');
+                
                 // Determine which fields to show based on availability type
                 if (availType === 'weekly') {
                     editWeeklyFields.style.display = 'block';
                     editSpecificFields.style.display = 'none';
+                    editWeeklyTimeFields.style.display = 'block';
                     
                     // Set weekday display and hidden value
                     const weekdayNum = this.dataset.weekday;
                     const weekdayName = getWeekdayName(weekdayNum);
                     editWeekday.value = weekdayNum;
                     editWeekdayDisplay.value = weekdayName;
+                    
+                    editStartTime.value = this.dataset.startTime;
+                    editEndTime.value = this.dataset.endTime;
+                    editOffDay.checked = this.dataset.offDay === 'true';
+                    
+                    // Trigger the change event to update required fields
+                    if (editOffDay.checked) {
+                        const event = new Event('change');
+                        editOffDay.dispatchEvent(event);
+                    }
                 } else {
+                    // Specific date (holiday)
                     editWeeklyFields.style.display = 'none';
                     editSpecificFields.style.display = 'block';
+                    editWeeklyTimeFields.style.display = 'none';
+                    
                     editSpecificDate.value = this.dataset.specificDate;
-                }
-                
-                editStartTime.value = this.dataset.startTime;
-                editEndTime.value = this.dataset.endTime;
-                editOffDay.checked = this.dataset.offDay === 'true';
-                
-                // Trigger the change event to update required fields
-                if (editOffDay.checked) {
-                    const event = new Event('change');
-                    editOffDay.dispatchEvent(event);
+                    
+                    // Set notes if available
+                    const editNotes = document.getElementById('editNotes');
+                    if (editNotes && this.dataset.notes) {
+                        editNotes.value = this.dataset.notes;
+                    }
                 }
                 
                 // Show modal using Bootstrap
@@ -289,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (confirm('Are you sure you want to delete this availability?')) {
                     // Send AJAX request to delete availability
-                    fetch('/business/staff/delete-availability/', {
+                    fetch('/business/staff/delete/availability/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -341,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const editServiceAssignmentModal = document.getElementById('editServiceAssignmentModal');
     const editServiceAssignmentForm = document.getElementById('editServiceAssignmentForm');
     const editAssignmentId = document.getElementById('editAssignmentId');
-    const editServiceOffering = document.getElementById('editServiceOffering');
     const editIsPrimary = document.getElementById('editIsPrimary');
     
     // Initialize Bootstrap modal instance for edit service assignment
@@ -360,7 +415,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set form values
                 editAssignmentId.value = assignmentId;
-                editServiceOffering.value = serviceId;
+                
+                // Select the correct radio button
+                const radioButton = document.getElementById(`edit_service_${serviceId}`);
+                if (radioButton) {
+                    radioButton.checked = true;
+                }
+                
                 editIsPrimary.checked = isPrimary;
                 
                 // Show modal
@@ -376,10 +437,13 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteServiceAssignmentButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const assignmentId = this.dataset.assignmentId;
+                console.log(this.dataset);
+                
+                console.log("Assignment Id: ", assignmentId)
                 
                 if (confirm('Are you sure you want to remove this service assignment?')) {
                     // Send AJAX request to delete service assignment
-                    fetch('/business/staff/delete-service-assignment/', {
+                    fetch('/business/staff/delete/service-assignment/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

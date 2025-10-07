@@ -18,6 +18,112 @@ class BookingStatus(models.TextChoices):
     NO_SHOW = 'no_show', 'No Show'
 
 
+class BookingEventType(models.Model):
+    """
+    Configurable event types that businesses can enable/disable for their booking workflow.
+    Allows businesses to customize which actions are available for their bookings.
+    """
+    PREDEFINED_TYPES = (
+        ('created', 'Booking Created', 'fa-plus-circle', 'primary', True),
+        ('confirmed', 'Booking Confirmed', 'fa-check', 'success', True),
+        ('cancelled', 'Booking Cancelled', 'fa-times', 'danger', True),
+        ('rescheduled', 'Booking Rescheduled', 'fa-calendar-alt', 'warning', True),
+        ('completed', 'Booking Completed', 'fa-check-double', 'success', True),
+        ('no_show', 'Marked as No Show', 'fa-user-times', 'dark', True),
+        ('status_changed', 'Status Changed', 'fa-info-circle', 'secondary', False),
+        ('note_added', 'Note Added', 'fa-sticky-note', 'info', False),
+        ('payment_received', 'Payment Received', 'fa-dollar-sign', 'success', False),
+        ('reminder_sent', 'Reminder Sent', 'fa-bell', 'info', False),
+        ('follow_up', 'Follow-up Scheduled', 'fa-calendar-check', 'primary', False),
+    )
+    
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='booking_event_types')
+    event_key = models.CharField(max_length=50, help_text="Unique key for this event type")
+    name = models.CharField(max_length=100, help_text="Display name for this event type")
+    icon = models.CharField(max_length=50, default='fa-info-circle', help_text="FontAwesome icon class")
+    color = models.CharField(max_length=20, default='secondary', help_text="Bootstrap color class")
+    is_enabled = models.BooleanField(default=True, help_text="Whether this event type is active")
+    show_in_timeline = models.BooleanField(default=True, help_text="Display in booking timeline")
+    requires_reason = models.BooleanField(default=False, help_text="Requires reason/note when triggered")
+    display_order = models.IntegerField(default=0, help_text="Order in which to display")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Booking Event Type"
+        verbose_name_plural = "Booking Event Types"
+        ordering = ['business', 'display_order', 'name']
+        unique_together = ['business', 'event_key']
+    
+    def __str__(self):
+        return f"{self.business.name} - {self.name}"
+    
+    @classmethod
+    def create_default_types(cls, business):
+        """Create default event types for a new business"""
+        for idx, (key, name, icon, color, enabled) in enumerate(cls.PREDEFINED_TYPES):
+            cls.objects.get_or_create(
+                business=business,
+                event_key=key,
+                defaults={
+                    'name': name,
+                    'icon': icon,
+                    'color': color,
+                    'is_enabled': enabled,
+                    'requires_reason': key in ['cancelled', 'rescheduled', 'no_show'],
+                    'display_order': idx
+                }
+            )
+
+
+class ReminderType(models.Model):
+    """
+    Configurable reminder types that businesses can enable/disable.
+    Allows businesses to choose which reminder channels they want to use.
+    """
+    PREDEFINED_TYPES = (
+        ('sms', 'SMS Reminder', 'fa-sms', True),
+        ('email', 'Email Reminder', 'fa-envelope', True),
+        ('voice', 'Voice Call Reminder', 'fa-phone', False),
+        ('whatsapp', 'WhatsApp Reminder', 'fa-whatsapp', False),
+        ('push', 'Push Notification', 'fa-bell', False),
+    )
+    
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='reminder_types')
+    reminder_key = models.CharField(max_length=50, help_text="Unique key for this reminder type")
+    name = models.CharField(max_length=100, help_text="Display name for this reminder type")
+    icon = models.CharField(max_length=50, default='fa-bell', help_text="FontAwesome icon class")
+    is_enabled = models.BooleanField(default=True, help_text="Whether this reminder type is active")
+    default_hours_before = models.IntegerField(default=24, help_text="Default hours before appointment to send")
+    display_order = models.IntegerField(default=0, help_text="Order in which to display")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Reminder Type"
+        verbose_name_plural = "Reminder Types"
+        ordering = ['business', 'display_order', 'name']
+        unique_together = ['business', 'reminder_key']
+    
+    def __str__(self):
+        return f"{self.business.name} - {self.name}"
+    
+    @classmethod
+    def create_default_types(cls, business):
+        """Create default reminder types for a new business"""
+        for idx, (key, name, icon, enabled) in enumerate(cls.PREDEFINED_TYPES):
+            cls.objects.get_or_create(
+                business=business,
+                reminder_key=key,
+                defaults={
+                    'name': name,
+                    'icon': icon,
+                    'is_enabled': enabled,
+                    'display_order': idx
+                }
+            )
+
+
 # ServiceType model has been replaced by ServiceOffering in business.models
 
 
@@ -308,6 +414,17 @@ class Booking(models.Model):
         if overlapping.exists():
             raise ValidationError("This booking overlaps with an existing booking")
     
+
+    def get_service_duration(self):
+        duration = 0
+        duration += self.service_offering.duration
+
+        for item in self.service_items.all():
+            duration += item.service_item.duration_minutes * item.quantity
+        
+        return duration
+
+    
     def save(self, *args, **kwargs):
         # Update lead status when booking is created or updated
         if self.lead and self.status == BookingStatus.CONFIRMED:
@@ -596,18 +713,39 @@ class BookingField(models.Model):
         return None
 
 
+class BookingEvent(models.Model):
+    """
+    Tracks all events in a booking's timeline (creation, confirmation, cancellation, reschedule, etc.)
+    Now uses configurable BookingEventType for flexibility.
+    """
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='events')
+    event_type = models.ForeignKey('BookingEventType', on_delete=models.PROTECT, related_name='events', help_text="Type of event")
+    description = models.TextField(help_text="Description of the event")
+    reason = models.TextField(blank=True, null=True, help_text="Reason for cancellation or reschedule")
+    old_date = models.DateField(blank=True, null=True, help_text="Previous date for reschedule events")
+    old_start_time = models.TimeField(blank=True, null=True, help_text="Previous start time for reschedule events")
+    old_end_time = models.TimeField(blank=True, null=True, help_text="Previous end time for reschedule events")
+    new_date = models.DateField(blank=True, null=True, help_text="New date for reschedule events")
+    new_start_time = models.TimeField(blank=True, null=True, help_text="New start time for reschedule events")
+    new_end_time = models.TimeField(blank=True, null=True, help_text="New end time for reschedule events")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Booking Event"
+        verbose_name_plural = "Booking Events"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.booking} - {self.event_type.name} - {self.created_at}"
+
+
 class BookingReminder(models.Model):
     """
     Tracks reminders sent for bookings.
+    Now uses configurable ReminderType for flexibility.
     """
-    REMINDER_TYPE_CHOICES = (
-        ('sms', 'SMS'),
-        ('email', 'Email'),
-        ('voice', 'Voice Call'),
-    )
-    
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='reminders')
-    reminder_type = models.CharField(max_length=10, choices=REMINDER_TYPE_CHOICES)
+    reminder_type = models.ForeignKey('ReminderType', on_delete=models.PROTECT, related_name='reminders', help_text="Type of reminder")
     scheduled_time = models.DateTimeField()
     sent_time = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=(
@@ -624,7 +762,7 @@ class BookingReminder(models.Model):
         ordering = ['-scheduled_time']
     
     def __str__(self):
-        return f"{self.booking} - {self.get_reminder_type_display()} - {self.status}"
+        return f"{self.booking} - {self.reminder_type.name} - {self.status}"
     
     def mark_sent(self, external_id=None):
         """

@@ -22,7 +22,8 @@
     --text-dark: #111827;
     --text-secondary: #cecece;
     --text-light: #f9fafb;
-    --muted-text: #cfcfcf;
+    --muted-text: #cecece;
+    --text-muted: var(--muted-text);
 
 
     
@@ -139,8 +140,8 @@ small, .text-small {
 .badge{
     border: 1px solid var(--border-color) !important;
     border-radius: 0.375rem !important;
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.8rem !important;
+    padding: 0.3rem 0.6rem !important;
+    font-size: 0.9rem !important;
     font-weight: 500 !important;
     display: inline-block;
     text-align: center;
@@ -148,6 +149,18 @@ small, .text-small {
     vertical-align: middle;
     color: var(--muted-text) !important;
 
+}
+
+.badge-md{
+    padding: 0.4rem 0.8rem !important;
+    font-size: 1rem !important;
+    border-radius: 0.4rem !important;
+}
+
+.badge-lg{
+    padding: 0.6rem 1.2rem !important;
+    font-size: 1.2rem !important;
+    border-radius: 0.5rem !important;
 }
 
 
@@ -164,6 +177,26 @@ small, .text-small {
 .bg-light{
     background-color: var(--muted-text) !important;
     color: var(--text-light) !important;
+}
+
+.bg-success{
+    background-color: var(--success) !important;
+    color: var(--text-light) !important;
+}
+
+.bg-warning{
+    background-color: var(--warning) !important;
+    color: black !important;
+}
+
+.bg-danger{
+    background-color: var(--error) !important;
+    color: var(--text-light) !important;
+}
+
+.bg-info{
+    background-color: var(--info) !important;
+    color: black !important;
 }
 
 

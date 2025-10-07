@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db import models
 from business.models import ServiceOffering, BusinessCustomField, ServiceItem, ServiceOfferingItem, Industry, IndustryField
@@ -12,6 +13,7 @@ import json
 import datetime
 from decimal import Decimal
 from .availability import check_timeslot_availability
+from business.utils import get_user_business
 
 # Create your views here.
 @login_required
@@ -574,7 +576,9 @@ def edit_booking(request, booking_id):
 @login_required
 def booking_detail(request, booking_id):
     """View for displaying detailed information about a booking"""
-    business = getattr(request.user, 'business', None)
+
+    
+    business = get_user_business(request.user)
     if not business:
         messages.error(request, 'Please register your business first.')
         return redirect('business:register')
@@ -638,40 +642,45 @@ def booking_detail(request, booking_id):
         
         print(f"Total price: {total_price}")
         
-        # Create a timeline of booking events
-        timeline = [
-            {
-                'timestamp': booking.created_at,
-                'type': 'primary',
-                'icon': 'fa-plus-circle',
-                'description': 'Booking created'
-            }
-        ]
+        # Get booking events for timeline (only show enabled event types)
+        from .models import BookingEvent, BookingEventType
+        booking_events = booking.events.select_related('event_type').filter(
+            event_type__show_in_timeline=True
+        ).order_by('-created_at')
         
-        # Add status changes to timeline if applicable
-        if booking.status != 'pending':
-            status_type_map = {
-                'confirmed': 'success',
-                'cancelled': 'danger',
-                'completed': 'success',
-                'rescheduled': 'warning',
-                'no_show': 'dark'
-            }
-            timeline.append({
-                'timestamp': booking.updated_at,
-                'type': status_type_map.get(booking.status, 'secondary'),
-                'icon': {
-                    'confirmed': 'fa-check',
-                    'cancelled': 'fa-times',
-                    'completed': 'fa-check-double',
-                    'rescheduled': 'fa-calendar-alt',
-                    'no_show': 'fa-user-times'
-                }.get(booking.status, 'fa-info-circle'),
-                'description': f'Booking {booking.status}'
-            })
+        # Build timeline from events
+        timeline = []
         
-        # Sort timeline by date
-        timeline = sorted(timeline, key=lambda x: x['timestamp'], reverse=True)
+        for event in booking_events:
+            timeline_item = {
+                'event_type': event.event_type.event_key,
+                'event_name': event.event_type.name,
+                'timestamp': event.created_at,
+                'type': event.event_type.color,
+                'icon': event.event_type.icon,
+                'description': event.description,
+                'reason': event.reason
+            }
+            
+            # Add reschedule details if applicable
+            if event.event_type.event_key == 'rescheduled' and event.old_date:
+                timeline_item['old_datetime'] = f"{event.old_date} {event.old_start_time.strftime('%I:%M %p') if event.old_start_time else ''}"
+                timeline_item['new_datetime'] = f"{event.new_date} {event.new_start_time.strftime('%I:%M %p') if event.new_start_time else ''}"
+            
+            timeline.append(timeline_item)
+        
+        # Get enabled event types for action buttons
+        enabled_event_types = BookingEventType.objects.filter(
+            business=business,
+            is_enabled=True
+        ).order_by('display_order')
+        
+        # Get enabled reminder types
+        from .models import ReminderType
+        enabled_reminder_types = ReminderType.objects.filter(
+            business=business,
+            is_enabled=True
+        ).order_by('display_order')
         
         # Get invoice and payment information
         from invoices.models import Invoice, Payment
@@ -697,10 +706,13 @@ def booking_detail(request, booking_id):
             'has_paid_items': has_paid_items,
             'total_price': total_price,
             'timeline': timeline,
+            'enabled_event_types': enabled_event_types,
+            'enabled_reminder_types': enabled_reminder_types,
             'invoice': invoice,
             'payments': payments,
             'total_paid': total_paid,
-            'balance_due': balance_due
+            'balance_due': balance_due,
+            'duration': booking.get_service_duration()
         })
        
     except Booking.DoesNotExist:
@@ -879,3 +891,285 @@ def check_availability(request):
     print("Availability result:", availability_result)
     
     return JsonResponse(availability_result)
+
+@login_required
+@require_http_methods(["POST"])
+def cancel_booking(request, booking_id):
+    """
+    Cancel a booking with reason
+    """
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({'success': False, 'message': 'Business not found'}, status=404)
+    
+    try:
+        booking = Booking.objects.get(id=booking_id, business=business)
+        
+        # Check if booking can be cancelled (must be at least 24 hours before appointment)
+        from datetime import datetime, timedelta
+        booking_datetime = timezone.make_aware(datetime.combine(booking.booking_date, booking.start_time))
+        now = timezone.now()
+        hours_until_booking = (booking_datetime - now).total_seconds() / 3600
+        
+        if hours_until_booking < 24:
+            return JsonResponse({
+                'success': False,
+                'message': 'Cannot cancel booking less than 24 hours before appointment time'
+            }, status=400)
+        
+        # Get cancellation reason from request
+        data = json.loads(request.body)
+        reason = data.get('reason', '')
+        
+        if not reason:
+            return JsonResponse({
+                'success': False,
+                'message': 'Cancellation reason is required'
+            }, status=400)
+        
+        # Update booking status
+        booking.status = BookingStatus.CANCELLED
+        booking.cancellation_reason = reason
+        booking.save()
+        
+        # Create booking event
+        from .models import BookingEvent, BookingEventType
+        cancelled_event_type = BookingEventType.objects.filter(
+            business=business,
+            event_key='cancelled',
+            is_enabled=True
+        ).first()
+        
+        if cancelled_event_type:
+            BookingEvent.objects.create(
+                booking=booking,
+                event_type=cancelled_event_type,
+                description=f'Booking cancelled',
+                reason=reason
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Booking cancelled successfully'
+        })
+        
+    except Booking.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Booking not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@login_required
+def get_available_timeslots(request, booking_id):
+    """
+    Get available timeslots for a specific date for rescheduling
+    """
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({'success': False, 'message': 'Business not found'}, status=404)
+    
+    try:
+        booking = Booking.objects.get(id=booking_id, business=business)
+        
+        # Get date from request
+        date_str = request.GET.get('date')
+        if not date_str:
+            return JsonResponse({'success': False, 'message': 'Date is required'}, status=400)
+        
+        from datetime import datetime, timedelta
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Get booking duration
+        duration_minutes = booking.get_service_duration()
+        
+        # Get assigned staff member
+        staff_assignment = booking.staff_assignments.first()
+        if not staff_assignment:
+            return JsonResponse({'success': False, 'message': 'No staff assigned to booking'}, status=400)
+        
+        staff_member = staff_assignment.staff_member
+        
+        # Get staff availability for the selected date
+        from .models import StaffAvailability, AVAILABILITY_TYPE, WEEKDAY_CHOICES
+        
+        weekday = date_obj.weekday()
+        
+        # Check for specific date availability/unavailability first
+        specific_availabilities = StaffAvailability.objects.filter(
+            staff_member=staff_member,
+            availability_type=AVAILABILITY_TYPE.SPECIFIC,
+            specific_date=date_obj
+        )
+        
+        if specific_availabilities.exists():
+            # Check if it's an off day
+            if specific_availabilities.filter(off_day=True).exists():
+                return JsonResponse({
+                    'success': True,
+                    'timeslots': [],
+                    'message': 'Staff member is not available on this date'
+                })
+            # Use specific availability
+            availabilities = specific_availabilities.filter(off_day=False)
+        else:
+            # Use weekly availability
+            availabilities = StaffAvailability.objects.filter(
+                staff_member=staff_member,
+                availability_type=AVAILABILITY_TYPE.WEEKLY,
+                weekday=weekday,
+                off_day=False
+            )
+        
+        if not availabilities.exists():
+            return JsonResponse({
+                'success': True,
+                'timeslots': [],
+                'message': 'No availability set for this day'
+            })
+        
+        # Generate timeslots
+        timeslots = []
+        for availability in availabilities:
+            start_time = availability.start_time
+            end_time = availability.end_time
+            
+            # Generate 30-minute intervals
+            current_time = datetime.combine(date_obj, start_time)
+            end_datetime = datetime.combine(date_obj, end_time)
+            
+            while current_time + timedelta(minutes=duration_minutes) <= end_datetime:
+                slot_start = current_time.time()
+                slot_end = (current_time + timedelta(minutes=duration_minutes)).time()
+                
+                # Check if this slot conflicts with existing bookings
+                conflicting_bookings = Booking.objects.filter(
+                    business=business,
+                    booking_date=date_obj,
+                    start_time__lt=slot_end,
+                    end_time__gt=slot_start,
+                    status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.RESCHEDULED]
+                ).exclude(id=booking_id)
+                
+                # Check if staff has conflicting bookings
+                from .models import BookingStaffAssignment
+                staff_conflicts = BookingStaffAssignment.objects.filter(
+                    staff_member=staff_member,
+                    booking__booking_date=date_obj,
+                    booking__start_time__lt=slot_end,
+                    booking__end_time__gt=slot_start,
+                    booking__status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.RESCHEDULED]
+                ).exclude(booking_id=booking_id)
+                
+                is_available = not conflicting_bookings.exists() and not staff_conflicts.exists()
+                
+                timeslots.append({
+                    'start_time': slot_start.strftime('%H:%M'),
+                    'end_time': slot_end.strftime('%H:%M'),
+                    'display_time': slot_start.strftime('%I:%M %p'),
+                    'available': is_available
+                })
+                
+                current_time += timedelta(minutes=30)
+        
+        return JsonResponse({
+            'success': True,
+            'timeslots': timeslots,
+            'duration': duration_minutes
+        })
+        
+    except Booking.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Booking not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def reschedule_booking(request, booking_id):
+    """
+    Reschedule a booking to a new date and time
+    """
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({'success': False, 'message': 'Business not found'}, status=404)
+    
+    try:
+        booking = Booking.objects.get(id=booking_id, business=business)
+        
+        # Check if booking can be rescheduled (must be at least 24 hours before appointment)
+        from datetime import datetime, timedelta
+        booking_datetime = timezone.make_aware(datetime.combine(booking.booking_date, booking.start_time))
+        now = timezone.now()
+        hours_until_booking = (booking_datetime - now).total_seconds() / 3600
+        
+        if hours_until_booking < 24:
+            return JsonResponse({
+                'success': False,
+                'message': 'Cannot reschedule booking less than 24 hours before appointment time'
+            }, status=400)
+        
+        # Get reschedule data from request
+        data = json.loads(request.body)
+        new_date_str = data.get('new_date')
+        new_start_time_str = data.get('new_start_time')
+        new_end_time_str = data.get('new_end_time')
+        reason = data.get('reason', '')
+        
+        if not all([new_date_str, new_start_time_str, new_end_time_str]):
+            return JsonResponse({
+                'success': False,
+                'message': 'New date and time are required'
+            }, status=400)
+        
+        if not reason:
+            return JsonResponse({
+                'success': False,
+                'message': 'Reschedule reason is required'
+            }, status=400)
+        
+        # Parse new date and time
+        new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+        new_start_time = datetime.strptime(new_start_time_str, '%H:%M').time()
+        new_end_time = datetime.strptime(new_end_time_str, '%H:%M').time()
+        
+        # Store old values for event tracking
+        old_date = booking.booking_date
+        old_start_time = booking.start_time
+        old_end_time = booking.end_time
+        
+        # Update booking
+        booking.booking_date = new_date
+        booking.start_time = new_start_time
+        booking.end_time = new_end_time
+        booking.status = BookingStatus.RESCHEDULED
+        booking.save()
+        
+        # Create booking event
+        from .models import BookingEvent, BookingEventType
+        rescheduled_event_type = BookingEventType.objects.filter(
+            business=business,
+            event_key='rescheduled',
+            is_enabled=True
+        ).first()
+        
+        if rescheduled_event_type:
+            BookingEvent.objects.create(
+                booking=booking,
+                event_type=rescheduled_event_type,
+                description=f'Booking rescheduled from {old_date} {old_start_time.strftime("%I:%M %p")} to {new_date} {new_start_time.strftime("%I:%M %p")}',
+                reason=reason,
+                old_date=old_date,
+                old_start_time=old_start_time,
+                old_end_time=old_end_time,
+                new_date=new_date,
+                new_start_time=new_start_time,
+                new_end_time=new_end_time
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Booking rescheduled successfully'
+        })
+        
+    except Booking.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Booking not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

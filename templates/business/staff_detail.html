@@ -28,11 +28,7 @@
                 </div>
             </div>
         </div>
-        <div>
-            <span class="badge {% if staff.is_active %}bg-success{% else %}bg-danger{% endif %} me-2">
-                {% if staff.is_active %}Active{% else %}Inactive{% endif %}
-            </span>
-        </div>
+    
     </div>
 
     <!-- Tabs Navigation -->
@@ -65,86 +61,87 @@
         <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
             <div class="row">
                 <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Staff Information</h5>
-                    <span class="badge {% if staff.is_active %}bg-success{% else %}bg-danger{% endif %}">
-                        {% if staff.is_active %}Active{% else %}Inactive{% endif %}
-                    </span>
-                </div>
-                <div class="card-body">
-                    <form id="staffProfileForm" method="post" action="{% url 'business:update_staff' staff.id %}" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <div class="text-center mb-4">
-                            <div class="staff-avatar-container">
-                                {% if staff.profile_image %}
-                                <img src="{{ staff.profile_image.url }}" alt="{{ staff.get_full_name }}" class="staff-avatar" id="avatarPreview">
-                                {% else %}
-                                <div class="avatar-placeholder" id="avatarPreview">
-                                    <i class="fas fa-user"></i>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Staff Information</h5>
+                            <span class="badge {% if staff.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if staff.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <form id="staffProfileForm" method="post" action="{% url 'business:update_staff' staff.id %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                
+                                <div class="text-center mb-4">
+                                    <div class="staff-avatar-container">
+                                        {% if staff.profile_image %}
+                                        <img src="{{ staff.profile_image.url }}" alt="{{ staff.get_full_name }}" class="staff-avatar" id="avatarPreview">
+                                        {% else %}
+                                        <div class="avatar-placeholder" id="avatarPreview">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="avatar-upload-overlay d-none" id="avatarUploadOverlay">
+                                            <label for="avatarUpload" class="mb-0">
+                                                <i class="fas fa-camera"></i>
+                                            </label>
+                                            <input type="file" name="profile_image" id="avatarUpload" class="d-none" accept="image/*">
+                                        </div>
+                                    </div>
                                 </div>
-                                {% endif %}
-                                <div class="avatar-upload-overlay d-none" id="avatarUploadOverlay">
-                                    <label for="avatarUpload" class="mb-0">
-                                        <i class="fas fa-camera"></i>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="firstName" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="firstName" name="first_name" value="{{ staff.first_name }}" disabled>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="lastName" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="lastName" name="last_name" value="{{ staff.last_name }}" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ staff.email }}" disabled>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ staff.phone|default:'' }}" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="roles" class="form-label">Roles</label>
+                                    <select class="form-select" id="roles" name="roles" multiple disabled>
+                                        {% for role in all_roles %}
+                                        <option value="{{ role.id }}" {% if role in staff.roles.all %}selected{% endif %}>{{ role.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="bio" class="form-label">Bio</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="3" disabled>{{ staff.bio|default:'' }}</textarea>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="isActive" name="is_active" {% if staff.is_active %}checked{% endif %} disabled>
+                                    <label class="form-check-label" for="isActive">
+                                        Active
                                     </label>
-                                    <input type="file" name="profile_image" id="avatarUpload" class="d-none" accept="image/*">
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="firstName" class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="firstName" name="first_name" value="{{ staff.first_name }}" disabled>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="lastName" class="form-label">Last Name</label>
-                                <input type="text" class="form-control" id="lastName" name="last_name" value="{{ staff.last_name }}" disabled>
-                            </div>
+                                <div class="form-actions d-none">
+                                    <button type="submit" class="btn btn-success me-2">Save Changes</button>
+                                    <button type="button" id="cancelEditBtn" class="btn btn-outline-secondary">Cancel</button>
+                                </div>
+                            </form>
                         </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" value="{{ staff.email }}" disabled>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="phone" class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ staff.phone|default:'' }}" disabled>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="roles" class="form-label">Roles</label>
-                            <select class="form-select" id="roles" name="roles" multiple disabled>
-                                {% for role in all_roles %}
-                                <option value="{{ role.id }}" {% if role in staff.roles.all %}selected{% endif %}>{{ role.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="bio" class="form-label">Bio</label>
-                            <textarea class="form-control" id="bio" name="bio" rows="3" disabled>{{ staff.bio|default:'' }}</textarea>
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="isActive" name="is_active" {% if staff.is_active %}checked{% endif %} disabled>
-                            <label class="form-check-label" for="isActive">
-                                Active
-                            </label>
-                        </div>
-
-                        <div class="form-actions d-none">
-                            <button type="submit" class="btn btn-success me-2">Save Changes</button>
-                            <button type="button" id="cancelEditBtn" class="btn btn-outline-secondary">Cancel</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
-                </div>
+              
                 <div class="col-lg-8">
                     <div class="card shadow-sm">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -187,11 +184,27 @@
         <div class="tab-pane fade" id="availability" role="tabpanel" aria-labelledby="availability-tab">
             <!-- Availability Card -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Availability</h5>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAvailabilityModal">
-                        <i class="fas fa-plus me-1"></i> Add Specific Date
-                    </button>
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="mb-2 mb-md-0">
+                            <h5 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Weekly Schedule</h5>
+                            <small class="text-muted">({{ week_start|date:"M d" }} - {{ week_end|date:"M d, Y" }})</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <div class="btn-group" role="group">
+                                <a href="?week_offset={{ week_offset|add:'-1' }}#availability" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                                <a href="?week_offset=0#availability" class="btn btn-sm btn-outline-secondary">Today</a>
+                                <a href="?week_offset={{ week_offset|add:'1' }}#availability" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </div>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAvailabilityModal">
+                                <i class="fas fa-plus me-1"></i> Add Holiday
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <ul class="nav nav-tabs mb-3" id="availabilityTabs" role="tablist">
@@ -199,111 +212,122 @@
                             <button class="nav-link active" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="true">Weekly Schedule</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="specific-tab" data-bs-toggle="tab" data-bs-target="#specific" type="button" role="tab" aria-controls="specific" aria-selected="false">Specific Dates</button>
+                            <button class="nav-link" id="specific-tab" data-bs-toggle="tab" data-bs-target="#specific" type="button" role="tab" aria-controls="specific" aria-selected="false">Holidays/Off Days</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="availabilityTabContent">
                         <!-- Weekly Schedule Tab -->
                         <div class="tab-pane fade show active" id="weekly" role="tabpanel" aria-labelledby="weekly-tab">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Weekly Schedule:</strong> View and manage staff availability for the current week. Use navigation buttons to check future weeks. Weekly rules apply every week unless overridden by a specific holiday.
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Day</th>
-                                            <th>Start Time</th>
-                                            <th>End Time</th>
-                                            <th>Status</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for day_num, day_name in weekday_choices %}
-                                        {% with day_availabilities=weekly_availabilities|filter_by_weekday:day_num %}
-                                        {% if day_availabilities %}
-                                        {% for avail in day_availabilities %}
-                                        <tr>
-                                            <td>{{ day_name }}</td>
-                                            <td>{{ avail.start_time|time:"g:i A" }}</td>
-                                            <td>{{ avail.end_time|time:"g:i A" }}</td>
+                                        {% for day in week_calendar %}
+                                        <tr {% if day.is_today %}class="table-active"{% endif %}>
                                             <td>
-                                                {% if avail.off_day %}
-                                                <span class="badge">Off</span>
+                                                <strong>{{ day.weekday }}</strong>
+                                                
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ day.date|date:"M d, Y" }}</small>
+                                            </td>
+                                            <td>
+                                                {% if day.is_holiday %}
+                                                    <span class="text-danger">
+                                                        <i class="fas fa-calendar-times me-1"></i>
+                                                        {{ day.holiday_reason|default:"Holiday" }}
+                                                    </span>
+                                                {% elif day.is_off_day %}
+                                                    <span class="badge bg-danger">OFF DAY</span>
+                                                {% elif day.time_ranges %}
+                                                    {% for time_range in day.time_ranges %}
+                                                    <span class="badge me-1">
+                                                        {{ time_range.start|time:"g:i A" }} - {{ time_range.end|time:"g:i A" }}
+                                                    </span>
+                                                    {% endfor %}
                                                 {% else %}
-                                                <span class="badge bg-success">Available</span>
+                                                    <span class="text-muted">No schedule set</span>
                                                 {% endif %}
                                             </td>
+                                         
                                             <td>
-                                                <button class="btn btn-sm btn-outline-primary edit-availability" 
-                                                        data-avail-id="{{ avail.id }}" 
-                                                        data-avail-type="weekly"
-                                                        data-weekday="{{ avail.weekday }}"
-                                                        data-start-time="{{ avail.start_time|time:'H:i' }}"
-                                                        data-end-time="{{ avail.end_time|time:'H:i' }}"
-                                                        data-off-day="{{ avail.off_day|yesno:'true,false' }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger delete-availability" 
-                                                        data-avail-id="{{ avail.id }}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                {% if not day.is_holiday %}
+                                                    {% with day_availabilities=weekly_availabilities|filter_by_weekday:day.date.weekday %}
+                                                    {% if day_availabilities %}
+                                                        {% for avail in day_availabilities %}
+                                                        <button class="btn btn-sm btn-outline-primary edit-availability" 
+                                                                data-avail-id="{{ avail.id }}" 
+                                                                data-avail-type="weekly"
+                                                                data-weekday="{{ avail.weekday }}"
+                                                                data-start-time="{{ avail.start_time|time:'H:i' }}"
+                                                                data-end-time="{{ avail.end_time|time:'H:i' }}"
+                                                                data-off-day="{{ avail.off_day|yesno:'true,false' }}">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger delete-availability" 
+                                                                data-avail-id="{{ avail.id }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <button class="btn btn-sm btn-outline-success add-weekday-availability" 
+                                                                data-weekday="{{ day.date.weekday }}"
+                                                                data-weekday-name="{{ day.weekday }}">
+                                                            <i class="fas fa-plus"></i> Add
+                                                        </button>
+                                                    {% endif %}
+                                                    {% endwith %}
+                                                {% endif %}
                                             </td>
                                         </tr>
-                                        {% endfor %}
-                                        {% else %}
-                                        <tr>
-                                            <td>{{ day_name }}</td>
-                                            <td colspan="3" class="text-center text-muted">No availability set</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-success add-weekday-availability" 
-                                                        data-weekday="{{ day_num }}"
-                                                        data-weekday-name="{{ day_name }}">
-                                                    <i class="fas fa-plus"></i> Add
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        {% endif %}
-                                        {% endwith %}
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                         
-                        <!-- Specific Dates Tab -->
+                        <!-- Holidays/Off Days Tab -->
                         <div class="tab-pane fade" id="specific" role="tabpanel" aria-labelledby="specific-tab">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-calendar-times me-2"></i>
+                                <strong>Holidays & Off Days:</strong> Mark specific dates when staff is unavailable. These override the weekly schedule rules.
+                            </div>
                             {% if specific_off_days %}
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Start Time</th>
-                                            <th>End Time</th>
-                                            <th>Status</th>
+                                            <th>Reason/Notes</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for avail in specific_off_days %}
                                         <tr>
-                                            <td>{{ avail.specific_date|date:"M d, Y" }}</td>
-                                            <td>{{ avail.start_time|time:"g:i A" }}</td>
-                                            <td>{{ avail.end_time|time:"g:i A" }}</td>
                                             <td>
-                                                {% if avail.off_day %}
-                                                <span class="badge">Off</span>
-                                                {% else %}
-                                                <span class="badge bg-success">Available</span>
-                                                {% endif %}
+                                                <i class="fas fa-calendar-times text-danger me-2"></i>
+                                                {{ avail.specific_date|date:"M d, Y" }}
                                             </td>
+                                            <td>{{ avail.notes|default:"Holiday" }}</td>
                                             <td>
                                                 <button class="btn btn-sm btn-outline-primary edit-availability" 
                                                         data-avail-id="{{ avail.id }}" 
                                                         data-avail-type="specific"
                                                         data-specific-date="{{ avail.specific_date|date:'Y-m-d' }}"
-                                                        data-start-time="{{ avail.start_time|time:'H:i' }}"
-                                                        data-end-time="{{ avail.end_time|time:'H:i' }}"
-                                                        data-off-day="{{ avail.off_day|yesno:'true,false' }}">
+                                                        data-notes="{{ avail.notes|default:'' }}"
+                                                        data-off-day="true">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-danger delete-availability" 
@@ -318,9 +342,9 @@
                             </div>
                             {% else %}
                             <div class="text-center py-4">
-                                <p class="text-muted">No specific date availability set</p>
+                                <p class="text-muted">No holidays or off days set</p>
                                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addAvailabilityModal">
-                                    <i class="fas fa-plus me-1"></i> Add Specific Date
+                                    <i class="fas fa-plus me-1"></i> Add Holiday/Off Day
                                 </button>
                             </div>
                             {% endif %}
@@ -423,12 +447,8 @@
                                         <small class="text-muted">{{ assignment.booking.start_time|time:"g:i A" }} - {{ assignment.booking.end_time|time:"g:i A" }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge 
-                                            {% if assignment.booking.status == 'confirmed' %}bg-success
-                                            {% elif assignment.booking.status == 'pending' %}bg-warning
-                                            {% elif assignment.booking.status == 'cancelled' %}bg-danger
-                                            {% elif assignment.booking.status == 'completed' %}bg-info
-                                            {% else %}bg-secondary{% endif %}">
+                                        <span class="badge"> 
+                                          
                                             {{ assignment.booking.get_status_display }}
                                         </span>
                                     </td>
@@ -460,7 +480,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAvailabilityModalLabel">Add Specific Date Availability</h5>
+                <h5 class="modal-title" id="addAvailabilityModalLabel">Add Holiday/Off Day</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -475,34 +495,46 @@
                             <input type="text" class="form-control" id="weekdayDisplay" disabled>
                             <input type="hidden" id="weekday" name="weekday">
                         </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="offDay" name="off_day">
+                            <label class="form-check-label" for="offDay">Mark as day off</label>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="startTime" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="startTime" name="start_time">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="endTime" class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="endTime" name="end_time">
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Specific Date Fields -->
                     <div id="specificFields">
                         <div class="mb-3">
-                            <label for="specificDate" class="form-label">Specific Date</label>
-                            <input type="date" class="form-control" id="specificDate" name="specific_date" required>
+                            <label class="form-label">Date Range</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="fromDate" class="form-label small">From Date</label>
+                                    <input type="date" class="form-control" id="fromDate" name="from_date" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="toDate" class="form-label small">To Date</label>
+                                    <input type="date" class="form-control" id="toDate" name="to_date" required>
+                                </div>
+                            </div>
+                            <small class="text-muted">Select same date for single day, or a range for multiple days</small>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="offDay" name="off_day">
-                        <label class="form-check-label" for="offDay">Mark as day off</label>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="startTime" class="form-label">Start Time</label>
-                            <input type="time" class="form-control" id="startTime" name="start_time" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="endTime" class="form-label">End Time</label>
-                            <input type="time" class="form-control" id="endTime" name="end_time" required>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Reason (Optional)</label>
+                            <input type="text" class="form-control" id="notes" name="notes" placeholder="e.g., Christmas, Personal Leave">
                         </div>
                     </div>
                     
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Save Availability</button>
+                        <button type="submit" class="btn btn-primary">Add Holiday</button>
                     </div>
                 </form>
             </div>
@@ -532,27 +564,34 @@
                         </div>
                     </div>
                     
-                    <!-- For specific date availabilities -->
+                    <!-- For specific date availabilities (holidays) -->
                     <div id="editSpecificFields" style="display: none;">
                         <div class="mb-3">
                             <label for="editSpecificDate" class="form-label">Date</label>
                             <input type="date" class="form-control" id="editSpecificDate" name="specific_date">
                         </div>
-                    </div>
-                    
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="editOffDay" name="off_day">
-                        <label class="form-check-label" for="editOffDay">Mark as day off</label>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="editStartTime" class="form-label">Start Time</label>
-                            <input type="time" class="form-control" id="editStartTime" name="start_time" required>
+                        <div class="mb-3">
+                            <label for="editNotes" class="form-label">Reason (Optional)</label>
+                            <input type="text" class="form-control" id="editNotes" name="notes" placeholder="e.g., Christmas, Personal Leave">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="editEndTime" class="form-label">End Time</label>
-                            <input type="time" class="form-control" id="editEndTime" name="end_time" required>
+                    </div>
+                    
+                    <!-- For weekly availabilities -->
+                    <div id="editWeeklyTimeFields">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="editOffDay" name="off_day">
+                            <label class="form-check-label" for="editOffDay">Mark as day off</label>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editStartTime" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="editStartTime" name="start_time" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editEndTime" class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="editEndTime" name="end_time" required>
+                            </div>
                         </div>
                     </div>
                     
@@ -606,13 +645,18 @@
                 <form id="addServiceAssignmentForm" method="post" action="{% url 'business:add_service_assignment' staff.id %}">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="serviceOffering" class="form-label">Service</label>
-                        <select class="form-select" id="serviceOffering" name="service_offering" required>
-                            <option value="">Select a service...</option>
+                        <label class="form-label">Select Service</label>
+                        <div class="service-radio-group">
                             {% for service in available_services %}
-                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            <div class="service-radio-item">
+                                <input type="radio" class="service-radio-input" id="service_{{ service.id }}" name="service_offering" value="{{ service.id }}" required>
+                                <label class="service-radio-label btn btn-outline-secondary" for="service_{{ service.id }}">
+                                    <i class="fas fa-briefcase me-2"></i>
+                                    <span>{{ service.name }}</span>
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="isPrimary" name="is_primary">
@@ -642,13 +686,18 @@
                     {% csrf_token %}
                     <input type="hidden" id="editAssignmentId" name="assignment_id">
                     <div class="mb-3">
-                        <label for="editServiceOffering" class="form-label">Service</label>
-                        <select class="form-select" id="editServiceOffering" name="service_offering" required>
-                            <option value="">Select a service...</option>
+                        <label class="form-label">Select Service</label>
+                        <div class="service-radio-group">
                             {% for service in available_services %}
-                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            <div class="service-radio-item">
+                                <input type="radio" class="service-radio-input" id="edit_service_{{ service.id }}" name="service_offering" value="{{ service.id }}" required>
+                                <label class="service-radio-label btn btn-outline-secondary" for="edit_service_{{ service.id }}">
+                                    <i class="fas fa-briefcase me-2"></i>
+                                    <span>{{ service.name }}</span>
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="editIsPrimary" name="is_primary">

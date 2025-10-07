@@ -29,3 +29,27 @@ select option{
     border: 1px solid var(--secondary-dark) !important;
 }
 
+
+
+
+/* MODALS */
+.modal{
+    backdrop-filter: blur(8px);
+}
+
+
+/* Modal styles */
+.modal-content {
+    background-color: var(--secondary); /* Dark modal background */
+    border-color: var(--border-color); /* Darker border */
+}
+
+.modal-header {
+    background-color: var(--secondary); /* Darker header background */
+    border-bottom: 1px solid #475569; /* Darker border */
+    color: #E2E8F0; /* Light text */
+}
+
+.modal-footer {
+    border-top: 1px solid #475569; /* Darker border */
+}

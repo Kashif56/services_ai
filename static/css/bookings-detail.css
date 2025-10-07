@@ -154,6 +154,68 @@
     }
 }
 
+/* Cal.com style timeslot grid */
+.timeslots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.timeslot-btn {
+    background: #1a1d29;
+    border: 2px solid #2d3142;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #e0e0e0;
+}
+
+.timeslot-btn:hover {
+    border-color: #ffc107;
+    background: #252837;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.timeslot-btn.active {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #1a1d29;
+    font-weight: 600;
+}
+
+.timeslot-btn.active:hover {
+    background: #ffca2c;
+    border-color: #ffca2c;
+}
+
+.timeslot-time {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.timeslot-duration {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.timeslot-btn.active .timeslot-duration {
+    opacity: 0.8;
+}
+
+/* Timeslot separator */
+.timeslot-separator {
+    font-size: 0.875rem;
+    opacity: 0.6;
+    margin: 2px 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .table-responsive {
@@ -171,5 +233,14 @@
     .service-item-pricing {
         margin-top: 1rem;
         text-align: left !important;
+    }
+    
+    .timeslots-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+    }
+    
+    .timeslot-btn {
+        padding: 10px 12px;
     }
 }

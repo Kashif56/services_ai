@@ -41,27 +41,12 @@
             <div class="d-flex justify-content-center">
                 <a href="/" class="d-flex align-items-center text-decoration-none">
                     <i class="fas fa-robot me-2 primary-icon"></i>
-                    <span class="brand-text">Services AI</span>
+                    <span class="text-light h2">Services AI</span>
                 </a>
             </div>
         </div>
     </header>
-    
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+
     
     <!-- Main Content -->
     <main class="auth-main py-5">

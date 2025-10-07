@@ -109,11 +109,13 @@ def login_page(request):
                         messages.warning(request, 'Please verify your email address before logging in.')
                         return redirect('accounts:verify_email')
                 except EmailVerification.DoesNotExist:
+                    print("Email Verification Does not Exists")
                     pass
         except User.DoesNotExist:
             pass
         
         user = authenticate(request, username=username, password=password)
+   
         
         if user is not None:
             login(request, user)
@@ -161,13 +163,7 @@ def password_reset_page(request):
             try:
                 # In a real implementation, you would use Django's PasswordResetForm
                 # For now, we'll just simulate the email sending
-                send_mail(
-                    'Password Reset Request',
-                    'You requested a password reset. Please contact support if you did not make this request.',
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    fail_silently=True,
-                )
+                pass
             except Exception as e:
                 # Log the error but don't reveal to user
                 print(f"Error sending password reset email: {str(e)}")

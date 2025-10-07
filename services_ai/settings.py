@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'plugins.apps.PluginsConfig',
     'licence.apps.LicenceConfig',
     'analytics.apps.AnalyticsConfig',
+    'staff.apps.StaffConfig',
+    'customer.apps.CustomerConfig',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'licence.middleware.LicenceMiddleware',
+    'staff.middleware.StaffAccessMiddleware',
 ]
 
 ROOT_URLCONF = 'services_ai.urls'

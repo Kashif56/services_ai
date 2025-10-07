@@ -4,8 +4,12 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.contrib import messages
 import json
+from .utils import get_user_business
 
 from bookings.models import StaffMember, StaffRole, StaffAvailability, WEEKDAY_CHOICES, AVAILABILITY_TYPE
+
+
+
 
 # Staff Management Views
 @login_required
@@ -14,12 +18,11 @@ def staff_management(request):
     Render the staff management page
     Shows all staff members for the business
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     # Get all staff members for this business
     staff_members = StaffMember.objects.filter(business=business)
@@ -40,12 +43,11 @@ def add_staff(request):
     Add a new staff member
     Handles form submission from the staff management page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     try:
         from bookings.models import StaffMember, StaffRole, StaffAvailability, AVAILABILITY_TYPE, WEEKDAY_CHOICES
@@ -114,12 +116,20 @@ def staff_detail(request, staff_id):
     """
     # Check if user has a business
     if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
+        business = request.user.staff_profile.business
+    else:
+        business = request.user.business
+        
+    from datetime import datetime, timedelta
     
-    business = request.user.business
+    # Get week offset from query parameter (default to current week)
+    week_offset = int(request.GET.get('week_offset', 0))
     
-    
+    # Calculate the week's start date (Monday)
+    today = datetime.now().date()
+    current_week_start = today - timedelta(days=today.weekday())
+    week_start = current_week_start + timedelta(weeks=week_offset)
+    week_end = week_start + timedelta(days=6)
     
     # Get staff member, ensuring it belongs to this business
     staff = get_object_or_404(StaffMember, id=staff_id, business=business)
@@ -133,17 +143,60 @@ def staff_detail(request, staff_id):
         availability_type=AVAILABILITY_TYPE.WEEKLY
     ).order_by('weekday', 'start_time')
     
-    specific_availabilities = StaffAvailability.objects.filter(
-        staff_member=staff,
-        availability_type=AVAILABILITY_TYPE.SPECIFIC,
-        off_day=False
-    ).order_by('specific_date', 'start_time')
-    
+    # Specific dates are ONLY for holidays/off days
     specific_off_days = StaffAvailability.objects.filter(
         staff_member=staff,
         availability_type=AVAILABILITY_TYPE.SPECIFIC,
         off_day=True
     ).order_by('specific_date')
+    
+    # Get holidays for the current week
+    week_holidays = specific_off_days.filter(
+        specific_date__gte=week_start,
+        specific_date__lte=week_end
+    )
+    
+    # Build week calendar data
+    week_calendar = []
+    for day_offset in range(7):
+        current_date = week_start + timedelta(days=day_offset)
+        weekday_num = current_date.weekday()
+        
+        # Get availability for this weekday
+        day_availabilities = weekly_availabilities.filter(weekday=weekday_num)
+        
+        # Check if this specific date is a holiday
+        is_holiday = week_holidays.filter(specific_date=current_date).exists()
+        holiday_reason = None
+        if is_holiday:
+            holiday = week_holidays.filter(specific_date=current_date).first()
+            holiday_reason = holiday.notes if holiday else None
+        
+        # Determine if it's an off day (either weekly off or holiday)
+        is_off_day = False
+        time_ranges = []
+        
+        if is_holiday:
+            is_off_day = True
+        elif day_availabilities.exists():
+            for avail in day_availabilities:
+                if avail.off_day:
+                    is_off_day = True
+                else:
+                    time_ranges.append({
+                        'start': avail.start_time,
+                        'end': avail.end_time
+                    })
+        
+        week_calendar.append({
+            'date': current_date,
+            'weekday': WEEKDAY_CHOICES(weekday_num).label,
+            'is_today': current_date == today,
+            'is_off_day': is_off_day,
+            'is_holiday': is_holiday,
+            'holiday_reason': holiday_reason,
+            'time_ranges': time_ranges
+        })
     
     # Get weekly off days (days with no availability set)
     weekly_off_days = []
@@ -174,13 +227,16 @@ def staff_detail(request, staff_id):
         'staff': staff,
         'all_roles': all_roles,
         'weekly_availabilities': weekly_availabilities,
-        'specific_availabilities': specific_availabilities,
         'specific_off_days': specific_off_days,
         'weekly_off_days': weekly_off_days,
         'assigned_bookings': assigned_bookings,
         'service_assignments': service_assignments,
         'available_services': available_services,
         'weekday_choices': WEEKDAY_CHOICES.choices,
+        'week_calendar': week_calendar,
+        'week_start': week_start,
+        'week_end': week_end,
+        'week_offset': week_offset,
     }
     
     return render(request, 'business/staff_detail.html', context)
@@ -192,12 +248,11 @@ def update_staff(request, staff_id):
     Update staff member information
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffRole
     
@@ -239,14 +294,13 @@ def update_staff_status(request):
     """
     Update staff member active status via AJAX
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
         return JsonResponse({
             'success': False,
-            'message': 'Please register your business first.'
+            'message': 'No business associated with your account.'
         })
-    
-    business = request.user.business
     
     try:
         # Parse JSON data from request body
@@ -280,12 +334,11 @@ def add_staff_availability(request, staff_id):
     Add new availability for a staff member
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffAvailability, AVAILABILITY_TYPE
     from django.utils.dateparse import parse_time, parse_date
@@ -296,9 +349,19 @@ def add_staff_availability(request, staff_id):
     try:
         # Get form data
         availability_type = request.POST.get('availability_type')
-        start_time = parse_time(request.POST.get('start_time'))
-        end_time = parse_time(request.POST.get('end_time'))
         off_day = 'off_day' in request.POST
+        
+        # For specific dates, ALWAYS mark as off_day (holidays only)
+        if availability_type == 'specific':
+            off_day = True
+            # Holidays are full day, so use midnight to end of day
+            from datetime import time
+            start_time = time(0, 0)
+            end_time = time(23, 59)
+        else:
+            # For weekly schedules, get the times from form
+            start_time = parse_time(request.POST.get('start_time'))
+            end_time = parse_time(request.POST.get('end_time'))
         
         # Create availability based on type
         if availability_type == 'weekly':
@@ -331,34 +394,58 @@ def add_staff_availability(request, staff_id):
             
             messages.success(request, 'Weekly availability added successfully!')
         elif availability_type == 'specific':
-            specific_date = parse_date(request.POST.get('specific_date'))
+            from_date = parse_date(request.POST.get('from_date'))
+            to_date = parse_date(request.POST.get('to_date'))
+            notes = request.POST.get('notes', '')
             
-            # Check if an availability already exists for this date and is not an off day
-            existing_availabilities = StaffAvailability.objects.filter(
-                staff_member=staff,
-                availability_type=AVAILABILITY_TYPE.SPECIFIC,
-                specific_date=specific_date
-            )
-            
-            if existing_availabilities.exists() and not off_day:
-                messages.warning(request, f'An availability for this date already exists. Please edit the existing one instead.')
+            if not from_date or not to_date:
+                messages.error(request, 'Both from and to dates are required.')
                 return redirect('business:staff_detail', staff_id=staff_id)
             
-            # If it's an off day, we can have multiple (or replace existing)
-            if off_day:
-                # If marking as off day, remove any existing availabilities for this date
-                existing_availabilities.delete()
+            if to_date < from_date:
+                messages.error(request, 'To date must be after or equal to from date.')
+                return redirect('business:staff_detail', staff_id=staff_id)
             
-            StaffAvailability.objects.create(
-                staff_member=staff,
-                availability_type=AVAILABILITY_TYPE.SPECIFIC,
-                specific_date=specific_date,
-                start_time=start_time,
-                end_time=end_time,
-                off_day=off_day
-            )
+            # Create holidays for each date in the range
+            from datetime import timedelta as td
+            current_date = from_date
+            created_count = 0
+            skipped_count = 0
             
-            messages.success(request, 'Specific date availability added successfully!')
+            while current_date <= to_date:
+                # Check if a holiday already exists for this date
+                existing_off_days = StaffAvailability.objects.filter(
+                    staff_member=staff,
+                    availability_type=AVAILABILITY_TYPE.SPECIFIC,
+                    specific_date=current_date,
+                    off_day=True
+                )
+                
+                if not existing_off_days.exists():
+                    # Create holiday (specific dates are ONLY for marking days off)
+                    StaffAvailability.objects.create(
+                        staff_member=staff,
+                        availability_type=AVAILABILITY_TYPE.SPECIFIC,
+                        specific_date=current_date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        off_day=True,  # Always True for specific dates
+                        notes=notes
+                    )
+                    created_count += 1
+                else:
+                    skipped_count += 1
+                
+                current_date += td(days=1)
+            
+            if created_count > 0:
+                if created_count == 1:
+                    messages.success(request, 'Holiday added successfully!')
+                else:
+                    messages.success(request, f'{created_count} holidays added successfully!')
+            
+            if skipped_count > 0:
+                messages.info(request, f'{skipped_count} date(s) were already marked as holidays and were skipped.')
         else:
             messages.error(request, 'Invalid availability type.')
     except Exception as e:
@@ -373,12 +460,11 @@ def update_staff_availability(request, staff_id):
     Update an existing staff availability
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffAvailability
     from django.utils.dateparse import parse_time, parse_date
@@ -389,25 +475,47 @@ def update_staff_availability(request, staff_id):
     try:
         # Get form data
         availability_id = request.POST.get('availability_id')
-        start_time = parse_time(request.POST.get('start_time'))
-        end_time = parse_time(request.POST.get('end_time'))
-        off_day = 'off_day' in request.POST
         
-        # Get the availability
-        availability = get_object_or_404(StaffAvailability, id=availability_id, staff_member=staff)
+        # Get the availability with select_related to ensure staff_member is loaded
+        availability = get_object_or_404(
+            StaffAvailability.objects.select_related('staff_member'), 
+            id=availability_id, 
+            staff_member=staff
+        )
         
-        # Update availability
-        availability.start_time = start_time
-        availability.end_time = end_time
-        availability.off_day = off_day
+        # Build update dict based on availability type
+        update_data = {}
         
-        # If it's a specific date availability, update the date
-        if availability.availability_type == 'specific' and 'specific_date' in request.POST:
-            availability.specific_date = parse_date(request.POST.get('specific_date'))
+        if availability.availability_type == 'specific':
+            # For holidays, only update date and notes
+            if 'specific_date' in request.POST:
+                specific_date = parse_date(request.POST.get('specific_date'))
+                update_data['specific_date'] = specific_date
+            
+            if 'notes' in request.POST:
+                update_data['notes'] = request.POST.get('notes', '')
+        else:
+            # For weekly schedules, update times and off_day status
+            start_time_str = request.POST.get('start_time')
+            end_time_str = request.POST.get('end_time')
+            off_day = 'off_day' in request.POST
+            
+            # Parse times
+            start_time = parse_time(start_time_str)
+            end_time = parse_time(end_time_str)
+            
+            update_data = {
+                'start_time': start_time,
+                'end_time': end_time,
+                'off_day': off_day
+            }
         
-        availability.save()
-        
-        messages.success(request, 'Availability updated successfully!')
+        # Use queryset update to bypass model validation
+        if update_data:
+            StaffAvailability.objects.filter(id=availability_id).update(**update_data)
+            messages.success(request, 'Availability updated successfully!')
+        else:
+            messages.warning(request, 'No changes to update.')
     except Exception as e:
         messages.error(request, f'Error updating availability: {str(e)}')
     
@@ -419,14 +527,13 @@ def delete_staff_availability(request):
     """
     Delete staff availability via AJAX
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
         return JsonResponse({
             'success': False,
-            'message': 'Please register your business first.'
+            'message': 'No business associated with your account.'
         })
-    
-    business = request.user.business
     
     try:
         # Parse JSON data from request body
@@ -458,12 +565,11 @@ def add_staff_off_day(request, staff_id):
     Add a specific off day for a staff member
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffAvailability, AVAILABILITY_TYPE
     from django.utils.dateparse import parse_date
@@ -501,12 +607,11 @@ def update_weekly_off_days(request, staff_id):
     Update weekly off days for a staff member
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffAvailability, AVAILABILITY_TYPE
     
@@ -549,12 +654,11 @@ def add_staff_role(request):
     Add a new staff role
     Handles form submission from the staff management page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     try:
         from bookings.models import StaffRole
@@ -589,12 +693,11 @@ def update_staff_role(request):
     Update an existing staff role
     Handles form submission from the staff management page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     try:
         from bookings.models import StaffRole
@@ -632,12 +735,11 @@ def add_service_assignment(request, staff_id):
     Add a service assignment to a staff member
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffServiceAssignment
     from business.models import ServiceOffering
@@ -687,12 +789,11 @@ def update_service_assignment(request, staff_id):
     Update an existing service assignment
     Handles form submission from the staff detail page
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
-    
-    business = request.user.business
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
     
     from bookings.models import StaffMember, StaffServiceAssignment
     from business.models import ServiceOffering
@@ -739,14 +840,13 @@ def delete_service_assignment(request):
     """
     Delete a service assignment via AJAX
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
         return JsonResponse({
             'success': False,
-            'message': 'Please register your business first.'
+            'message': 'No business associated with your account.'
         })
-    
-    business = request.user.business
     
     try:
         # Parse JSON data from request body
@@ -777,14 +877,13 @@ def delete_staff_role(request):
     """
     Delete a staff role via AJAX
     """
-    # Check if user has a business
-    if not hasattr(request.user, 'business'):
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
         return JsonResponse({
             'success': False,
-            'message': 'Please register your business first.'
+            'message': 'No business associated with your account.'
         })
-    
-    business = request.user.business
     
     try:
         # Parse JSON data from request body
@@ -813,6 +912,286 @@ def delete_staff_role(request):
             'success': True,
             'message': f'Staff role "{role_name}" deleted successfully!'
         })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+# Staff Account Management Views
+@login_required
+def staff_accounts(request):
+    """
+    Render the staff accounts management page
+    Shows all staff members with their account status
+    """
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        messages.warning(request, 'No business associated with your account.')
+        return redirect('accounts:login')
+    
+    # Get all staff members for this business with their profiles
+    from staff.models import StaffProfile
+    staff_members = StaffMember.objects.filter(business=business).prefetch_related('roles')
+    
+    # Add account status to each staff member
+    staff_with_accounts = []
+    for staff in staff_members:
+        has_account = hasattr(staff, 'profile')
+        staff_data = {
+            'staff': staff,
+            'has_account': has_account,
+            'profile': staff.profile if has_account else None,
+            'user': staff.profile.user if has_account else None,
+        }
+        staff_with_accounts.append(staff_data)
+    
+    context = {
+        'business': business,
+        'staff_with_accounts': staff_with_accounts,
+    }
+    
+    return render(request, 'business/staff_accounts.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def create_staff_account(request):
+    """
+    Create a user account for a staff member
+    Handles form submission from the staff accounts page
+    """
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({
+            'success': False,
+            'message': 'No business associated with your account.'
+        })
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        staff_id = data.get('staff_id')
+        username = data.get('username')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        
+        # Validate required fields
+        if not staff_id or not username or not password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Staff member, username, and password are required.'
+            })
+        
+        # Validate password match
+        if password != confirm_password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Passwords do not match.'
+            })
+        
+        # Validate password strength (minimum 8 characters)
+        if len(password) < 8:
+            return JsonResponse({
+                'success': False,
+                'message': 'Password must be at least 8 characters long.'
+            })
+        
+        # Get staff member, ensuring it belongs to this business
+        staff_member = get_object_or_404(StaffMember, id=staff_id, business=business)
+        
+        # Use utility function to create staff account
+        from staff.utils import create_staff_user
+        from django.core.exceptions import ValidationError
+        
+        try:
+            user, staff_profile = create_staff_user(
+                staff_member=staff_member,
+                username=username,
+                email=staff_member.email,
+                password=password,
+                is_active=True
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Account created successfully for {staff_member.get_full_name()}!',
+                'username': user.username
+            })
+        except ValidationError as ve:
+            return JsonResponse({
+                'success': False,
+                'message': str(ve)
+            })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_staff_account(request):
+    """
+    Delete a staff member's user account
+    Handles AJAX request from the staff accounts page
+    """
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({
+            'success': False,
+            'message': 'No business associated with your account.'
+        })
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        staff_id = data.get('staff_id')
+        
+        # Get staff member, ensuring it belongs to this business
+        staff_member = get_object_or_404(StaffMember, id=staff_id, business=business)
+        
+        # Use utility function to delete staff account
+        from staff.utils import delete_staff_user
+        
+        if delete_staff_user(staff_member):
+            return JsonResponse({
+                'success': True,
+                'message': f'Account deleted successfully for {staff_member.get_full_name()}!'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Staff member does not have an account.'
+            })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_staff_account_status(request):
+    """
+    Activate or deactivate a staff member's user account
+    Handles AJAX request from the staff accounts page
+    """
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({
+            'success': False,
+            'message': 'No business associated with your account.'
+        })
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        staff_id = data.get('staff_id')
+        is_active = data.get('is_active')
+        
+        # Get staff member, ensuring it belongs to this business
+        staff_member = get_object_or_404(StaffMember, id=staff_id, business=business)
+        
+        # Use utility functions to activate/deactivate
+        from staff.utils import activate_staff_user, deactivate_staff_user
+        
+        if is_active:
+            if activate_staff_user(staff_member):
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Account activated for {staff_member.get_full_name()}!'
+                })
+        else:
+            if deactivate_staff_user(staff_member):
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Account deactivated for {staff_member.get_full_name()}!'
+                })
+        
+        return JsonResponse({
+            'success': False,
+            'message': 'Staff member does not have an account.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+
+@login_required
+@require_http_methods(["POST"])
+def reset_staff_account_password(request):
+    """
+    Reset a staff member's password
+    Handles AJAX request from the staff accounts page
+    """
+    # Get business for either business owner or staff user
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({
+            'success': False,
+            'message': 'No business associated with your account.'
+        })
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        staff_id = data.get('staff_id')
+        new_password = data.get('new_password')
+        confirm_password = data.get('confirm_password')
+        
+        # Validate required fields
+        if not staff_id or not new_password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Staff member and new password are required.'
+            })
+        
+        # Validate password match
+        if new_password != confirm_password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Passwords do not match.'
+            })
+        
+        # Validate password strength
+        if len(new_password) < 8:
+            return JsonResponse({
+                'success': False,
+                'message': 'Password must be at least 8 characters long.'
+            })
+        
+        # Get staff member, ensuring it belongs to this business
+        staff_member = get_object_or_404(StaffMember, id=staff_id, business=business)
+        
+        # Use utility function to reset password
+        from staff.utils import reset_staff_password
+
+        print(new_password)
+        
+        if reset_staff_password(staff_member, new_password):
+            return JsonResponse({
+                'success': True,
+                'message': f'Password reset successfully for {staff_member.get_full_name()}!'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Staff member does not have an account.'
+            })
+        
     except Exception as e:
         return JsonResponse({
             'success': False,

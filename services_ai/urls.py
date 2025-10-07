@@ -34,6 +34,8 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),
     path('plugins/', include('plugins.urls')),
     path('licence/', include('licence.urls')),
+    path('staff/', include('staff.urls')),
+    path('customer/', include('customer.urls')),
 ]
 
 # Serve media files in development
