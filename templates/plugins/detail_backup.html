@@ -41,10 +41,6 @@
             </button>
             {% endif %}
             
-            <a href="{% url 'plugins:update_plugin' plugin.id %}" class="btn btn-info">
-                <i class="fas fa-sync-alt"></i> Update
-            </a>
-            
             <form method="post" action="{% url 'plugins:toggle_plugin' plugin.id %}" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn {% if plugin.enabled %}btn-warning{% else %}btn-success{% endif %}">
@@ -142,9 +138,7 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-8">
+            
             {% if plugin.enabled and plugin.status == 'approved' %}
             <div class="card mb-4">
                 <div class="card-header">
@@ -178,8 +172,8 @@
                 </div>
             </div>
             {% endif %}
-
-             {% if plugin.dependencies.all %}
+            
+            {% if plugin.dependencies.all %}
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-box"></i> Dependencies</h5>
@@ -218,13 +212,81 @@
                 </div>
             </div>
             {% endif %}
+        </div>
+        
+        <div class="col-md-8">
+            {% if custom_settings_page %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Custom Settings</h5>
+                </div>
+                <div class="card-body">
+                    {{ custom_settings_page|safe }}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if settings %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'plugins:update_settings' plugin.id %}">
+                        {% csrf_token %}
+                        {% for setting in settings %}
+                        <div class="mb-3">
+                            <label for="{{ setting.setting_name }}" class="form-label">
+                                {{ setting.setting_name|title }}
+                            </label>
+                            
+                            {% if setting.setting_type == 'checkbox' %}
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="{{ setting.setting_name }}" 
+                                       name="{{ setting.setting_name }}" value="true"
+                                       {% if setting.setting_value == 'true' %}checked{% endif %}>
+                            </div>
+                            {% elif setting.setting_type == 'textarea' %}
+                            <textarea class="form-control" id="{{ setting.setting_name }}" 
+                                      name="{{ setting.setting_name }}" rows="3">{{ setting.setting_value }}</textarea>
+                            {% elif setting.setting_type == 'select' %}
+                            <select class="form-select" id="{{ setting.setting_name }}" name="{{ setting.setting_name }}">
+                                {% for option in plugin.manifest.settings|get_item:forloop.counter0|get_item:'options' %}
+                                <option value="{{ option.value }}" 
+                                        {% if setting.setting_value == option.value %}selected{% endif %}>
+                                    {{ option.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
+                            <input type="{{ setting.setting_type }}" class="form-control" id="{{ setting.setting_name }}" 
+                                   name="{{ setting.setting_name }}" value="{{ setting.setting_value }}">
+                            {% endif %}
+                            
+                            {% if plugin.manifest.settings|get_item:forloop.counter0|get_item:'description' %}
+                            <div class="form-text">
+                                {{ plugin.manifest.settings|get_item:forloop.counter0|get_item:'description' }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
             
 
         </div>
     </div>
-    <div class="row">
-        <!-- Error Logs Section -->
-        <div class="card mb-4">
+
+   
+</div>
+
+ <div class="row">
+                    <!-- Error Logs Section -->
+        <div class="card mb-4 col-12">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Recent Errors</h5>
                 <span class="badge bg-danger"> Unresolved</span>
@@ -233,7 +295,7 @@
                 {% with recent_errors=plugin.errors.all|slice:":10" %}
                 {% if recent_errors %}
                 <div class="table-responsive">
-                    <table class="table table-sm">
+                    <table class="table table-sm table-hover">
                         <thead>
                             <tr>
                                 <th>Time</th>
@@ -290,6 +352,9 @@
                         </tbody>
                     </table>
                 </div>
+                <a href="{% url 'admin:plugins_pluginerror_changelist' %}?plugin__id__exact={{ plugin.id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-list me-1"></i>View All Errors
+                </a>
                 {% else %}
                 <p class="text-muted mb-0">
                     <i class="fas fa-check-circle text-success me-2"></i>No errors recorded
@@ -298,12 +363,99 @@
                 {% endwith %}
             </div>
         </div>
-
+        
+        <!-- Execution Logs Section -->
+        <div class="card mb-4 col-12">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history text-info me-2"></i>Recent Executions</h5>
+                <span class="badge bg-info">Last 20</span>
+            </div>
+            <div class="card-body">
+                {% with recent_logs=plugin.execution_logs.all|slice:":20" %}
+                {% if recent_logs %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Hook</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr class="{% if not log.success %}table-warning{% endif %}">
+                                <td><small>{{ log.executed_at|date:"M d, H:i:s" }}</small></td>
+                                <td><code>{{ log.hook_name }}</code></td>
+                                <td>
+                                    <span class="badge {% if log.execution_time > 1 %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ log.execution_time|floatformat:3 }}s
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if log.success %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log.error_message %}
+                                    <small class="text-danger">{{ log.error_message|truncatewords:8 }}</small>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Execution Statistics -->
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Total Executions</h6>
+                            <h4>{{ plugin.execution_logs.count }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Success Rate</h6>
+                            <h4 class="text-success">
+                                
+                            </h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Avg Duration</h6>
+                            <h4></h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Failed</h6>
+                            <h4 class="text-danger"></h4>
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="{% url 'admin:plugins_pluginexecutionlog_changelist' %}?plugin__id__exact={{ plugin.id }}" class="btn btn-sm btn-outline-primary mt-3">
+                    <i class="fas fa-list me-1"></i>View All Executions
+                </a>
+                {% else %}
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-2"></i>No executions recorded yet
+                </p>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
     </div>
-   
-</div>
-
-
 
 <!-- Uninstall Confirmation Modal -->
 <div class="modal fade" id="uninstallModal" tabindex="-1" aria-labelledby="uninstallModalLabel" aria-hidden="true">

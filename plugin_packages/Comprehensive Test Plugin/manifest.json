@@ -1,6 +1,6 @@
 {
   "name": "Comprehensive Test Plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A comprehensive test plugin that implements all available hooks to verify the plugin architecture works correctly",
   "author": "Services AI Team",
   "email": "plugins@servicesai.com",

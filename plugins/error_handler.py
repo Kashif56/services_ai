@@ -111,8 +111,7 @@ class PluginErrorHandler:
                     user=admin,
                     title=f"Plugin Error: {self.plugin.name}",
                     message=f"{error.error_type}: {error.error_message[:200]}",
-                    notification_type="error",
-                    link=f"/plugins/{self.plugin.id}/"
+                    notification_type="error"
                 )
         except Exception as e:
             print(f"[ERROR] Failed to send admin notification: {e}")
@@ -130,8 +129,7 @@ class PluginErrorHandler:
                     user=admin,
                     title=f"Plugin Auto-Disabled: {self.plugin.name}",
                     message=f"Plugin was automatically disabled due to excessive errors. Please review the error logs.",
-                    notification_type="error",
-                    link=f"/plugins/{self.plugin.id}/"
+                    notification_type="error"
                 )
         except Exception as e:
             print(f"[ERROR] Failed to send disable notification: {e}")

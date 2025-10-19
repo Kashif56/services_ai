@@ -95,20 +95,6 @@ class PluginPermission(models.Model):
     def __str__(self):
         return f"{self.plugin.name} - {self.permission_name}"
 
-class PluginSetting(models.Model):
-    """Model to store plugin settings"""
-    plugin = models.ForeignKey(Plugin, on_delete=models.CASCADE, related_name='settings')
-    setting_name = models.CharField(max_length=100)
-    setting_value = models.TextField(blank=True, null=True)
-    setting_type = models.CharField(max_length=20)  # text, number, checkbox, select
-    
-    class Meta:
-        unique_together = ('plugin', 'setting_name')
-    
-    def __str__(self):
-        return f"{self.plugin.name} - {self.setting_name}"
-
-
 class PluginDependency(models.Model):
     """Track plugin dependencies"""
     plugin = models.ForeignKey(Plugin, on_delete=models.CASCADE, related_name='dependencies')

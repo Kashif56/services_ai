@@ -1,12 +1,8 @@
 from django.contrib import admin
-from .models import Plugin, PluginPermission, PluginSetting, PluginDependency, PluginError, PluginExecutionLog
+from .models import Plugin, PluginPermission, PluginDependency, PluginError, PluginExecutionLog
 
 class PluginPermissionInline(admin.TabularInline):
     model = PluginPermission
-    extra = 1
-
-class PluginSettingInline(admin.TabularInline):
-    model = PluginSetting
     extra = 1
 
 @admin.register(Plugin)
@@ -15,7 +11,7 @@ class PluginAdmin(admin.ModelAdmin):
     list_filter = ('enabled',)
     search_fields = ('name', 'description', 'author')
     readonly_fields = ('installed_at', 'updated_at')
-    inlines = [PluginPermissionInline, PluginSettingInline]
+    inlines = [PluginPermissionInline]
     fieldsets = (
         (None, {
             'fields': ('name', 'description', 'version', 'enabled')
@@ -36,13 +32,6 @@ class PluginPermissionAdmin(admin.ModelAdmin):
     list_display = ('plugin', 'permission_name', 'enabled')
     list_filter = ('enabled', 'plugin')
     search_fields = ('permission_name', 'plugin__name')
-
-@admin.register(PluginSetting)
-class PluginSettingAdmin(admin.ModelAdmin):
-    list_display = ('plugin', 'setting_name', 'setting_type')
-    list_filter = ('setting_type', 'plugin')
-    search_fields = ('setting_name', 'plugin__name')
-
 
 @admin.register(PluginDependency)
 class PluginDependencyAdmin(admin.ModelAdmin):

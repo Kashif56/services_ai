@@ -1,0 +1,88 @@
+{% extends "common/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Update Plugin - {{ plugin.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Update Plugin: {{ plugin.name }}</h1>
+            <p class="lead">Upload a new version of the plugin to update it.</p>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Current Version:</strong> {{ plugin.version }}
+            </div>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'plugins:plugin_detail' plugin.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Plugin
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="row mb-4">
+        <div class="col">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Update Plugin</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_plugin_file" class="form-label">Plugin File</label>
+                            {{ form.plugin_file }}
+                            <div class="form-text">Upload a ZIP file containing the updated plugin version.</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle me-2"></i>Update Requirements</h5>
+                            <p>The updated plugin must:</p>
+                            <ul>
+                                <li>Have the same plugin name: <strong>{{ plugin.name }}</strong></li>
+                                <li>Include a valid <code>manifest.json</code> file</li>
+                                <li>Include a <code>main.py</code> file with plugin code</li>
+                                <li>Have a different version number (recommended)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+                            <ul class="mb-0">
+                                <li>The plugin will be temporarily disabled during the update</li>
+                                <li>All permissions will be reset to disabled for security</li>
+                                <li>Old plugin files will be replaced with new ones</li>
+                                <li>Dependencies will be updated based on the new manifest</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sync-alt me-2"></i>Update Plugin
+                            </button>
+                            <a href="{% url 'plugins:plugin_detail' plugin.id %}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

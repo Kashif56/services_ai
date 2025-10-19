@@ -234,43 +234,6 @@ class PluginAPI:
             return True
         except Exception as e:
             return False
-    
-    # Settings API
-    def get_setting(self, setting_name, default=None):
-        """
-        Get a plugin setting value
-        
-        Args:
-            setting_name: Name of the setting
-            default: Default value if setting doesn't exist
-            
-        Returns:
-            Setting value or default
-        """
-        try:
-            setting = self.plugin.settings.get(setting_name=setting_name)
-            return setting.setting_value
-        except:
-            return default
-    
-    def set_setting(self, setting_name, value):
-        """
-        Update a plugin setting value
-        
-        Args:
-            setting_name: Name of the setting
-            value: New value for the setting
-            
-        Returns:
-            bool: True if setting was updated
-        """
-        try:
-            setting = self.plugin.settings.get(setting_name=setting_name)
-            setting.setting_value = str(value)
-            setting.save()
-            return True
-        except:
-            return False
 
 
 def get_plugin_api(plugin_id, context=None):

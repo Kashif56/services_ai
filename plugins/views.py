@@ -11,9 +11,9 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.forms import modelformset_factory
 
-from .models import Plugin, PluginPermission, PluginSetting
+from .models import Plugin, PluginPermission
 from .plugin_manager import plugin_manager
-from .forms import PluginUploadForm, PluginSettingForm
+from .forms import PluginUploadForm
 from .events import get_dashboard_widgets
 
 @login_required
@@ -30,32 +30,9 @@ def plugin_detail(request, plugin_id):
     # Get plugin permissions
     permissions = plugin.permissions.all()
     
-    # Get plugin settings
-    settings = plugin.settings.all()
-    
-    # Check if plugin has a custom settings page
-    custom_settings_page = None
-    if plugin.enabled:
-        try:
-            from .plugin_api import get_plugin_api
-            api = get_plugin_api(plugin_id, context={'request': request, 'user': request.user})
-            
-            result = plugin_manager.call_hook(
-                'settings_page',
-                plugin_id=plugin_id,
-                context={'request': request, 'user': request.user, 'plugin': plugin},
-                api=api
-            )
-            if result and len(result) > 0:
-                custom_settings_page = result[0]
-        except Exception as e:
-            messages.error(request, f"Error loading custom settings page: {str(e)}")
-    
     return render(request, 'plugins/detail.html', {
         'plugin': plugin,
-        'permissions': permissions,
-        'settings': settings,
-        'custom_settings_page': custom_settings_page
+        'permissions': permissions
     })
 
 @login_required
@@ -108,7 +85,18 @@ def upload_plugin(request):
                     # Create directory for this plugin
                     plugin_dir = os.path.join(plugins_dir, manifest['name'])
                     if os.path.exists(plugin_dir):
-                        shutil.rmtree(plugin_dir)
+                        import stat
+                        
+                        # Use onexc callback to handle permission issues (Python 3.12+)
+                        def remove_readonly(func, path, exc_info):
+                            """Clear the readonly bit and reattempt the removal"""
+                            try:
+                                os.chmod(path, stat.S_IWRITE)
+                                func(path)
+                            except Exception:
+                                pass
+                        
+                        shutil.rmtree(plugin_dir, onexc=remove_readonly)
                     
                     # Copy plugin files
                     plugin_source_dir = os.path.dirname(manifest_path)
@@ -140,16 +128,6 @@ def upload_plugin(request):
                                 plugin=plugin,
                                 permission_name=permission,
                                 enabled=False  # Default to disabled for security
-                            )
-                    
-                    # Create settings
-                    if 'settings' in manifest:
-                        for setting in manifest['settings']:
-                            PluginSetting.objects.create(
-                                plugin=plugin,
-                                setting_name=setting['name'],
-                                setting_type=setting['type'],
-                                setting_value=setting.get('default', '')
                             )
                     
                     # Create and install dependencies
@@ -199,6 +177,189 @@ def upload_plugin(request):
         form = PluginUploadForm()
     
     return render(request, 'plugins/upload.html', {'form': form})
+
+@login_required
+def update_plugin(request, plugin_id):
+    """View to update an existing plugin with a new zip file"""
+    plugin = get_object_or_404(Plugin, id=plugin_id)
+    
+    if request.method == 'POST':
+        form = PluginUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            plugin_file = request.FILES['plugin_file']
+            
+            # Create a temporary directory
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # Extract the plugin zip file
+                zip_path = os.path.join(temp_dir, plugin_file.name)
+                with open(zip_path, 'wb+') as destination:
+                    for chunk in plugin_file.chunks():
+                        destination.write(chunk)
+                
+                try:
+                    # Extract the zip file
+                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                        zip_ref.extractall(temp_dir)
+                    
+                    # Look for manifest.json
+                    manifest_path = None
+                    for root, dirs, files in os.walk(temp_dir):
+                        if 'manifest.json' in files:
+                            manifest_path = os.path.join(root, 'manifest.json')
+                            break
+                    
+                    if not manifest_path:
+                        messages.error(request, 'Invalid plugin: manifest.json not found')
+                        return redirect('plugins:plugin_detail', plugin_id=plugin.id)
+                    
+                    # Load and validate manifest
+                    with open(manifest_path, 'r') as f:
+                        manifest = json.load(f)
+                    
+                    # Validate required fields
+                    required_fields = ['name', 'version', 'description', 'author', 'email']
+                    for field in required_fields:
+                        if field not in manifest:
+                            messages.error(request, f'Invalid manifest: {field} is required')
+                            return redirect('plugins:plugin_detail', plugin_id=plugin.id)
+                    
+                    # Verify plugin name matches
+                    if manifest['name'] != plugin.name:
+                        messages.error(request, f'Plugin name mismatch. Expected "{plugin.name}" but got "{manifest["name"]}"')
+                        return redirect('plugins:plugin_detail', plugin_id=plugin.id)
+                    
+                    # Unload the plugin if it's enabled
+                    was_enabled = plugin.enabled
+                    if plugin.enabled:
+                        plugin_manager.unload_plugin(plugin.id)
+                    
+                    # Remove old plugin directory with robust error handling
+                    import stat
+                    import time
+                    
+                    if os.path.exists(plugin.package_path):
+                        removal_success = False
+                        try:
+                            # Use onexc callback to handle permission issues (Python 3.12+)
+                            def remove_readonly(func, path, exc_info):
+                                """Clear the readonly bit and reattempt the removal"""
+                                try:
+                                    os.chmod(path, stat.S_IWRITE)
+                                    func(path)
+                                except Exception:
+                                    pass
+                            
+                            shutil.rmtree(plugin.package_path, onexc=remove_readonly)
+                            removal_success = True
+                        except Exception as e:
+                            # If still fails, try to rename the directory and continue
+                            try:
+                                backup_path = f"{plugin.package_path}_old_{int(time.time())}"
+                                os.rename(plugin.package_path, backup_path)
+                                messages.warning(request, f"Old plugin files moved to backup: {os.path.basename(backup_path)}")
+                                removal_success = True
+                            except Exception as rename_error:
+                                messages.error(request, f"Error removing old plugin files: {str(e)}")
+                                return redirect('plugins:plugin_detail', plugin_id=plugin.id)
+                    
+                    # Create plugin directory
+                    plugins_dir = os.path.join(settings.BASE_DIR, 'plugin_packages')
+                    os.makedirs(plugins_dir, exist_ok=True)
+                    
+                    # Create directory for this plugin
+                    plugin_dir = os.path.join(plugins_dir, manifest['name'])
+                    
+                    # Ensure the target directory doesn't exist (in case of edge cases)
+                    if os.path.exists(plugin_dir):
+                        try:
+                            def remove_readonly(func, path, exc_info):
+                                """Clear the readonly bit and reattempt the removal"""
+                                try:
+                                    os.chmod(path, stat.S_IWRITE)
+                                    func(path)
+                                except Exception:
+                                    pass
+                            shutil.rmtree(plugin_dir, onexc=remove_readonly)
+                        except Exception:
+                            # Last resort: rename it
+                            backup_path = f"{plugin_dir}_conflict_{int(time.time())}"
+                            os.rename(plugin_dir, backup_path)
+                    
+                    # Copy new plugin files
+                    plugin_source_dir = os.path.dirname(manifest_path)
+                    shutil.copytree(plugin_source_dir, plugin_dir)
+                    
+                    # Get entry point and plugin class
+                    entry_point = manifest.get('entry_point', 'main.py')
+                    plugin_class = manifest.get('plugin_class', None)
+                    
+                    # Update the plugin in the database
+                    plugin.description = manifest['description']
+                    plugin.version = manifest['version']
+                    plugin.author = manifest['author']
+                    plugin.email = manifest['email']
+                    plugin.package_path = plugin_dir
+                    plugin.entry_point = entry_point
+                    plugin.plugin_class = plugin_class
+                    plugin.manifest = manifest
+                    plugin.save()
+                    
+                    # Update permissions - remove old ones and add new ones
+                    plugin.permissions.all().delete()
+                    if 'permissions' in manifest:
+                        for permission in manifest['permissions']:
+                            PluginPermission.objects.create(
+                                plugin=plugin,
+                                permission_name=permission,
+                                enabled=False  # Default to disabled for security
+                            )
+                    
+                    # Update dependencies
+                    if 'dependencies' in manifest and 'packages' in manifest['dependencies']:
+                        from .dependency_manager import DependencyManager
+                        from .models import PluginDependency
+                        
+                        # Remove old dependencies
+                        plugin.dependencies.all().delete()
+                        
+                        dep_manager = DependencyManager(plugin)
+                        
+                        for package_name, version_spec in manifest['dependencies']['packages'].items():
+                            # Create dependency record
+                            PluginDependency.objects.create(
+                                plugin=plugin,
+                                package_name=package_name,
+                                version_spec=version_spec,
+                                install_status='pending'
+                            )
+                        
+                        # Install all dependencies
+                        try:
+                            dep_manager.install_dependencies()
+                            messages.success(request, f'Dependencies updated for {plugin.name}')
+                        except Exception as e:
+                            messages.warning(request, f'Error installing dependencies: {str(e)}')
+                    
+                    # Reload the plugin if it was enabled
+                    if was_enabled:
+                        plugin.enabled = True
+                        plugin.save()
+                        plugin_manager.load_plugin(plugin)
+                    
+                    messages.success(request, f'Plugin {plugin.name} updated successfully to version {plugin.version}')
+                    return redirect('plugins:plugin_detail', plugin_id=plugin.id)
+                
+                except Exception as e:
+                    messages.error(request, f'Error updating plugin: {str(e)}')
+                    return redirect('plugins:plugin_detail', plugin_id=plugin.id)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = PluginUploadForm()
+    
+    return render(request, 'plugins/update.html', {'form': form, 'plugin': plugin})
 
 @login_required
 def approve_plugin(request, plugin_id):
@@ -258,30 +419,6 @@ def toggle_permission(request, plugin_id, permission_id):
     return redirect('plugins:plugin_detail', plugin_id=plugin_id)
 
 @login_required
-def update_settings(request, plugin_id):
-    """Update plugin settings"""
-    plugin = get_object_or_404(Plugin, id=plugin_id)
-    
-    if request.method == 'POST':
-        # Process each setting
-        for setting in plugin.settings.all():
-            setting_name = setting.setting_name
-            if setting_name in request.POST:
-                setting_value = request.POST[setting_name]
-                
-                # Handle checkbox fields
-                if setting.setting_type == 'checkbox':
-                    setting_value = 'true' if setting_value == 'true' else 'false'
-                
-                setting.setting_value = setting_value
-                setting.save()
-        
-        messages.success(request, 'Settings updated successfully')
-        return redirect('plugins:plugin_detail', plugin_id=plugin.id)
-    
-    return redirect('plugins:plugin_detail', plugin_id=plugin.id)
-
-@login_required
 def uninstall_plugin(request, plugin_id):
     """Uninstall a plugin"""
     plugin = get_object_or_404(Plugin, id=plugin_id)
@@ -297,10 +434,21 @@ def uninstall_plugin(request, plugin_id):
         # Unload the plugin
         plugin_manager.unload_plugin(plugin.id)
         
-        # Remove plugin directory
+        # Remove plugin directory with robust error handling
         if os.path.exists(plugin.package_path):
             try:
-                shutil.rmtree(plugin.package_path)
+                import stat
+                
+                # Use onexc callback to handle permission issues (Python 3.12+)
+                def remove_readonly(func, path, exc_info):
+                    """Clear the readonly bit and reattempt the removal"""
+                    try:
+                        os.chmod(path, stat.S_IWRITE)
+                        func(path)
+                    except Exception:
+                        pass
+                
+                shutil.rmtree(plugin.package_path, onexc=remove_readonly)
             except Exception as e:
                 messages.warning(request, f"Error removing plugin files: {str(e)}")
         

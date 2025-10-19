@@ -245,6 +245,12 @@ class ServicesAIPluginManager:
                     print(f"     Calling hook '{hook_name}' on plugin {plugin_id} ({plugin.name})")
                     hook_method = getattr(instance, hook_name)
                     
+                    # Create API instance for the plugin if not already provided
+                    if 'api' not in kwargs:
+                        from plugins.plugin_api import get_plugin_api
+                        context = kwargs.get('context', {})
+                        kwargs['api'] = get_plugin_api(plugin_id, context=context)
+                    
                     # Execute in sandbox with error handling
                     with PluginSandbox(plugin):
                         result = safe_hook_execution(

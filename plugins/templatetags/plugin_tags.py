@@ -6,7 +6,7 @@ import importlib.util
 import json
 from django.http import HttpResponse
 from django.shortcuts import render
-from ..models import Plugin, PluginSetting, PluginPermission
+from ..models import Plugin, PluginPermission
 from ..plugin_manager import plugin_manager
 
 register = template.Library()

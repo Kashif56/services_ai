@@ -73,18 +73,6 @@ class PluginHooks:
         """
     
     @hookspec
-    def settings_page(self, plugin_id, context, api):
-        """Hook to render custom settings page
-        
-        Args:
-            plugin_id: ID of the plugin
-            context: Dictionary containing context information including request and user
-            
-        Returns:
-            HTML string for the settings page
-        """
-    
-    @hookspec
     def register_routes(self, plugin_id, api):
         """Hook to register custom URL routes
         

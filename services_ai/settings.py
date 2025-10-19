@@ -226,3 +226,7 @@ RETELL_API_KEY = os.getenv('RETELL_API_KEY')
 
 # Django EventStream Configuration
 EVENTSTREAM_STORAGE_CLASS = 'django_eventstream.storage.DjangoModelStorage'
+
+
+
+EMAILIT_API_KEY = os.getenv('EMAILIT_API_KEY')
