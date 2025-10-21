@@ -74,7 +74,7 @@
                     {{ session.ai_response|linebreaks }}
                     {% if session.status == 'completed' %}
                     <div class="message-actions">
-                        <a href="{% url 'ai_website:preview' %}" class="preview-btn">
+                        <a href="{% url 'public_website' business_slug %}" class="preview-btn">
                             <i class="fas fa-eye"></i> Preview Website
                         </a>
                     </div>

@@ -48,6 +48,8 @@ def chat_builder(request):
         'business': request.user.business,
         'available_models': get_available_models(),
         'current_model': ai_model,
+
+        'business_slug': website.business_slug,
     }
     
     return render(request, 'ai_website/chat_builder.html', context)
