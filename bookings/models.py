@@ -102,6 +102,10 @@ class BookingEventType(models.Model):
         
         # Get user's group names
         group = user.groups.first()
+        
+        # If user has no groups, deny access
+        if not group:
+            return False
 
         if group.name in self.allowed_roles:
             return True

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Widget Example</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 40px 0;
+        }
+        .example-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .info-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .code-block code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        h1 {
+            color: #8b5cf6;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #6d28d9;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .badge-custom {
+            background: #8b5cf6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="example-container">
+        <!-- Header -->
+        <div class="info-section">
+            <h1><i class="fas fa-calendar-check"></i> Booking Widget Example</h1>
+            <p class="lead">This page demonstrates how to embed the booking widget into any website.</p>
+            <span class="badge-custom">Embeddable</span>
+            <span class="badge-custom">Responsive</span>
+            <span class="badge-custom">Customizable</span>
+        </div>
+        
+        <!-- Usage Instructions -->
+        <div class="info-section">
+            <h2>📋 How to Use</h2>
+            <p>To embed the booking widget on your website, add the following code:</p>
+            
+            <div class="code-block">
+                <code>&lt;!-- Booking Widget Container --&gt;<br>
+&lt;div id="booking-widget" <br>
+     data-business-id="<strong>your-business-id</strong>"<br>
+     data-api-url="<strong>{{ request.scheme }}://{{ request.get_host }}</strong>"<br>
+     data-primary-color="#8b5cf6"&gt;<br>
+&lt;/div&gt;<br><br>
+&lt;!-- Widget Loader Script --&gt;<br>
+&lt;script src="<strong>{{ request.scheme }}://{{ request.get_host }}/static/js/booking-widget-loader.js</strong>"&gt;&lt;/script&gt;</code>
+            </div>
+            
+            <h3>Configuration Options</h3>
+            <ul>
+                <li><strong>data-business-id</strong> (required): Your business ID identifier</li>
+                <li><strong>data-api-url</strong> (optional): The base URL of your API (defaults to current domain)</li>
+                <li><strong>data-primary-color</strong> (optional): Custom primary color in hex format (defaults to #8b5cf6)</li>
+            </ul>
+        </div>
+        
+        <!-- Features -->
+        <div class="info-section">
+            <h2>✨ Features</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul>
+                        <li>Multi-step booking form (5 steps)</li>
+                        <li>Service selection with pricing</li>
+                        <li>Dynamic service items</li>
+                        <li>Real-time staff availability checking</li>
+                        <li>Custom fields support</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul>
+                        <li>Responsive design (mobile-friendly)</li>
+                        <li>Real-time price calculation</li>
+                        <li>Booking summary sidebar</li>
+                        <li>Form validation</li>
+                        <li>No authentication required for clients</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Endpoints -->
+        <div class="info-section">
+            <h2>🔌 API Endpoints</h2>
+            <p>The widget uses the following public API endpoints:</p>
+            <ul>
+                <li><code>GET /bookings/widget/{business_id}/config/</code> - Get widget configuration</li>
+                <li><code>GET /bookings/widget/{business_id}/service-items/{service_id}/</code> - Get service items</li>
+                <li><code>GET /bookings/widget/{business_id}/check-availability/</code> - Check staff availability</li>
+                <li><code>POST /bookings/widget/{business_id}/create/</code> - Create booking</li>
+            </ul>
+        </div>
+        
+        <!-- Live Demo -->
+        <div class="info-section">
+            <h2>🎯 Live Demo</h2>
+            <p>Below is a live example of the booking widget. Try it out!</p>
+        </div>
+        
+        <!-- Widget Container -->
+        <div id="booking-widget" 
+             data-business-id="{{ business_id }}"
+             data-api-url="{{ request.scheme }}://{{ request.get_host }}"
+             data-primary-color="#8b5cf6">
+        </div>
+        
+        <!-- For AI-Generated Websites -->
+        <div class="info-section mt-4">
+            <h2>🤖 For AI-Generated Websites</h2>
+            <p>The widget can be easily embedded into AI-generated websites. Simply include the widget code in your HTML template:</p>
+            
+            <div class="code-block">
+                <code>&lt;!-- In your AI-generated website template --&gt;<br>
+&lt;section class="booking-section"&gt;<br>
+&nbsp;&nbsp;&lt;div class="container"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;h2&gt;Book an Appointment&lt;/h2&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;!-- Booking Widget --&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;div id="booking-widget" <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data-business-id="{{ business.id }}"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data-api-url="{{ api_base_url }}"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;script src="{{ api_base_url }}/static/js/booking-widget-loader.js"&gt;&lt;/script&gt;<br>
+&nbsp;&nbsp;&lt;/div&gt;<br>
+&lt;/section&gt;</code>
+            </div>
+        </div>
+        
+        <!-- Customization -->
+        <div class="info-section">
+            <h2>🎨 Customization</h2>
+            <p>You can customize the widget appearance by:</p>
+            <ul>
+                <li>Setting a custom primary color using <code>data-primary-color</code></li>
+                <li>Adding custom CSS to override widget styles</li>
+                <li>The widget inherits Bootstrap 5 classes for easy styling</li>
+            </ul>
+            
+            <h3>Example Custom Styling</h3>
+            <div class="code-block">
+                <code>&lt;style&gt;<br>
+&nbsp;&nbsp;#booking-widget {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;--primary: #your-color;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;font-family: 'Your Font', sans-serif;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;#booking-widget .widget-header {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);<br>
+&nbsp;&nbsp;}<br>
+&lt;/style&gt;</code>
+            </div>
+        </div>
+        
+        <!-- Support -->
+        <div class="info-section">
+            <h2>💬 Support</h2>
+            <p>For questions or issues with the booking widget, please contact support.</p>
+            <p><strong>Note:</strong> Make sure your business is active and has at least one service offering configured before embedding the widget.</p>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Widget Loader -->
+    <script src="{{ request.scheme }}://{{ request.get_host }}/static/js/booking-widget-loader.js"></script>
+</body>
+</html>
