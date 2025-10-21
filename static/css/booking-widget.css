@@ -1,4 +1,134 @@
-/* bookings-create-booking.css - Multi-Step Form Styles */
+/* booking-widget.css - Modern Light Theme Multi-Step Form Styles */
+
+/* CSS Variables for Light Theme */
+#booking-widget {
+    --primary: #8b5cf6;
+    --primary-hover: #7c3aed;
+    --primary-light: #ede9fe;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border-color: #e5e7eb;
+    --border-light: #f3f4f6;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Widget Container */
+.booking-widget-container {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 12px;
+}
+
+/* Cards */
+#booking-widget .card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+#booking-widget .card-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem;
+}
+
+#booking-widget .card-body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Form Controls */
+#booking-widget .form-control,
+#booking-widget .form-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    transition: all 0.2s ease;
+}
+
+#booking-widget .form-control:focus,
+#booking-widget .form-select:focus {
+    background: var(--bg-primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    color: var(--text-primary);
+}
+
+#booking-widget .form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+#booking-widget .form-text {
+    color: var(--text-secondary);
+}
+
+/* Buttons */
+#booking-widget .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+#booking-widget .btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+#booking-widget .btn-outline-secondary {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+}
+
+#booking-widget .btn-outline-secondary:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+#booking-widget .btn-success {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+}
+
+#booking-widget .btn-success:hover {
+    background: #059669;
+    border-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
 
 /* Progress Steps Styling */
 .steps-progress {
@@ -21,8 +151,9 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--bg-dark);
-    color: white;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,7 +165,7 @@
 
 .step-label {
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     font-weight: 500;
     text-align: center;
     transition: all 0.3s ease;
@@ -52,6 +183,8 @@
 
 .step.completed .step-number {
     background: var(--success);
+    border-color: var(--success);
+    color: white;
 }
 
 .step.completed .step-label {
@@ -67,7 +200,7 @@
 }
 
 .step.completed + .step-line {
-    background: var(--color-success);
+    background: var(--success);
 }
 
 /* Form Steps */
@@ -100,10 +233,10 @@
 /* Summary Sections */
 .summary-section {
     padding: 0.75rem;
-    background: transparent;
+    background: var(--bg-secondary);
     border-radius: 8px;
     height: auto;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-light);
 }
 
 .summary-value {
@@ -129,25 +262,46 @@
 
 #summary-items .item-entry {
     padding: 0.5rem;
-    background: var(--color-surface);
-    border-radius: 4px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
+    border: 1px solid var(--border-light);
 }
 
 /* Form Styling */
-h4 {
+#booking-widget h4 {
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
 }
 
+#booking-widget .alert-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+}
 
+#booking-widget .alert-success {
+    background: var(--success-light);
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    border-radius: 8px;
+}
 
-.alert-info {
-    background: #eef2ff;
-    color: #3730a3;
-    border: 1px solid #6366f1;
-    border-radius: 6px;
+#booking-widget .alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+}
+
+#booking-widget .alert-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
 }
 
 
@@ -173,25 +327,25 @@ h4 {
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: #23262f;
-    border: 2px solid #363b47;
-    border-radius: 8px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     height: 100%;
 }
 
 .service-tab-label:hover {
-    border-color: #8b5cf6;
-    background: #2a2d38;
+    border-color: var(--primary);
+    background: var(--primary-light);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    box-shadow: var(--shadow-md);
 }
 
 .service-tab-input:checked + .service-tab-label {
-    border-color: #8b5cf6;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+    border-color: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
 }
 
 .service-tab-input:checked + .service-tab-label .service-tab-icon {
@@ -205,9 +359,9 @@ h4 {
     justify-content: center;
     width: 48px;
     height: 48px;
-    background: #363b47;
-    border-radius: 8px;
-    color: #8b5cf6;
+    background: var(--primary-light);
+    border-radius: 10px;
+    color: var(--primary);
     font-size: 1.25rem;
     transition: all 0.3s ease;
     flex-shrink: 0;
@@ -221,7 +375,7 @@ h4 {
 .service-tab-name {
     font-size: 1rem;
     font-weight: 600;
-    color: #f3f4f6;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
     white-space: nowrap;
     overflow: hidden;
@@ -235,12 +389,12 @@ h4 {
 }
 
 .service-tab-price {
-    color: #10b981;
+    color: var(--success);
     font-weight: 600;
 }
 
 .service-tab-duration {
-    color: #9ca3af;
+    color: var(--text-secondary);
 }
 
 .service-tab-input:checked + .service-tab-label .service-tab-name,
@@ -263,8 +417,8 @@ h4 {
 .service-item-card {
     display: block;
     padding: 1.25rem;
-    background: var(--color-background);
-    border: 2px solid var(--color-border);
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -272,20 +426,20 @@ h4 {
 }
 
 .service-item-card:hover {
-    border-color: var(--color-primary);
+    border-color: var(--primary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.2);
+    box-shadow: var(--shadow-md);
 }
 
 .service-item-checkbox-input:checked + .service-item-card {
-    border-color: #8b5cf6;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(109, 40, 217, 0.15) 100%);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
 .service-item-required {
-    border-color: #10b981 !important;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+    border-color: var(--success) !important;
+    background: var(--success-light);
     cursor: not-allowed;
 }
 
@@ -303,25 +457,25 @@ h4 {
 .service-item-check-icon {
     width: 24px;
     height: 24px;
-    border: 2px solid #363b47;
+    border: 2px solid var(--border-color);
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.3s ease;
-    background: #1a1d24;
+    background: var(--bg-primary);
 }
 
 .service-item-checkbox-input:checked + .service-item-card .service-item-check-icon {
-    background: #8b5cf6;
-    border-color: #8b5cf6;
+    background: var(--primary);
+    border-color: var(--primary);
     color: white;
 }
 
 .service-item-required .service-item-check-icon {
-    background: #10b981;
-    border-color: #10b981;
+    background: var(--success);
+    border-color: var(--success);
     color: white;
 }
 
@@ -344,7 +498,7 @@ h4 {
 .service-item-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #f3f4f6;
+    color: var(--text-primary);
     margin: 0 0 0.5rem 0;
 }
 
@@ -359,18 +513,18 @@ h4 {
 }
 
 .badge-optional {
-    background: rgba(139, 92, 246, 0.2);
-    color: #a78bfa;
+    background: var(--primary-light);
+    color: var(--primary);
 }
 
 .badge-required {
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
+    background: var(--success-light);
+    color: var(--success);
 }
 
 .service-item-description {
     font-size: 0.875rem;
-    color: #9ca3af;
+    color: var(--text-secondary);
     margin: 0 0 0.75rem 0;
     line-height: 1.5;
 }
@@ -380,18 +534,18 @@ h4 {
     justify-content: space-between;
     align-items: center;
     padding-top: 0.75rem;
-    border-top: 1px solid #363b47;
+    border-top: 1px solid var(--border-light);
 }
 
 .service-item-price {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #10b981;
+    color: var(--success);
 }
 
 .service-item-duration {
     font-size: 0.875rem;
-    color: #60a5fa;
+    color: var(--info);
     display: flex;
     align-items: center;
 }
@@ -410,7 +564,7 @@ h4 {
 .item-field-container label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #e0e7ef;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
 }
 
@@ -424,15 +578,15 @@ h4 {
 .quantity-control label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #e0e7ef;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
     display: block;
 }
 
-/* Validation Styles for Radio Buttons */
+/* Validation Styles */
 .service-tab-input.is-invalid + .service-tab-label {
-    border-color: #dc2626 !important;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
 .service-tab-input.is-invalid + .service-tab-label::after {
@@ -442,16 +596,36 @@ h4 {
     right: -8px;
     width: 20px;
     height: 20px;
-    background: #dc2626;
+    background: var(--danger);
     border-radius: 50%;
-    border: 2px solid #23262f;
+    border: 2px solid var(--bg-primary);
 }
 
-/* General validation styles */
-.form-control.is-invalid,
-.form-select.is-invalid {
-    border-color: #dc2626 !important;
-    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+#booking-widget .form-control.is-invalid,
+#booking-widget .form-select.is-invalid {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Text Colors */
+#booking-widget .text-primary {
+    color: var(--text-primary) !important;
+}
+
+#booking-widget .text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+#booking-widget .text-muted {
+    color: var(--text-muted) !important;
+}
+
+#booking-widget .text-success {
+    color: var(--success) !important;
+}
+
+#booking-widget .text-danger {
+    color: var(--danger) !important;
 }
 
 @media (max-width: 767px) {
