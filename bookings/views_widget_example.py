@@ -2,20 +2,24 @@
 View for rendering the widget example page
 """
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from business.models import Business
 
 
-def widget_example(request):
+
+@login_required
+def widget_showcase(request):
     """
-    Render the widget example page
-    Shows how to embed the booking widget
+    Render the widget showcase page for logged-in users
+    Shows embedding instructions and features
     """
-    # Get the first active business as an example
-    # In production, you would pass the specific business ID
-    business = Business.objects.filter(is_active=True).first()
+    business = getattr(request.user, 'business', None)
+    
+    if not business:
+        business = Business.objects.filter(is_active=True).first()
     
     context = {
-        'business_id': business.id if business else 'your-business-id',
+        'business': business,
     }
     
-    return render(request, 'bookings/widget_example.html', context)
+    return render(request, 'bookings/widget_showcase.html', context)

@@ -1,0 +1,473 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Booking Widget - Embed on Your Website{% endblock %}
+
+{% block extra_css %}
+<style>
+    .showcase-header {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        padding: 3rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+        border-radius: 0;
+    }
+    
+    .feature-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        background: #ede9fe;
+        color: #8b5cf6;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .code-block {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1.5rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 1rem 0;
+        position: relative;
+    }
+    
+    .code-block code {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .copy-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #8b5cf6;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+    
+    .copy-btn:hover {
+        background: #7c3aed;
+    }
+    
+    .badge-feature {
+        display: inline-block;
+        background: #ede9fe;
+        color: #8b5cf6;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .step-number-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #8b5cf6;
+        color: white;
+        border-radius: 50%;
+        font-weight: 600;
+        margin-right: 0.75rem;
+    }
+    
+    .preview-frame {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <h1 class="mb-3"><i class="fas fa-code me-3"></i>Booking Widget</h1>
+            <p class="text-muted">Embed a powerful booking form on any website - No coding required!</p>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                    <h3 class="mb-0">5 Steps</h3>
+                    <small class="text-muted">Multi-step Form</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-mobile-alt text-primary fa-2x mb-2"></i>
+                    <h3 class="mb-0">100%</h3>
+                    <small class="text-muted">Responsive</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-bolt text-warning fa-2x mb-2"></i>
+                    <h3 class="mb-0">Real-time</h3>
+                    <small class="text-muted">Availability Check</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-palette text-info fa-2x mb-2"></i>
+                    <h3 class="mb-0">Custom</h3>
+                    <small class="text-muted">Branding</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Embed Code Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header border-bottom">
+            <h4 class="mb-0"><i class="fas fa-code me-2"></i>Embed Code</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Copy and paste this code into any website to embed your booking form:</p>
+            
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyEmbedCode()">
+                    <i class="fas fa-copy me-1"></i>Copy Code
+                </button>
+                <code>&lt;!-- Booking Widget --&gt;
+&lt;div id="booking-widget" 
+     data-business-id="<strong class="text-warning">{{ business.id }}</strong>"
+     data-api-url="<strong class="text-warning">{{ request.scheme }}://{{ request.get_host }}</strong>"
+     data-primary-color="#8b5cf6"&gt;
+&lt;/div&gt;
+
+&lt;script src="{{ request.scheme }}://{{ request.get_host }}/static/js/booking-widget-loader.js"&gt;&lt;/script&gt;</code>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Your Business ID:</strong> <code>{{ business.id }}</code>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header border-bottom">
+            <h4 class="mb-0"><i class="fas fa-star me-2"></i>Features</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h5>Multi-Step Form</h5>
+                        <p class="text-muted mb-0">5-step booking process with progress tracking and validation</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h5>Real-Time Availability</h5>
+                        <p class="text-muted mb-0">Check staff availability instantly with alternate time suggestions</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h5>Dynamic Pricing</h5>
+                        <p class="text-muted mb-0">Live price calculation with service items and tax breakdown</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-list-ul"></i>
+                        </div>
+                        <h5>Service Items</h5>
+                        <p class="text-muted mb-0">Support for all field types: text, number, select, boolean, textarea</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <h5>Custom Fields</h5>
+                        <p class="text-muted mb-0">Collect business-specific information with custom fields</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h5>Fully Responsive</h5>
+                        <p class="text-muted mb-0">Works perfectly on desktop, tablet, and mobile devices</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h5>Secure & Reliable</h5>
+                        <p class="text-muted mb-0">Built with security best practices and error handling</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <h5>Custom Branding</h5>
+                        <p class="text-muted mb-0">Customize colors to match your brand identity</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h5>Fast & Lightweight</h5>
+                        <p class="text-muted mb-0">Optimized for performance with minimal load time</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Booking Flow -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h4 class="mb-0"><i class="fas fa-route me-2"></i>Booking Flow</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex align-items-start mb-4">
+                        <span class="step-number-badge">1</span>
+                        <div>
+                            <h5 class="mb-2">Client Information</h5>
+                            <p class="text-muted mb-0">Collect name, email, phone, and custom fields</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-4">
+                        <span class="step-number-badge">2</span>
+                        <div>
+                            <h5 class="mb-2">Service Selection</h5>
+                            <p class="text-muted mb-0">Choose service type and location (business, on-site, or virtual)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-4">
+                        <span class="step-number-badge">3</span>
+                        <div>
+                            <h5 class="mb-2">Service Items</h5>
+                            <p class="text-muted mb-0">Select optional/required service items with dynamic pricing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-4">
+                        <span class="step-number-badge">4</span>
+                        <div>
+                            <h5 class="mb-2">Date & Time</h5>
+                            <p class="text-muted mb-0">Pick date/time with real-time staff availability checking</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start">
+                        <span class="step-number-badge">5</span>
+                        <div>
+                            <h5 class="mb-2">Review & Confirm</h5>
+                            <p class="text-muted mb-0">Add notes, review booking details, and confirm</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customization Options -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h4 class="mb-0"><i class="fas fa-cog me-2"></i>Customization Options</h4>
+        </div>
+        <div class="card-body">
+            <h5 class="mb-3">Available Attributes</h5>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Attribute</th>
+                            <th>Required</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>data-business-id</code></td>
+                            <td><span class="badge bg-danger">Required</span></td>
+                            <td>-</td>
+                            <td>Your business ID identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>data-api-url</code></td>
+                            <td><span class="badge bg-secondary">Optional</span></td>
+                            <td>Current domain</td>
+                            <td>Base URL of your API</td>
+                        </tr>
+                        <tr>
+                            <td><code>data-primary-color</code></td>
+                            <td><span class="badge bg-secondary">Optional</span></td>
+                            <td>#8b5cf6</td>
+                            <td>Custom primary color (hex format)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <h5 class="mt-4 mb-3">Custom Color Example</h5>
+            <div class="code-block">
+                <code>&lt;div id="booking-widget" 
+     data-business-id="{{ business.id }}"
+     data-api-url="{{ request.scheme }}://{{ request.get_host }}"
+     data-primary-color="<strong class="text-warning">#FF6B6B</strong>"&gt;
+&lt;/div&gt;</code>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Use Cases -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h4 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Use Cases</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h5><i class="fas fa-globe me-2"></i>Business Website</h5>
+                    <p class="text-muted">Embed directly on your main website to accept bookings</p>
+                    <span class="badge badge-md">WordPress</span>
+                    <span class="badge badge-md">Wix</span>
+                    <span class="badge badge-md">Squarespace</span>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <h5><i class="fas fa-robot me-2"></i>AI-Generated Sites</h5>
+                    <p class="text-muted">Automatically include in AI-generated landing pages</p>
+                    <span class="badge badge-md">Auto-embed</span>
+                    <span class="badge badge-md">Dynamic</span>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <h5><i class="fas fa-shopping-cart me-2"></i>E-commerce</h5>
+                    <p class="text-muted">Add booking functionality to online stores</p>
+                    <span class="badge badge-md">Shopify</span>
+                    <span class="badge badge-md">WooCommerce</span>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <h5><i class="fas fa-share-alt me-2"></i>Social Media</h5>
+                    <p class="text-muted">Link from social media profiles to booking page</p>
+                    <span class="badge badge-md">Link in Bio</span>
+                    <span class="badge badge-md">Landing Page</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-4">
+            <h4 class="mb-3">Ready to Get Started?</h4>
+ 
+            <button class="btn btn-success btn-lg" onclick="copyEmbedCode()">
+                <i class="fas fa-copy me-2"></i>Copy Embed Code
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyEmbedCode() {
+    const code = `<!-- Booking Widget -->
+<div id="booking-widget" 
+     data-business-id="{{ business.id }}"
+     data-api-url="{{ request.scheme }}://{{ request.get_host }}"
+     data-primary-color="#8b5cf6">
+</div>
+
+<script src="{{ request.scheme }}://{{ request.get_host }}/static/js/booking-widget-loader.js"><\/script>`;
+    
+    navigator.clipboard.writeText(code).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+        btn.classList.remove('btn-primary', 'btn-success');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    }, function(err) {
+        alert('Failed to copy code. Please copy manually.');
+    });
+}
+</script>
+{% endblock %}

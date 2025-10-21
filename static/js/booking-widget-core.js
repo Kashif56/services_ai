@@ -100,13 +100,7 @@
             baseDuration = parseInt(duration);
             totalDuration = baseDuration;
             
-            // Clear selected items when service changes
-            console.log('=== SERVICE CHANGE ===');
-            console.log('New Service ID:', serviceId);
-            console.log('Clearing selected items. Previous items:', Object.keys(selectedItems).length);
-            selectedItems = {};
-            console.log('Selected items cleared');
-            
+
             // Immediately update the summary with cleared items
             updateTotalPrice();
             
@@ -336,25 +330,25 @@
             return;
         }
         
-        let html = '<div class="list-group">';
+        let html = '<div class="alternate-timeslots-list">';
         slots.forEach(slot => {
             const date = new Date(slot.date).toLocaleDateString();
             const startTime = formatTime(slot.time);
             const endTime = formatTime(slot.end_time);
             
             html += `
-                <button type="button" class="list-group-item list-group-item-action alternate-slot" 
+                <button type="button" class="alternate-slot-item" 
                     data-date="${slot.date}" 
                     data-time="${slot.time}" 
                     data-end-time="${slot.end_time}"
                     data-staff-id="${slot.staff.id}"
                     data-staff-name="${slot.staff.name}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
+                    <div class="alternate-slot-content">
+                        <div class="alternate-slot-time">
                             <i class="far fa-calendar-alt me-2"></i> ${date}, ${startTime} - ${endTime}
                         </div>
-                        <div>
-                            <span class="badge bg-info text-dark">Staff: ${slot.staff.name}</span>
+                        <div class="alternate-slot-staff">
+                            <span class="staff-badge">Staff: ${slot.staff.name}</span>
                         </div>
                     </div>
                 </button>
@@ -365,7 +359,7 @@
         alternateTimeslots.innerHTML = html;
         
         // Add event listeners to alternate timeslot buttons
-        document.querySelectorAll('.alternate-slot').forEach(button => {
+        document.querySelectorAll('.alternate-slot-item').forEach(button => {
             button.addEventListener('click', function() {
                 // Update form with selected timeslot
                 bookingDateInput.value = this.dataset.date;
@@ -877,10 +871,8 @@
         });
         
         // Initialize selected items from required items
-        console.log('=== INITIALIZING REQUIRED ITEMS ===');
         items.forEach(item => {
             if (!item.is_optional) {  // Required items (is_optional = false)
-                console.log('Adding required item:', item.id, item.name);
                 
                 // Initialize with default price (0 for items that need user selection)
                 let initialPrice = 0;
@@ -899,7 +891,6 @@
                 };
             }
         });
-        console.log('Total selected items after initialization:', Object.keys(selectedItems).length);
         
         updateTotalPrice();
     }
@@ -910,32 +901,21 @@
     function updateTotalPrice() {
         totalPrice = basePrice;
         totalDuration = baseDuration;
-        
-        console.log('=== UPDATE TOTAL PRICE ===');
-        console.log('Base price:', basePrice);
-        console.log('Selected items:', selectedItems);
-        
+
         // Add prices and durations of selected items
         Object.entries(selectedItems).forEach(([itemId, item]) => {
             const itemPrice = item.price * item.quantity;
-            console.log(`Item ${itemId} (${item.name}):`, {
-                price: item.price,
-                quantity: item.quantity,
-                total: itemPrice
-            });
+           
             totalPrice += itemPrice;
             totalDuration += item.duration * item.quantity;
         });
         
-        console.log('Total price:', totalPrice);
+        
         
         if (totalPriceSpan) totalPriceSpan.textContent = totalPrice.toFixed(2);
         
         // Dispatch event for multi-step form to update summary
         if (isMultiStepForm) {
-            console.log('=== DISPATCHING SERVICE ITEMS UPDATED EVENT ===');
-            console.log('Selected items to dispatch:', selectedItems);
-            console.log('Selected items count:', Object.keys(selectedItems).length);
             
             const event = new CustomEvent('serviceItemsUpdated', {
                 detail: { items: selectedItems }
@@ -1180,8 +1160,7 @@
         
         // Create a hidden input for each selected service item's field value
         if (valid) {
-            console.log('Checked checkboxes count:', document.querySelectorAll('.service-item-checkbox-input:checked').length);
-            
+
             document.querySelectorAll('.service-item-checkbox-input:checked').forEach(function(checkbox) {
                 const itemId = checkbox.value;
                 const fieldType = checkbox.dataset.fieldType;
@@ -1211,16 +1190,8 @@
                     value: fieldValue,
                     quantity: quantityInput ? parseInt(quantityInput.value) : 1
                 };
-                
-                console.log(`Item ${itemId} (${fieldType}):`, {
-                    value: fieldValue,
-                    quantity: quantityInput ? parseInt(quantityInput.value) : 1
-                });
             });
             
-            console.log('=== FINAL SELECTED ITEMS DATA ===');
-            console.log('Selected items data:', selectedItemsData);
-            console.log('Selected items data JSON:', JSON.stringify(selectedItemsData));
             
             // Add the selected items data as a hidden input
             const hiddenInput = document.createElement('input');

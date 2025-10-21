@@ -83,10 +83,31 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/bookings/" class="nav-link {% if '/bookings/' in request.path %}active{% endif %}">
+                        <a class="nav-link {% if '/bookings/' in request.path %}active{% endif %}" href="#bookingsSubmenu" data-bs-toggle="collapse" aria-expanded="{% if '/bookings/' in request.path %}true{% else %}false{% endif %}">
                             <i class="fas fa-calendar-alt"></i>
                             <span>Bookings</span>
+                            <i class="fas fa-angle-down ms-auto"></i>
                         </a>
+                        <ul class="collapse {% if '/bookings/' in request.path %}show{% endif %} nav flex-column submenu" id="bookingsSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link ps-5 py-2 submenu-item {% if '/bookings/' == request.path %}active{% endif %}" href="/bookings/">
+                                    <i class="fas fa-list me-2"></i>
+                                    <span>All Bookings</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link ps-5 py-2 submenu-item {% if '/bookings/create/' in request.path %}active{% endif %}" href="/bookings/create/">
+                                    <i class="fas fa-plus me-2"></i>
+                                    <span>Create Booking</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link ps-5 py-2 submenu-item {% if '/bookings/widget-showcase/' in request.path %}active{% endif %}" href="{% url 'bookings:widget_showcase' %}">
+                                    <i class="fas fa-code me-2"></i>
+                                    <span>Booking Widget</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a href="/leads/" class="nav-link {% if '/leads/' in request.path %}active{% endif %}">

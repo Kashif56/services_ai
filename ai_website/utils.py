@@ -17,15 +17,20 @@ def create_website_directory(business_slug):
     return site_dir
 
 
-def save_html_file(business_slug, html_content):
+def save_html_file(business_slug, html_content, inject_widget=False):
     """
     Save HTML content to a file in the business's directory
+    Replaces booking widget placeholders with actual values
     Returns the file path relative to MEDIA_ROOT
     
     Args:
         business_slug: URL-friendly slug of the business name
         html_content: HTML content to save
+        inject_widget: Whether to inject the booking widget (default: False, deprecated)
     """
+    # Replace booking widget placeholders with actual values
+    html_content = replace_widget_placeholders(html_content, business_slug)
+    
     # Create website directory
     site_dir = create_website_directory(business_slug)
     
@@ -39,6 +44,47 @@ def save_html_file(business_slug, html_content):
         f.write(html_content)
     
     return relative_path
+
+
+def replace_widget_placeholders(html_content, business_slug):
+    """
+    Replace booking widget placeholders with actual business ID and API URL
+    
+    Args:
+        html_content: HTML content with placeholders
+        business_slug: Business slug from GeneratedWebsite model
+        
+    Returns:
+        HTML content with placeholders replaced
+    """
+    from ai_website.models import GeneratedWebsite
+    
+    # Get business ID from the GeneratedWebsite using business_slug
+    try:
+        website = GeneratedWebsite.objects.select_related('user__business').get(business_slug=business_slug)
+        business = website.user.business
+        business_id = business.id
+    except (GeneratedWebsite.DoesNotExist, AttributeError):
+        # If website or business not found, return original content
+        return html_content
+    
+    # Determine API URL based on environment
+    if settings.DEBUG:
+        api_url = "http://localhost:8000"
+    else:
+        if hasattr(settings, 'ALLOWED_HOSTS') and settings.ALLOWED_HOSTS:
+            domain = next((host for host in settings.ALLOWED_HOSTS if host != '*'), 'localhost')
+            api_url = f"https://{domain}"
+        else:
+            api_url = "http://localhost:8000"
+    
+    # Replace placeholders
+    html_content = html_content.replace('BUSINESS_ID_PLACEHOLDER', str(business_id))
+    html_content = html_content.replace('API_URL_PLACEHOLDER', api_url)
+    
+    return html_content
+
+
 
 
 # Mock website generation function has been removed
@@ -132,15 +178,16 @@ You MUST include ALL of these sections in order:
 
 1. **Navigation Bar** (Sticky/Fixed)
    - Logo on left, menu on right
-   - Smooth scroll to sections
+   - Smooth scroll to sections (Home, About, Services, Testimonials, Gallery, Contact, **Booking**)
    - Mobile hamburger menu
    - Transparent/solid on scroll transition
+   - **IMPORTANT**: Include a "Book Now" or "Booking" link in navigation that scrolls to #booking section
 
 2. **Hero Section** (Full viewport height)
    - Stunning background (gradient overlay on image)
    - Large, bold headline (60-80px)
    - Compelling subheadline
-   - 2 CTA buttons (primary + secondary)
+   - 2 CTA buttons (primary: "Book Now" linking to #booking, secondary: "Learn More")
    - Scroll indicator animation
    - Fade-in animation on load
 
@@ -323,6 +370,50 @@ Return ONLY the complete HTML code:
 - Secondary CTA: Outlined or subtle style
 - Action-oriented text: "Get Started", "Book Now", "Contact Us"
 - Create urgency when appropriate
+
+**CRITICAL - BOOKING WIDGET INTEGRATION:**
+
+You MUST include a booking section with the following EXACT code. Place it strategically in the website (usually near the end, before footer):
+
+```html
+<!-- Booking Widget Section -->
+<section id="booking" class="py-20 bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Book Your Appointment</h2>
+            <p class="text-xl text-gray-600">Schedule your service in just a few clicks</p>
+        </div>
+        
+        <div class="text-center">
+            <button id="open-booking-modal" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Book Now
+            </button>
+        </div>
+        
+        <!-- Hidden widget container for modal -->
+        <div id="booking-widget" 
+             data-business-id="BUSINESS_ID_PLACEHOLDER"
+             data-api-url="API_URL_PLACEHOLDER"
+             data-primary-color="#8b5cf6"
+             data-modal-mode="true"
+             style="display: none;">
+        </div>
+    </div>
+</section>
+
+<!-- Booking Widget Script -->
+<script src="API_URL_PLACEHOLDER/static/js/booking-widget-loader.js"></script>
+```
+
+**IMPORTANT NOTES:**
+- Copy this code EXACTLY as shown (including placeholders)
+- Place it before the closing </body> tag
+- The placeholders (BUSINESS_ID_PLACEHOLDER, API_URL_PLACEHOLDER) will be replaced automatically
+- Include navigation links that scroll to #booking (e.g., "Book Now" in nav and hero)
+- DO NOT modify the button ID, widget container ID, or data attributes
 
 Create something extraordinary!"""
 

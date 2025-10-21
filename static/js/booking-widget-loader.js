@@ -21,6 +21,7 @@
     const businessId = widgetContainer.dataset.businessId;
     const apiBaseUrl = widgetContainer.dataset.apiUrl || window.location.origin;
     const primaryColor = widgetContainer.dataset.primaryColor || '#8b5cf6';
+    const modalMode = widgetContainer.dataset.modalMode === 'true';
     
     if (!businessId) {
         console.error('Booking Widget: data-business-id attribute is required');
@@ -63,23 +64,53 @@
     
     // Load CSS
     function loadCSS() {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `${apiBaseUrl}/static/css/booking-widget.css`;
-        document.head.appendChild(link);
-        
-        // Add Font Awesome
+        // Add Font Awesome only
         const faLink = document.createElement('link');
         faLink.rel = 'stylesheet';
         faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
         document.head.appendChild(faLink);
         
-        // Add custom color styles
+        // Add widget custom CSS (no Bootstrap needed)
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `${apiBaseUrl}/static/css/booking-widget.css`;
+        document.head.appendChild(link);
+        
+        // Add custom color styles and CSS isolation
         const style = document.createElement('style');
         style.textContent = `
+            /* Widget color customization */
             #booking-widget {
                 --primary: ${primaryColor};
                 --primary-rgb: ${hexToRgb(primaryColor)};
+            }
+            
+            /* Modal wrapper styling */
+            .booking-widget-modal-wrapper {
+                position: relative;
+                max-width: 1200px;
+                margin: 2rem auto;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-height: 90vh;
+                overflow-y: auto;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                box-sizing: border-box;
+            }
+            
+            .booking-widget-modal-wrapper * {
+                box-sizing: border-box;
+            }
+            
+            /* Ensure modal overlay is on top */
+            #booking-widget-modal {
+                z-index: 999999 !important;
+            }
+            
+            /* Reset Tailwind interference for modal content */
+            #booking-widget-modal-content * {
+                font-family: inherit;
             }
         `;
         document.head.appendChild(style);
@@ -137,10 +168,83 @@
         }
     }
     
+    // Create modal container
+    function createModal() {
+        const modal = document.createElement('div');
+        modal.id = 'booking-widget-modal';
+        modal.style.cssText = `
+            display: none;
+            position: fixed;
+            z-index: 999999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        `;
+        
+        modal.innerHTML = `
+            <div class="booking-widget-modal-wrapper">
+                <button id="close-booking-modal" style="position: absolute; top: 15px; right: 15px; z-index: 10; background: #ef4444; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; line-height: 1; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;">
+                    &times;
+                </button>
+                <div id="booking-widget-modal-content"></div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close modal handlers
+        const closeBtn = modal.querySelector('#close-booking-modal');
+        closeBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('mouseenter', function() {
+            this.style.background = '#dc2626';
+            this.style.transform = 'scale(1.1)';
+        });
+        closeBtn.addEventListener('mouseleave', function() {
+            this.style.background = '#ef4444';
+            this.style.transform = 'scale(1)';
+        });
+        
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        
+        return modal;
+    }
+    
+    // Open modal
+    function openModal() {
+        const modal = document.getElementById('booking-widget-modal');
+        if (modal) {
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    // Close modal
+    function closeModal() {
+        const modal = document.getElementById('booking-widget-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+    
     // Render the widget HTML
     function renderWidget() {
-        widgetContainer.innerHTML = `
-            <div class="booking-widget-container">
+        const targetContainer = modalMode ? document.getElementById('booking-widget-modal-content') : widgetContainer;
+        
+        if (!targetContainer) return;
+        
+        // Wrap content in #booking-widget for CSS scoping
+        targetContainer.innerHTML = `
+            <div id="booking-widget">
+                <div class="booking-widget-container">
                 <!-- Header -->
              
                 
@@ -199,28 +303,28 @@
                                 <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Booking Summary</h5>
                             </div>
                             <div class="card-body">
-                                <div class="summary-section mb-3">
+                                <div class="summary-section mb-3 p-1">
                                     <h6 class="text-muted mb-2">Date & Time</h6>
                                     <div id="summary-datetime" class="summary-value">
                                         <i class="fas fa-calendar text-muted me-2"></i>Not selected yet
                                     </div>
                                 </div>
                                 
-                                <div class="summary-section mb-3">
+                                <div class="summary-section mb-3 p-1">
                                     <h6 class="text-muted mb-2">Duration</h6>
                                     <div id="summary-duration" class="summary-value">
                                         <i class="fas fa-clock text-muted me-2"></i>0 minutes
                                     </div>
                                 </div>
                                 
-                                <div class="summary-section mb-3">
+                                <div class="summary-section mb-3 p-1">
                                     <h6 class="text-muted mb-2">Service Type</h6>
                                     <div id="summary-service" class="summary-value">
                                         <i class="fas fa-briefcase text-muted me-2"></i>Not selected yet
                                     </div>
                                 </div>
                                 
-                                <div class="summary-section mb-3">
+                                <div class="summary-section mb-3 p-1">
                                     <h6 class="text-muted mb-2">Service Items</h6>
                                     <div id="summary-items" class="summary-value">
                                         <i class="fas fa-list text-muted me-2"></i>No items selected
@@ -251,6 +355,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         `;
@@ -442,15 +547,15 @@
                 <h4 class="mb-4"><i class="fas fa-calendar-alt me-2"></i>Date & Time Selection</h4>
                 
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3" style="width: 50%;">
                         <label for="booking_date" class="form-label">Booking Date <span class="text-danger">*</span></label>
                         <input type="date" name="booking_date" id="booking_date" class="form-control" required>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3" style="width: 50%;">
                         <label for="start_time" class="form-label">Start Time <span class="text-danger">*</span></label>
                         <input type="time" name="start_time" id="start_time" class="form-control" required>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3" style="width: 50%;">
                         <label for="end_time" class="form-label">End Time <span class="text-danger">*</span></label>
                         <input type="time" name="end_time" id="end_time" class="form-control" required>
                     </div>
@@ -541,6 +646,33 @@
     
     // Load CSS and initialize
     loadCSS();
-    initWidget();
+    
+    // If modal mode, create modal and set up button handler
+    if (modalMode) {
+        createModal();
+        
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupModalButton);
+        } else {
+            setupModalButton();
+        }
+        
+        function setupModalButton() {
+            const openButton = document.getElementById('open-booking-modal');
+            if (openButton) {
+                openButton.addEventListener('click', function() {
+                    // Initialize widget on first open
+                    if (!widgetState.business) {
+                        initWidget();
+                    }
+                    openModal();
+                });
+            }
+        }
+    } else {
+        // Normal inline mode
+        initWidget();
+    }
     
 })();

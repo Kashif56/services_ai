@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views, widget_views
-from .views_widget_example import widget_example
+from .views_widget_example import widget_showcase
 
 app_name = 'bookings'
 
@@ -8,7 +8,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('create/', views.create_booking, name='create_booking'),
     path('<str:booking_id>/edit/', views.edit_booking, name='edit_booking'),
-    path('<str:booking_id>/', views.booking_detail, name='booking_detail'),
+    path('<str:booking_id>/detail/', views.booking_detail, name='booking_detail'),
     
     # API endpoints
     path('api/service-items/<str:service_id>/', views.get_service_items, name='get_service_items'),
@@ -21,8 +21,8 @@ urlpatterns = [
     path('widget/<str:business_id>/check-availability/', widget_views.check_widget_availability, name='widget_check_availability'),
     path('widget/<str:business_id>/create/', widget_views.create_widget_booking, name='widget_create_booking'),
     
-    # Widget example page
-    path('widget-example/', widget_example, name='widget_example'),
+    # Widget pages
+    path('widget-showcase/', widget_showcase, name='widget_showcase'),
     
     # Booking actions
     path('<str:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
