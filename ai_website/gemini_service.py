@@ -66,10 +66,11 @@ Now, apply the following changes: {ai_prompt}"""
     
     # Combine system and user prompts for Gemini
     full_prompt = f"{system_prompt}\n\n{user_prompt}"
+
     
     try:
         # Initialize Gemini model
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-pro')
         
         # Generate content
         response = model.generate_content(
@@ -82,7 +83,6 @@ Now, apply the following changes: {ai_prompt}"""
         # Extract generated HTML
         html_content = response.text
         
-        print(html_content)
         
         # Clean up the response (remove markdown code blocks if present)
         html_content = html_content.strip()
@@ -95,7 +95,6 @@ Now, apply the following changes: {ai_prompt}"""
         
         html_content = html_content.strip()
         
-        print(html_content)
         
         return html_content
         

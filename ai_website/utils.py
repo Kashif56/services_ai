@@ -1,7 +1,7 @@
 import os
 from django.conf import settings
 from pathlib import Path
-
+from bookings.models import StaffMember
 
 def create_website_directory(business_slug):
     """
@@ -68,7 +68,7 @@ def get_business_context(business):
         'website': business.website or '',
         'services': [],
         'service_items': [],
-        'staff_members': []
+        'staff_members': [],
     }
     
     # Get service offerings
@@ -96,22 +96,22 @@ def get_business_context(business):
         context['service_items'].append(item_data)
     
     # Get staff members
-    try:
-        from staff.models import StaffMember
-        staff_members = StaffMember.objects.filter(business=business, is_active=True)
-        for staff in staff_members:
-            staff_data = {
-                'name': staff.name,
-                'role': staff.role.name if staff.role else 'Team Member',
-                'email': staff.email or '',
-                'phone': staff.phone or '',
-                'bio': staff.bio or '',
-                'profile_image': staff.profile_image.url if staff.profile_image else '',
-            }
-            context['staff_members'].append(staff_data)
-    except:
-        pass  # Staff module might not be available
+
+    staff_members = StaffMember.objects.filter(business=business, is_active=True)
+    for staff in staff_members:
+        staff_data = {
+            'name': staff.get_full_name(),
+            'role': staff.roles.first().name if staff.roles.first() else 'Team Member',
+            'email': staff.email or '',
+            'phone': staff.phone or '',
+            'bio': staff.bio or '',
+            'profile_image': staff.profile_image.url if staff.profile_image else '',
+        }
+        context['staff_members'].append(staff_data)
+
     
+    print(context)
+
     return context
 
 
@@ -215,39 +215,6 @@ You MUST include ALL of these sections in order:
 
 **3. ANIMATIONS & INTERACTIONS (CRITICAL):**
 
-You MUST include these smooth animations:
-
-```css
-/* Fade in on scroll */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Hover effects */
-.card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-}
-
-/* Button animations */
-.btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* Smooth transitions */
-* {
-    transition: all 0.3s ease;
-}
-```
-
 **Required Animations:**
 - Fade-in on page load
 - Hover effects on all interactive elements
@@ -281,7 +248,6 @@ Use Tailwind's responsive prefixes:
 - Desktop (1024px+): `class="lg:text-xl"`
 - Large (1280px+): `class="xl:text-2xl"`
 
-Example: `class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"`
 
 **6. OUTPUT FORMAT:**
 
@@ -299,33 +265,6 @@ Return ONLY the complete HTML code:
 - NO comments outside HTML
 - Just pure, valid, beautiful HTML that renders perfectly
 
-**EXAMPLE STRUCTURE:**
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Name</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* ONLY custom animations and specific effects here - UNDER 100 LINES */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .animate-fade-in {
-            animation: fadeIn 1s ease-in-out;
-        }
-    </style>
-</head>
-<body class="font-['Poppins']">
-    <!-- Use Tailwind classes for everything else -->
-</body>
-</html>
-```
 
 **QUALITY STANDARDS:**
 - Website should look like it cost $10,000+
@@ -449,26 +388,6 @@ def build_user_prompt(business_context, ai_prompt):
 **🎨 Custom Requirements:**
 {ai_prompt}
 
-**🎯 Design Direction:**
-- Match the design aesthetic to the {business_context['industry']} industry
-- Use colors and imagery that resonate with the target audience
-- Highlight the services listed above prominently with pricing
-- Include the exact contact information provided
-- {"Showcase the team members with their roles, photos, and bios in a dedicated Team/About section" if business_context['staff_members'] else ""}
-- Create a professional, trustworthy appearance that builds confidence
-- Make it conversion-focused to generate leads and bookings
-- Ensure the design is modern, clean, and visually stunning
-- Use high-quality placeholder images from Unsplash related to {business_context['industry']}
-
-**💡 Key Goals:**
-1. Make a powerful first impression
-2. Clearly communicate the value proposition
-3. Showcase services with pricing transparency
-4. {"Highlight the professional team members to build trust" if business_context['staff_members'] else ""}
-5. Make it easy for visitors to contact or book
-6. Build trust and credibility
-7. Stand out from competitors
-
-Generate a complete, beautiful, modern HTML website that will make {business_context['business_name']} proud to share with their customers!"""
+"""
     
     return prompt

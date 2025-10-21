@@ -7,370 +7,214 @@
     <title>Kashif Mehmood - Professional Cleaning Services</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap"
         rel="stylesheet">
     <style>
         /* Custom CSS - Under 100 lines */
         :root {
-            --primary-color: #059669;
-            /* Tailwind emerald-600 */
-            --primary-dark: #047857;
-            /* Tailwind emerald-700 */
-            --accent-color: #A3E635;
-            /* Tailwind lime-400 */
-            --text-color: #1F2937;
-            /* Tailwind gray-800 */
-            --light-text-color: #4B5563;
-            /* Tailwind gray-600 */
-            --bg-light: #F9FAFB;
-            /* Tailwind gray-50 */
-            --bg-medium: #ECFDF5;
-            /* Tailwind emerald-50 */
-            --bg-accent: #D1FAE5;
-            /* Tailwind emerald-100 */
+            --primary-color: #4338CA; /* indigo-700 */
+            --primary-dark: #3730A3; /* indigo-800 */
+            --accent-color: #10B981; /* emerald-500 */
+            --text-color: #111827; /* gray-900 */
+            --light-text-color: #4B5563; /* gray-600 */
+            --bg-light: #F9FAFB; /* gray-50 */
+            --bg-medium: #EEF2FF; /* indigo-50 */
+            --bg-accent: #D1FAE5; /* emerald-100 */
         }
+        body { font-family: 'Open Sans', sans-serif; color: var(--text-color); }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', sans-serif; color: var(--text-color); }
 
-        body {
-            font-family: 'Open Sans', sans-serif;
-            color: var(--text-color);
-        }
+        /* Keyframes */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-15px); } 60% { transform: translateY(-7px); } }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-color);
-        }
+        .animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
+        .animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; }
+        .animate-bounce-slow { animation: bounce 2s infinite; }
 
-        /* Keyframes for animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
+        /* Mobile Menu Logic */
+        #menu-toggle:checked~#mobile-menu { transform: translateX(0); }
+        #menu-toggle:checked~.hamburger span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        #menu-toggle:checked~.hamburger span:nth-child(2) { opacity: 0; }
+        #menu-toggle:checked~.hamburger span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+        .hamburger span { display: block; width: 25px; height: 3px; background-color: var(--text-color); margin: 5px 0; transition: all 0.3s ease; }
+        
+        /* Testimonial Slider */
+        .testimonial-slider { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .testimonial-slider::-webkit-scrollbar { display: none; }
+        .testimonial-card { scroll-snap-align: start; flex: 0 0 90%; }
+        @media (min-width: 768px) { .testimonial-card { flex: 0 0 calc(50% - 1rem); } }
+        @media (min-width: 1024px) { .testimonial-card { flex: 0 0 calc(33.33% - 1.33rem); } }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes bounce {
-
-            0%,
-            20%,
-            50%,
-            80%,
-            100% {
-                transform: translateY(0);
-            }
-
-            40% {
-                transform: translateY(-15px);
-            }
-
-            60% {
-                transform: translateY(-7px);
-            }
-        }
-
-        .animate-fadeIn {
-            animation: fadeIn 1s ease-out forwards;
-        }
-
-        .animate-fadeInUp {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        .animate-bounce-slow {
-            animation: bounce 2s infinite;
-        }
-
-        /* Mobile Hamburger Menu (CSS-only toggle) */
-        #menu-toggle:checked~#mobile-menu {
-            display: flex;
-        }
-
-        #menu-toggle:checked~.hamburger span:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
-        }
-
-        #menu-toggle:checked~.hamburger span:nth-child(2) {
-            opacity: 0;
-        }
-
-        #menu-toggle:checked~.hamburger span:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
-        }
-
-        .hamburger span {
-            display: block;
-            width: 25px;
-            height: 3px;
-            background-color: var(--text-color);
-            margin: 5px 0;
-            transition: all 0.3s ease;
-        }
-
-        /* Testimonial slider (CSS only) */
-        .testimonial-slider {
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            /* Firefox */
-        }
-
-        .testimonial-slider::-webkit-scrollbar {
-            display: none;
-            /* Chrome, Safari, Opera */
-        }
-
-        .testimonial-card {
-            scroll-snap-align: start;
-            flex: 0 0 90%;
-            /* For mobile */
-        }
-
-        @media (min-width: 768px) {
-            .testimonial-card {
-                flex: 0 0 calc(33.33% - 2rem);
-                /* 3 cards + gap on desktop */
-            }
-        }
+        /* Custom Background Patterns */
+        .bg-pattern-dots { background-image: radial-gradient(var(--primary-color) 1px, transparent 1px); background-size: 15px 15px; background-position: center; opacity: 0.1; }
+        .bg-pattern-lines { background-image: repeating-linear-gradient(45deg, rgba(67, 56, 202, 0.05), rgba(67, 56, 202, 0.05) 10px, transparent 10px, transparent 20px); }
+        .bg-pattern-grid { background-color: var(--bg-light); background-image: linear-gradient(var(--primary-color) 1px, transparent 1px), linear-gradient(to right, var(--primary-color) 1px, var(--bg-light) 1px); background-size: 20px 20px; opacity: 0.05; }
+        .nav-scrolled { background-color: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        
+        /* Lightbox (basic) */
+        .lightbox:target { display: flex; }
     </style>
 </head>
 
-<body class="text-gray-800 antialiased leading-relaxed">
+<body class="bg-[var(--bg-light)] text-[var(--text-color)] antialiased leading-relaxed">
 
     <!-- Navigation Bar -->
-    <header class="fixed top-0 left-0 w-full z-50 bg-white shadow-lg transition-all duration-300">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="#hero" class="text-3xl font-bold text-[var(--primary-color)]">Kashif Mehmood</a>
-
-            <!-- Mobile Menu Toggle (Hamburger) -->
-            <input type="checkbox" id="menu-toggle" class="hidden">
-            <label for="menu-toggle" class="hamburger lg:hidden cursor-pointer">
-                <span></span>
-                <span></span>
-                <span></span>
-            </label>
-
-            <!-- Desktop Menu & Mobile Menu -->
-            <nav id="mobile-menu"
-                class="hidden lg:flex flex-col lg:flex-row absolute lg:static top-full left-0 w-full lg:w-auto bg-white lg:bg-transparent shadow-lg lg:shadow-none py-4 lg:py-0 items-center justify-center transition-all duration-300 ease-in-out">
-                <ul class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-8 text-lg font-semibold">
-                    <li><a href="#hero" class="hover:text-[var(--primary-color)] transition-colors duration-300">Home</a></li>
-                    <li><a href="#features"
-                            class="hover:text-[var(--primary-color)] transition-colors duration-300">Benefits</a></li>
-                    <li><a href="#services"
-                            class="hover:text-[var(--primary-color)] transition-colors duration-300">Services</a></li>
+    <header id="navbar" class="fixed top-0 left-0 w-full z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center max-w-7xl">
+            <a href="#hero" class="text-3xl font-extrabold text-[var(--primary-color)]">Kashif Mehmood</a>
+            <nav class="hidden lg:flex items-center">
+                <ul class="flex space-x-8 text-lg font-semibold text-gray-700">
+                    <li><a href="#features" class="hover:text-[var(--primary-color)] transition-colors duration-300">Benefits</a></li>
+                    <li><a href="#services" class="hover:text-[var(--primary-color)] transition-colors duration-300">Services</a></li>
                     <li><a href="#about" class="hover:text-[var(--primary-color)] transition-colors duration-300">About</a></li>
-                    <li><a href="#team" class="hover:text-[var(--primary-color)] transition-colors duration-300">Team</a></li>
-                    <li><a href="#testimonials"
-                            class="hover:text-[var(--primary-color)] transition-colors duration-300">Testimonials</a>
-                    </li>
-                    <li><a href="#gallery"
-                            class="hover:text-[var(--primary-color)] transition-colors duration-300">Gallery</a></li>
-                    <li><a href="#contact"
-                            class="hover:text-[var(--primary-color)] transition-colors duration-300">Contact</a></li>
+                    <li><a href="#testimonials" class="hover:text-[var(--primary-color)] transition-colors duration-300">Reviews</a></li>
+                    <li><a href="#gallery" class="hover:text-[var(--primary-color)] transition-colors duration-300">Gallery</a></li>
                 </ul>
+                <a href="#contact" class="ml-8 bg-[var(--primary-color)] text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-[var(--primary-dark)] hover:scale-105 transition-all duration-300">Contact Us</a>
             </nav>
+            <input type="checkbox" id="menu-toggle" class="hidden">
+            <label for="menu-toggle" class="hamburger lg:hidden cursor-pointer z-50" aria-label="Toggle navigation menu">
+                <span></span><span></span><span></span>
+            </label>
+            <div id="mobile-menu" class="fixed top-0 right-0 h-full w-full bg-white flex flex-col items-center justify-center transform translate-x-full transition-transform duration-300 lg:hidden">
+                <ul class="flex flex-col space-y-8 text-2xl font-semibold text-center">
+                    <li><a href="#features" class="hover:text-[var(--primary-color)]">Benefits</a></li>
+                    <li><a href="#services" class="hover:text-[var(--primary-color)]">Services</a></li>
+                    <li><a href="#about" class="hover:text-[var(--primary-color)]">About</a></li>
+                    <li><a href="#testimonials" class="hover:text-[var(--primary-color)]">Reviews</a></li>
+                    <li><a href="#gallery" class="hover:text-[var(--primary-color)]">Gallery</a></li>
+                    <li><a href="#contact" class="mt-4 bg-[var(--primary-color)] text-white px-8 py-3 rounded-full">Contact Us</a></li>
+                </ul>
+            </div>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section id="hero"
-        class="relative min-h-screen flex items-center justify-center text-center text-white overflow-hidden animate-fadeIn">
-        <div class="absolute inset-0 bg-cover bg-center"
-            style="background-image: url('https://images.unsplash.com/photo-1581578330538-232f059e35b7?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
-        </div>
-        <div class="absolute inset-0 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-dark)] opacity-80"></div>
-
-        <div class="container mx-auto px-4 relative z-10 animate-fadeInUp delay-200">
-            <h1 class="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6 drop-shadow-lg">
-                Sparkling Clean, Every Time.
-            </h1>
-            <p class="text-lg md:text-xl lg:text-2xl mb-10 max-w-3xl mx-auto font-light">
-                Experience the difference with Kashif Mehmood's professional cleaning services. We make your home shine!
-            </p>
-            <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6">
-                <a href="#services"
-                    class="btn bg-[var(--accent-color)] text-gray-900 px-10 py-4 rounded-full font-bold shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 text-lg">
-                    Explore Services
-                </a>
-                <a href="#contact"
-                    class="btn bg-transparent border-2 border-white text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-white hover:text-[var(--primary-color)] hover:scale-105 transition-all duration-300 text-lg">
-                    Get a Free Quote
-                </a>
+    <section id="hero" class="relative min-h-screen flex items-center bg-[var(--bg-medium)] overflow-hidden">
+        <div class="absolute inset-0 bg-pattern-lines z-0"></div>
+        <div class="container mx-auto px-4 z-10 grid lg:grid-cols-2 items-center gap-12 max-w-7xl">
+            <div class="text-center lg:text-left animate-fadeInUp">
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 text-[var(--primary-dark)] leading-tight">
+                    Your Home's Sparkle, Our Promise.
+                </h1>
+                <p class="text-lg md:text-xl text-[var(--light-text-color)] mb-10 max-w-xl mx-auto lg:mx-0">
+                    Elite, professional cleaning services tailored to bring pristine perfection to every corner of your home in Dina, Punjab.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="#services" class="bg-[var(--accent-color)] text-white px-10 py-4 rounded-full font-bold shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300 text-lg">
+                        Explore Services <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                    <a href="#contact" class="bg-transparent border-2 border-[var(--primary-color)] text-[var(--primary-color)] px-10 py-4 rounded-full font-bold shadow-lg hover:bg-[var(--primary-color)] hover:text-white hover:scale-105 transition-all duration-300 text-lg">
+                        Get a Free Quote
+                    </a>
+                </div>
+            </div>
+            <div class="relative hidden lg:block animate-fadeIn">
+                <div class="absolute -top-10 -left-10 w-48 h-48 bg-emerald-200 rounded-full opacity-50"></div>
+                <div class="absolute -bottom-10 -right-10 w-72 h-72 bg-indigo-200 rounded-full opacity-50"></div>
+                <img src="https://images.unsplash.com/photo-1581578330538-232f059e35b7?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Sparkling clean modern living room" class="rounded-3xl shadow-2xl relative z-10 w-full h-auto object-cover transform -rotate-3 hover:rotate-0 transition-transform duration-500">
             </div>
         </div>
-        <a href="#features" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-4xl animate-bounce-slow">
+        <a href="#features" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-[var(--primary-color)] text-4xl animate-bounce-slow" aria-label="Scroll down">
             <i class="fas fa-chevron-down"></i>
         </a>
     </section>
 
     <!-- Features/Benefits Section -->
-    <section id="features" class="py-24 bg-[var(--bg-light)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-16">Why Choose Kashif Mehmood?</h2>
+    <section id="features" class="py-24 bg-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-pattern-grid z-0"></div>
+        <div class="container mx-auto px-4 max-w-7xl relative z-10">
+            <div class="text-center mb-16 animate-fadeInUp" style="animation-delay: 0.2s;">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-[var(--text-color)]">Why Trust Kashif Mehmood?</h2>
+                <p class="mt-4 text-lg text-[var(--light-text-color)] max-w-3xl mx-auto">We're not just cleaners; we're perfectionists dedicated to making your space shine.</p>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Feature Card 1 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div
-                        class="text-5xl text-[var(--primary-color)] mb-6 group-hover:rotate-12 transition-transform duration-300">
-                        <i class="fas fa-hand-sparkles"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-4 text-[var(--text-color)]">Exceptional Cleanliness</h3>
-                    <p class="text-gray-600">We guarantee a spotless finish, paying attention to every detail.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-[var(--accent-color)] animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <div class="text-5xl text-[var(--accent-color)] mb-6"><i class="fas fa-hand-sparkles"></i></div>
+                    <h3 class="text-2xl font-semibold mb-3">Exceptional Cleanliness</h3>
+                    <p class="text-[var(--light-text-color)]">We guarantee a spotless finish, paying attention to every detail.</p>
                 </div>
-                <!-- Feature Card 2 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div
-                        class="text-5xl text-[var(--primary-color)] mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-4 text-[var(--text-color)]">Reliable & Timely</h3>
-                    <p class="text-gray-600">Our team arrives on schedule and completes the job efficiently.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-[var(--primary-color)] animate-fadeInUp" style="animation-delay: 0.6s;">
+                    <div class="text-5xl text-[var(--primary-color)] mb-6"><i class="fas fa-clock"></i></div>
+                    <h3 class="text-2xl font-semibold mb-3">Reliable & Timely</h3>
+                    <p class="text-[var(--light-text-color)]">Our team arrives on schedule and completes the job efficiently.</p>
                 </div>
-                <!-- Feature Card 3 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div
-                        class="text-5xl text-[var(--primary-color)] mb-6 group-hover:bounce transition-transform duration-300">
-                        <i class="fas fa-leaf"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-4 text-[var(--text-color)]">Eco-Friendly Products</h3>
-                    <p class="text-gray-600">Using safe and sustainable cleaning solutions for your home.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-yellow-400 animate-fadeInUp" style="animation-delay: 0.8s;">
+                    <div class="text-5xl text-yellow-400 mb-6"><i class="fas fa-leaf"></i></div>
+                    <h3 class="text-2xl font-semibold mb-3">Eco-Friendly Products</h3>
+                    <p class="text-[var(--light-text-color)]">Using safe and sustainable cleaning solutions for your home.</p>
                 </div>
-                <!-- Feature Card 4 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div
-                        class="text-5xl text-[var(--primary-color)] mb-6 group-hover:rotate-6 transition-transform duration-300">
-                        <i class="fas fa-handshake"></i>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-4 text-[var(--text-color)]">Customer Satisfaction</h3>
-                    <p class="text-gray-600">Your happiness is our top priority, guaranteed with every service.</p>
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-pink-500 animate-fadeInUp" style="animation-delay: 1s;">
+                    <div class="text-5xl text-pink-500 mb-6"><i class="fas fa-handshake"></i></div>
+                    <h3 class="text-2xl font-semibold mb-3">Satisfaction Guaranteed</h3>
+                    <p class="text-[var(--light-text-color)]">Your happiness is our top priority with every service.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Services Section -->
-    <section id="services" class="py-24 bg-[var(--bg-medium)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-16">Our Professional Cleaning Services</h2>
+    <section id="services" class="py-24 bg-[var(--bg-light)] bg-pattern-lines">
+        <div class="container mx-auto px-4 max-w-7xl">
+            <div class="text-center mb-16 animate-fadeInUp">
+                <h2 class="text-4xl lg:text-5xl font-extrabold">Our Professional Cleaning Services</h2>
+                <p class="mt-4 text-lg text-[var(--light-text-color)] max-w-3xl mx-auto">Choose from our curated packages or customize your own for the perfect clean.</p>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Service Card 1: Deep Cleaning -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div
-                        class="text-6xl text-[var(--primary-color)] mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fas fa-broom"></i>
+                <div class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col text-center border border-gray-100 animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <div class="text-6xl text-[var(--primary-color)] mb-4"><i class="fas fa-broom"></i></div>
+                    <h3 class="text-3xl font-semibold mb-4">Deep Cleaning</h3>
+                    <p class="text-[var(--light-text-color)] mb-6 flex-grow">Deep thorough cleaning of your home, reaching every nook and cranny.</p>
+                    <div class="my-6">
+                        <span class="text-5xl font-extrabold text-[var(--primary-dark)]">$150.0</span>
+                        <span class="text-lg text-gray-500 block">100 min</span>
                     </div>
-                    <h3 class="text-3xl font-semibold mb-4 text-[var(--text-color)]">Deep Cleaning</h3>
-                    <p class="text-gray-600 mb-4">Deep thorough cleaning of your home, reaching every nook and cranny.
-                    </p>
-                    <div class="text-4xl font-bold text-[var(--primary-dark)] mb-2">$150.0</div>
-                    <p class="text-gray-500 mb-6">Approx. 100 minutes</p>
-                    <a href="#contact"
-                        class="inline-block bg-[var(--accent-color)] text-gray-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform duration-300">
-                        Book Now
-                    </a>
+                    <a href="#contact" class="mt-auto w-full bg-[var(--primary-color)] text-white px-8 py-3 rounded-full font-bold hover:bg-[var(--primary-dark)] hover:scale-105 transition-all duration-300">Book Deep Clean</a>
                 </div>
-                <!-- Service Card 2: Standard Cleaning -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div
-                        class="text-6xl text-[var(--primary-color)] mb-6 group-hover:rotate-6 transition-transform duration-300">
-                        <i class="fas fa-spray-can"></i>
+                <div class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col text-center border-4 border-[var(--accent-color)] animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <div class="text-6xl text-[var(--accent-color)] mb-4"><i class="fas fa-spray-can"></i></div>
+                    <h3 class="text-3xl font-semibold mb-4">Standard Cleaning</h3>
+                    <p class="text-[var(--light-text-color)] mb-6 flex-grow">Standard cleaning service - perfect for small homes and regular upkeep.</p>
+                    <div class="my-6">
+                        <span class="text-5xl font-extrabold text-[var(--primary-dark)]">$100.0</span>
+                        <span class="text-lg text-gray-500 block">60 min</span>
                     </div>
-                    <h3 class="text-3xl font-semibold mb-4 text-[var(--text-color)]">Standard Cleaning</h3>
-                    <p class="text-gray-600 mb-4">Standard cleaning service - perfect for small homes.</p>
-                    <div class="text-4xl font-bold text-[var(--primary-dark)] mb-2">$100.0</div>
-                    <p class="text-gray-500 mb-6">Approx. 60 minutes</p>
-                    <a href="#contact"
-                        class="inline-block bg-[var(--accent-color)] text-gray-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform duration-300">
-                        Book Now
-                    </a>
+                    <a href="#contact" class="mt-auto w-full bg-[var(--accent-color)] text-white px-8 py-3 rounded-full font-bold hover:bg-emerald-600 hover:scale-105 transition-all duration-300">Book Standard Clean</a>
                 </div>
-                <!-- Additional Options Card -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center flex flex-col justify-between">
-                    <div>
-                        <div
-                            class="text-6xl text-[var(--primary-color)] mb-6 group-hover:rotate-12 transition-transform duration-300">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h3 class="text-3xl font-semibold mb-4 text-[var(--text-color)]">Additional Options</h3>
-                        <ul class="text-left text-gray-600 space-y-3 mb-6">
-                            <li class="flex items-center"><i class="fas fa-check-circle text-[var(--primary-color)] mr-3"></i>
-                                Bedroom Cleaning: <span class="font-semibold ml-auto">$10.0</span></li>
-                            <li class="flex items-center"><i class="fas fa-check-circle text-[var(--primary-color)] mr-3"></i>
-                                Driveway Cleaning: <span class="font-semibold ml-auto">$10.0</span></li>
-                            <li class="flex items-center"><i class="fas fa-check-circle text-[var(--primary-color)] mr-3"></i>
-                                Premium Cleaner Product: <span class="font-semibold ml-auto">$20.0</span></li>
-                        </ul>
-                    </div>
-                    <a href="#contact"
-                        class="inline-block bg-gray-200 text-gray-800 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform duration-300">
-                        Customize Your Clean
-                    </a>
+                <div class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col text-center border border-gray-100 animate-fadeInUp" style="animation-delay: 0.6s;">
+                    <div class="text-6xl text-yellow-500 mb-4"><i class="fas fa-plus-circle"></i></div>
+                    <h3 class="text-3xl font-semibold mb-4">Additional Options</h3>
+                    <ul class="text-left text-[var(--light-text-color)] space-y-4 mb-6 flex-grow">
+                        <li class="flex items-center justify-between"><i class="fas fa-check-circle text-[var(--primary-color)] mr-3"></i> Bedroom Cleaning <span class="font-semibold ml-auto text-gray-800">$10.0</span></li>
+                        <li class="flex items-center justify-between"><i class="fas fa-check-circle text-[var(--primary-color)] mr-3"></i> Driveway Cleaned <span class="font-semibold ml-auto text-gray-800">$10.0</span></li>
+                        <li class="flex items-center justify-between"><i class="fas fa-check-circle text-[var(--primary-color)] mr-3"></i> Select Cleaner Product <span class="font-semibold ml-auto text-gray-800">$20.0</span></li>
+                    </ul>
+                    <a href="#contact" class="mt-auto w-full bg-gray-200 text-[var(--text-color)] px-8 py-3 rounded-full font-bold hover:bg-gray-300 hover:scale-105 transition-all duration-300">Customize Your Clean</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- About/Why Choose Us Section -->
-    <section id="about" class="py-24 bg-[var(--bg-light)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
+    <section id="about" class="py-24 bg-white relative overflow-hidden">
+        <div class="absolute -left-20 top-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-100 rounded-full opacity-50"></div>
+        <div class="container mx-auto px-4 max-w-7xl relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div class="lg:order-2">
-                    <img src="https://images.unsplash.com/photo-1541888946777-a33716616a18?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Kashif Mehmood Cleaning Team"
-                        class="rounded-3xl shadow-2xl w-full h-auto object-cover max-h-[500px]">
+                <div class="relative animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <div class="absolute top-0 left-0 w-full h-full bg-pattern-dots z-0 transform -translate-x-4 -translate-y-4"></div>
+                    <img src="https://images.unsplash.com/photo-1541888946777-a33716616a18?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Kashif Mehmood Cleaning Team" class="rounded-2xl shadow-2xl w-full h-auto object-cover relative z-10 transform transition-transform duration-500 hover:scale-105">
                 </div>
-                <div class="lg:order-1 text-center lg:text-left">
-                    <h2 class="text-4xl font-bold mb-6">Your Trusted Partner in Cleanliness</h2>
-                    <p class="text-lg text-gray-600 mb-8">
-                        Kashif Mehmood provides unparalleled cleaning services across Dina, Punjab. With a passion for
-                        spotless environments and a commitment to customer satisfaction, we transform your spaces into
-                        pristine havens. Our experienced team uses the latest techniques and eco-friendly products to
-                        deliver a superior clean every time.
+                <div class="animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <h2 class="text-4xl lg:text-5xl font-extrabold mb-6">Your Trusted Partner in Cleanliness</h2>
+                    <p class="text-lg text-[var(--light-text-color)] mb-8">
+                        With a passion for spotless environments and a commitment to customer satisfaction, we transform your spaces into pristine havens using the latest techniques and eco-friendly products.
                     </p>
-                    <ul class="space-y-4 text-lg text-gray-700">
-                        <li class="flex items-start lg:items-center justify-center lg:justify-start">
-                            <i class="fas fa-check-circle text-[var(--primary-color)] text-2xl mr-4 mt-1 lg:mt-0"></i>
-                            <span>Years of proven experience in residential and commercial cleaning.</span>
-                        </li>
-                        <li class="flex items-start lg:items-center justify-center lg:justify-start">
-                            <i class="fas fa-check-circle text-[var(--primary-color)] text-2xl mr-4 mt-1 lg:mt-0"></i>
-                            <span>Highly trained and background-checked cleaning professionals.</span>
-                        </li>
-                        <li class="flex items-start lg:items-center justify-center lg:justify-start">
-                            <i class="fas fa-check-circle text-[var(--primary-color)] text-2xl mr-4 mt-1 lg:mt-0"></i>
-                            <span>Flexible scheduling to fit your busy lifestyle.</span>
-                        </li>
-                        <li class="flex items-start lg:items-center justify-center lg:justify-start">
-                            <i class="fas fa-check-circle text-[var(--primary-color)] text-2xl mr-4 mt-1 lg:mt-0"></i>
-                            <span>Dedicated to using safe, non-toxic cleaning agents.</span>
-                        </li>
+                    <ul class="space-y-4 text-lg">
+                        <li class="flex items-center"><i class="fas fa-check-circle text-[var(--accent-color)] text-2xl mr-4"></i><span>Years of proven experience</span></li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-[var(--accent-color)] text-2xl mr-4"></i><span>Highly trained & vetted professionals</span></li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-[var(--accent-color)] text-2xl mr-4"></i><span>Flexible scheduling to fit your life</span></li>
                     </ul>
                 </div>
             </div>
@@ -378,243 +222,126 @@
     </section>
 
     <!-- Team Section -->
-    <section id="team" class="py-24 bg-[var(--bg-medium)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-16">Meet Our Expert Team</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Team Member 1 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734b584?q=80&w=1976&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Team Member Sarah"
-                        class="w-32 h-32 rounded-full object-cover mx-auto mb-6 border-4 border-[var(--primary-color)] shadow-md">
-                    <h3 class="text-2xl font-semibold mb-2 text-[var(--text-color)]">Sarah Khan</h3>
-                    <p class="text-[var(--primary-dark)] font-medium mb-4">Lead Cleaner & Supervisor</p>
-                    <p class="text-gray-600 mb-6">Sarah ensures every clean meets our high standards with her keen eye for detail and years of experience.</p>
-                    <div class="flex justify-center space-x-4 text-xl">
-                        <a href="#" class="text-gray-500 hover:text-[var(--primary-color)] transition-colors duration-300" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="text-gray-500 hover:text-[var(--primary-color)] transition-colors duration-300" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+    <section id="team" class="py-24 bg-[var(--bg-light)] bg-pattern-lines">
+        <div class="container mx-auto px-4 max-w-7xl">
+            <div class="text-center mb-16 animate-fadeInUp">
+                <h2 class="text-4xl lg:text-5xl font-extrabold">Meet Our Expert Team</h2>
+                <p class="mt-4 text-lg text-[var(--light-text-color)] max-w-3xl mx-auto">The friendly faces behind our spotless reputation.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Kashif Mehmood" class="w-32 h-32 rounded-full object-cover border-4 border-[var(--primary-color)] flex-shrink-0">
+                    <div>
+                        <h3 class="text-2xl font-semibold">Kashif Mehmood</h3>
+                        <p class="text-[var(--primary-dark)] font-medium mb-2">Founder & Lead Cleaner</p>
+                        <p class="text-[var(--light-text-color)] text-sm mb-3">Kashif ensures every service reflects his commitment to excellence.</p>
+                        <div class="flex space-x-3 text-lg"><a href="mailto:8bpcoins4u@gmail.com" class="text-gray-400 hover:text-[var(--primary-color)]"><i class="fas fa-envelope"></i></a><a href="tel:03153472237" class="text-gray-400 hover:text-[var(--primary-color)]"><i class="fas fa-phone-alt"></i></a></div>
                     </div>
                 </div>
-                <!-- Team Member 2 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <img src="https://images.unsplash.com/photo-1560250097-0b73528c311a?q=80&w=1965&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Team Member Ali"
-                        class="w-32 h-32 rounded-full object-cover mx-auto mb-6 border-4 border-[var(--primary-color)] shadow-md">
-                    <h3 class="text-2xl font-semibold mb-2 text-[var(--text-color)]">Ali Hassan</h3>
-                    <p class="text-[var(--primary-dark)] font-medium mb-4">Operations Manager</p>
-                    <p class="text-gray-600 mb-6">Ali manages our daily operations, ensuring smooth scheduling and efficient service delivery.</p>
-                    <div class="flex justify-center space-x-4 text-xl">
-                        <a href="#" class="text-gray-500 hover:text-[var(--primary-color)] transition-colors duration-300" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="text-gray-500 hover:text-[var(--primary-color)] transition-colors duration-300" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    </div>
-                </div>
-                <!-- Team Member 3 -->
-                <div
-                    class="group bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1976&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Team Member Fatima"
-                        class="w-32 h-32 rounded-full object-cover mx-auto mb-6 border-4 border-[var(--primary-color)] shadow-md">
-                    <h3 class="text-2xl font-semibold mb-2 text-[var(--text-color)]">Fatima Ahmed</h3>
-                    <p class="text-[var(--primary-dark)] font-medium mb-4">Customer Relations</p>
-                    <p class="text-gray-600 mb-6">Fatima is your friendly point of contact, dedicated to making your experience seamless and satisfactory.</p>
-                    <div class="flex justify-center space-x-4 text-xl">
-                        <a href="#" class="text-gray-500 hover:text-[var(--primary-color)] transition-colors duration-300" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="text-gray-500 hover:text-[var(--primary-color)] transition-colors duration-300" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <div class="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <img src="https://randomuser.me/api/portraits/men/46.jpg" alt="Vik o beall" class="w-32 h-32 rounded-full object-cover border-4 border-[var(--primary-color)] flex-shrink-0">
+                    <div>
+                        <h3 class="text-2xl font-semibold">Vik o beall</h3>
+                        <p class="text-[var(--primary-dark)] font-medium mb-2">Senior Cleaning Specialist</p>
+                        <p class="text-[var(--light-text-color)] text-sm mb-3">Vik brings years of experience and a meticulous approach to every job.</p>
+                        <div class="flex space-x-3 text-lg"><a href="mailto:vkbeall@gmail.com" class="text-gray-400 hover:text-[var(--primary-color)]"><i class="fas fa-envelope"></i></a><a href="tel:03153472237" class="text-gray-400 hover:text-[var(--primary-color)]"><i class="fas fa-phone-alt"></i></a></div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Testimonials/Social Proof Section -->
-    <section id="testimonials" class="py-24 bg-[var(--bg-accent)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-16">What Our Clients Say</h2>
-            <div class="testimonial-slider flex space-x-8 pb-4">
-                <!-- Testimonial Card 1 -->
-                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-xl text-center">
-                    <div class="flex justify-center mb-4">
-                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Client Photo"
-                            class="w-24 h-24 rounded-full object-cover shadow-md border-4 border-[var(--primary-color)]">
-                    </div>
-                    <div class="text-[var(--accent-color)] text-xl mb-4">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i>
-                    </div>
-                    <p class="text-gray-700 text-lg italic mb-6">
-                        "Kashif Mehmood's team did an incredible deep clean on my apartment. It looks and smells
-                        amazing! Highly recommend their services."
-                    </p>
-                    <p class="font-semibold text-[var(--text-color)]">- Aisha Khan</p>
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="py-24 bg-[var(--bg-medium)] relative overflow-hidden">
+        <div class="absolute inset-0 bg-pattern-dots z-0" style="opacity: 0.05;"></div>
+        <div class="container mx-auto px-4 max-w-7xl relative z-10">
+            <div class="text-center mb-16 animate-fadeInUp">
+                <h2 class="text-4xl lg:text-5xl font-extrabold">What Our Clients Say</h2>
+                <p class="mt-4 text-lg text-[var(--light-text-color)] max-w-3xl mx-auto">Real stories from satisfied customers who love their clean homes.</p>
+            </div>
+            <div class="testimonial-slider flex gap-8 pb-4 -mx-4 px-4">
+                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative">
+                    <i class="fas fa-quote-left text-7xl text-indigo-100 absolute top-4 left-6 -z-1"></i>
+                    <div class="flex items-center mb-4"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Aisha Khan" class="w-16 h-16 rounded-full object-cover mr-4"><div class="text-left"><p class="font-semibold text-lg">Aisha Khan</p><div class="text-yellow-400"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div></div></div>
+                    <p class="text-[var(--light-text-color)] italic">"Kashif Mehmood's team did an incredible deep clean. It looks and smells amazing! Highly recommend."</p>
                 </div>
-                <!-- Testimonial Card 2 -->
-                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-xl text-center">
-                    <div class="flex justify-center mb-4">
-                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Client Photo"
-                            class="w-24 h-24 rounded-full object-cover shadow-md border-4 border-[var(--primary-color)]">
-                    </div>
-                    <div class="text-[var(--accent-color)] text-xl mb-4">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-                    </div>
-                    <p class="text-gray-700 text-lg italic mb-6">
-                        "The standard cleaning service is perfect for our small office. Consistently professional and
-                        always on time. Great value!"
-                    </p>
-                    <p class="font-semibold text-[var(--text-color)]">- Bilal Ahmed</p>
+                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative">
+                    <i class="fas fa-quote-left text-7xl text-indigo-100 absolute top-4 left-6 -z-1"></i>
+                    <div class="flex items-center mb-4"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Bilal Ahmed" class="w-16 h-16 rounded-full object-cover mr-4"><div class="text-left"><p class="font-semibold text-lg">Bilal Ahmed</p><div class="text-yellow-400"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div></div></div>
+                    <p class="text-[var(--light-text-color)] italic">"The standard cleaning is perfect for our office. Consistently professional and always on time. Great value!"</p>
                 </div>
-                <!-- Testimonial Card 3 -->
-                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-xl text-center">
-                    <div class="flex justify-center mb-4">
-                        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client Photo"
-                            class="w-24 h-24 rounded-full object-cover shadow-md border-4 border-[var(--primary-color)]">
-                    </div>
-                    <div class="text-[var(--accent-color)] text-xl mb-4">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i>
-                    </div>
-                    <p class="text-gray-700 text-lg italic mb-6">
-                        "I added driveway cleaning and it made a huge difference! Their attention to detail is
-                        unmatched. My home feels brand new."
-                    </p>
-                    <p class="font-semibold text-[var(--text-color)]">- Zara Ali</p>
-                </div>
-                <!-- Testimonial Card 4 -->
-                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-xl text-center">
-                    <div class="flex justify-center mb-4">
-                        <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Client Photo"
-                            class="w-24 h-24 rounded-full object-cover shadow-md border-4 border-[var(--primary-color)]">
-                    </div>
-                    <div class="text-[var(--accent-color)] text-xl mb-4">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i>
-                    </div>
-                    <p class="text-gray-700 text-lg italic mb-6">
-                        "Fantastic service! The team was polite, efficient, and left my house sparkling. Will definitely
-                        be using them again."
-                    </p>
-                    <p class="font-semibold text-[var(--text-color)]">- Omer Farooq</p>
+                <div class="testimonial-card bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative">
+                    <i class="fas fa-quote-left text-7xl text-indigo-100 absolute top-4 left-6 -z-1"></i>
+                    <div class="flex items-center mb-4"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Zara Ali" class="w-16 h-16 rounded-full object-cover mr-4"><div class="text-left"><p class="font-semibold text-lg">Zara Ali</p><div class="text-yellow-400"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div></div></div>
+                    <p class="text-[var(--light-text-color)] italic">"I added driveway cleaning and it made a huge difference! Their attention to detail is unmatched."</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Gallery/Portfolio Section -->
-    <section id="gallery" class="py-24 bg-[var(--bg-light)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-16">Our Work in Action</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="group relative overflow-hidden rounded-xl shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1542838183-503487bd4367?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Cleaned Living Room"
-                        class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent opacity-0 group-hover:opacity-100 flex items-end p-6 transition-opacity duration-500">
-                        <h3 class="text-white text-xl font-semibold">Living Room Transformation</h3>
-                    </div>
-                </div>
-                <div class="group relative overflow-hidden rounded-xl shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Sparkling Kitchen"
-                        class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent opacity-0 group-hover:opacity-100 flex items-end p-6 transition-opacity duration-500">
-                        <h3 class="text-white text-xl font-semibold">Kitchen Deep Clean</h3>
-                    </div>
-                </div>
-                <div class="group relative overflow-hidden rounded-xl shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Fresh Bathroom"
-                        class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent opacity-0 group-hover:opacity-100 flex items-end p-6 transition-opacity duration-500">
-                        <h3 class="text-white text-xl font-semibold">Bathroom Sanitization</h3>
-                    </div>
-                </div>
-                <div class="group relative overflow-hidden rounded-xl shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        alt="Organized Bedroom"
-                        class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent opacity-0 group-hover:opacity-100 flex items-end p-6 transition-opacity duration-500">
-                        <h3 class="text-white text-xl font-semibold">Bedroom Refresh</h3>
-                    </div>
-                </div>
+    <section id="gallery" class="py-24 bg-white">
+        <div class="container mx-auto px-4 max-w-7xl">
+            <div class="text-center mb-16 animate-fadeInUp">
+                <h2 class="text-4xl lg:text-5xl font-extrabold">Our Work in Action</h2>
+                <p class="mt-4 text-lg text-[var(--light-text-color)] max-w-3xl mx-auto">See the transformations we've accomplished for our clients.</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="#img1" class="group relative overflow-hidden rounded-xl shadow-lg md:col-span-2 md:row-span-2 animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <img src="https://images.unsplash.com/photo-1581578330538-232f059e35b7" alt="Cleaned Living Room" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/40 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity"><h3 class="text-white text-xl font-semibold">Living Room Transformation</h3></div>
+                </a>
+                <a href="#img2" class="group relative overflow-hidden rounded-xl shadow-lg animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <img src="https://images.unsplash.com/photo-1588072432836-e108e92d0046" alt="Sparkling Kitchen" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/40 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity"><h3 class="text-white text-xl font-semibold">Kitchen Deep Clean</h3></div>
+                </a>
+                <a href="#img3" class="group relative overflow-hidden rounded-xl shadow-lg animate-fadeInUp" style="animation-delay: 0.6s;">
+                    <img src="https://images.unsplash.com/photo-1543163351-b85055034b07" alt="Fresh Bathroom" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/40 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity"><h3 class="text-white text-xl font-semibold">Bathroom Sanitization</h3></div>
+                </a>
+                <a href="#img4" class="group relative overflow-hidden rounded-xl shadow-lg md:col-span-2 animate-fadeInUp" style="animation-delay: 0.8s;">
+                    <img src="https://images.unsplash.com/photo-1571004116086-1ee1274a171d" alt="Organized Bedroom" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/40 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity"><h3 class="text-white text-xl font-semibold">Bedroom Refresh</h3></div>
+                </a>
             </div>
         </div>
+        <!-- Lightbox Modals -->
+        <div id="img1" class="lightbox hidden fixed inset-0 bg-black/80 items-center justify-center z-50"><a href="#gallery" class="fixed inset-0"></a><img src="https://images.unsplash.com/photo-1581578330538-232f059e35b7" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl z-10" alt="Cleaned Living Room"><a href="#gallery" class="absolute top-4 right-4 text-white text-3xl">&times;</a></div>
+        <div id="img2" class="lightbox hidden fixed inset-0 bg-black/80 items-center justify-center z-50"><a href="#gallery" class="fixed inset-0"></a><img src="https://images.unsplash.com/photo-1588072432836-e108e92d0046" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl z-10" alt="Sparkling Kitchen"><a href="#gallery" class="absolute top-4 right-4 text-white text-3xl">&times;</a></div>
+        <div id="img3" class="lightbox hidden fixed inset-0 bg-black/80 items-center justify-center z-50"><a href="#gallery" class="fixed inset-0"></a><img src="https://images.unsplash.com/photo-1543163351-b85055034b07" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl z-10" alt="Fresh Bathroom"><a href="#gallery" class="absolute top-4 right-4 text-white text-3xl">&times;</a></div>
+        <div id="img4" class="lightbox hidden fixed inset-0 bg-black/80 items-center justify-center z-50"><a href="#gallery" class="fixed inset-0"></a><img src="https://images.unsplash.com/photo-1571004116086-1ee1274a171d" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl z-10" alt="Organized Bedroom"><a href="#gallery" class="absolute top-4 right-4 text-white text-3xl">&times;</a></div>
     </section>
 
     <!-- Contact Section -->
-    <section id="contact" class="py-24 bg-[var(--bg-medium)] animate-fadeInUp">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-bold text-center mb-16">Get Your Home Sparkling Today!</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <!-- Contact Form -->
-                <div class="bg-white rounded-2xl p-8 md:p-12 shadow-xl">
-                    <h3 class="text-3xl font-bold mb-8 text-center lg:text-left">Send Us a Message</h3>
-                    <form>
-                        <div class="mb-6">
-                            <label for="name" class="block text-gray-700 text-lg font-semibold mb-2">Full Name</label>
-                            <input type="text" id="name" name="name" placeholder="Your Name"
-                                class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none transition-all duration-300">
-                        </div>
-                        <div class="mb-6">
-                            <label for="email" class="block text-gray-700 text-lg font-semibold mb-2">Email
-                                Address</label>
-                            <input type="email" id="email" name="email" placeholder="you@example.com"
-                                class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none transition-all duration-300">
-                        </div>
-                        <div class="mb-6">
-                            <label for="phone" class="block text-gray-700 text-lg font-semibold mb-2">Phone
-                                Number</label>
-                            <input type="tel" id="phone" name="phone" placeholder="+92 315 3472237"
-                                class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none transition-all duration-300">
-                        </div>
-                        <div class="mb-8">
-                            <label for="message"
-                                class="block text-gray-700 text-lg font-semibold mb-2">Message</label>
-                            <textarea id="message" name="message" rows="6" placeholder="Tell us about your cleaning needs..."
-                                class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none resize-y transition-all duration-300"></textarea>
-                        </div>
-                        <button type="submit"
-                            class="w-full bg-[var(--primary-color)] text-white px-8 py-4 rounded-full font-bold text-xl shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300">
-                            Submit Request
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Contact Info & Map -->
-                <div class="bg-white rounded-2xl p-8 md:p-12 shadow-xl flex flex-col justify-between">
+    <section id="contact" class="py-24 bg-[var(--bg-light)] relative overflow-hidden">
+        <div class="absolute inset-0 bg-pattern-lines z-0"></div>
+        <div class="container mx-auto px-4 max-w-7xl relative z-10">
+            <div class="text-center mb-16 animate-fadeInUp">
+                <h2 class="text-4xl lg:text-5xl font-extrabold">Get Your Home Sparkling Today!</h2>
+                <p class="mt-4 text-lg text-[var(--light-text-color)] max-w-3xl mx-auto">Ready for a cleaner space? Reach out to us for a free, no-obligation quote.</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 grid lg:grid-cols-2 gap-12 border border-gray-100 animate-fadeInUp" style="animation-delay: 0.2s;">
+                <form>
+                    <h3 class="text-3xl font-bold mb-8">Send Us a Message</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div><label for="name" class="sr-only">Full Name</label><input type="text" id="name" placeholder="Full Name" class="w-full p-3 bg-gray-100 rounded-lg border-2 border-transparent focus:border-[var(--primary-color)] focus:bg-white outline-none transition-all"></div>
+                        <div><label for="email" class="sr-only">Email</label><input type="email" id="email" placeholder="Email Address" class="w-full p-3 bg-gray-100 rounded-lg border-2 border-transparent focus:border-[var(--primary-color)] focus:bg-white outline-none transition-all"></div>
+                    </div>
+                    <div class="mb-6"><label for="phone" class="sr-only">Phone</label><input type="tel" id="phone" placeholder="Phone Number" class="w-full p-3 bg-gray-100 rounded-lg border-2 border-transparent focus:border-[var(--primary-color)] focus:bg-white outline-none transition-all"></div>
+                    <div class="mb-8"><label for="message" class="sr-only">Message</label><textarea id="message" rows="5" placeholder="Tell us about your cleaning needs..." class="w-full p-3 bg-gray-100 rounded-lg border-2 border-transparent focus:border-[var(--primary-color)] focus:bg-white outline-none resize-y transition-all"></textarea></div>
+                    <button type="submit" class="w-full bg-[var(--primary-color)] text-white p-4 rounded-full font-bold text-lg shadow-lg hover:bg-[var(--primary-dark)] hover:scale-105 transition-all duration-300">Submit Request</button>
+                </form>
+                <div class="flex flex-col justify-between">
                     <div>
-                        <h3 class="text-3xl font-bold mb-8 text-center lg:text-left">Contact Information</h3>
-                        <div class="space-y-6 text-lg text-gray-700">
-                            <p class="flex items-center">
-                                <i class="fas fa-envelope text-[var(--primary-color)] text-2xl mr-4"></i>
-                                <span>Email: <a href="mailto:8bpcoins4u@gmail.com"
-                                        class="hover:text-[var(--primary-dark)]">8bpcoins4u@gmail.com</a></span>
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fas fa-phone-alt text-[var(--primary-color)] text-2xl mr-4"></i>
-                                <span>Phone: <a href="tel:03153472237" class="hover:text-[var(--primary-dark)]">03153472237</a></span>
-                            </p>
-                            <p class="flex items-start">
-                                <i class="fas fa-map-marker-alt text-[var(--primary-color)] text-2xl mr-4 mt-1"></i>
-                                <span>Address: Dhok Mewra Chakoha, PO and Teh Dina, District Jhelum, Dina, Punjab
-                                    49400</span>
-                            </p>
+                        <h3 class="text-3xl font-bold mb-8">Contact Information</h3>
+                        <div class="space-y-6 text-lg">
+                            <p class="flex items-start"><i class="fas fa-envelope text-[var(--primary-color)] text-xl mr-4 mt-1"></i><a href="mailto:8bpcoins4u@gmail.com" class="hover:text-[var(--primary-dark)]">8bpcoins4u@gmail.com</a></p>
+                            <p class="flex items-start"><i class="fas fa-phone-alt text-[var(--primary-color)] text-xl mr-4 mt-1"></i><a href="tel:03153472237" class="hover:text-[var(--primary-dark)]">03153472237</a></p>
+                            <p class="flex items-start"><i class="fas fa-map-marker-alt text-[var(--primary-color)] text-xl mr-4 mt-1"></i><span>Dhok Mewra Chakoha, PO and Teh Dina, District Jhelum, Dina, Punjab 49400</span></p>
                         </div>
-                        <div class="mt-12">
-                            <h4 class="text-2xl font-bold mb-4 text-center lg:text-left">Find Us On The Map</h4>
-                            <div class="w-full h-64 bg-gray-200 rounded-lg overflow-hidden shadow-inner">
-                                <!-- Google Map Placeholder (replace with actual embed code) -->
-                                <iframe
-                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3368.587289667794!2d73.5786358!3d32.992225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x391f9b3b0d7a6e1f%3A0x7e7d6b3e1c6e1c6e!2sDina%2C%20Jhelum%20District%2C%20Punjab%2C%20Pakistan!5e0!3m2!1sen!2sus!4v1701725000000!5m2!1sen!2sus"
-                                    width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade"></iframe>
-                            </div>
-                        </div>
+                    </div>
+                    <div class="w-full h-48 bg-gray-200 rounded-lg overflow-hidden shadow-inner mt-8">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3368.587289667794!2d73.5786358!3d32.992225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x391f9b3b0d7a6e1f%3A0x7e7d6b3e1c6e1c6e!2sDina%2C%20Jhelum%20District%2C%20Punjab%2C%20Pakistan!5e0!3m2!1sen!2sus!4v1701725000000!5m2!1sen!2sus" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Google Map of Dina, Punjab"></iframe>
                     </div>
                 </div>
             </div>
@@ -622,47 +349,55 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="container mx-auto px-4 text-center md:text-left">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                <div>
+    <footer class="bg-gray-900 text-white">
+        <div class="container mx-auto px-4 py-12 max-w-7xl">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 text-center md:text-left">
+                <div class="md:col-span-2">
                     <h3 class="text-2xl font-bold mb-4 text-[var(--primary-color)]">Kashif Mehmood</h3>
-                    <p class="text-gray-400">Your trusted partner for sparkling clean homes and businesses in Dina and
-                        surrounding areas.</p>
+                    <p class="text-gray-400 max-w-md mx-auto md:mx-0">Your trusted partner for sparkling clean homes and businesses in Dina and surrounding areas.</p>
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Quick Links</h3>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="#hero" class="hover:text-[var(--primary-color)] transition-colors duration-300">Home</a></li>
-                        <li><a href="#services"
-                                class="hover:text-[var(--primary-color)] transition-colors duration-300">Services</a></li>
-                        <li><a href="#about"
-                                class="hover:text-[var(--primary-color)] transition-colors duration-300">About Us</a></li>
-                        <li><a href="#team" class="hover:text-[var(--primary-color)] transition-colors duration-300">Our Team</a></li>
-                        <li><a href="#contact"
-                                class="hover:text-[var(--primary-color)] transition-colors duration-300">Contact</a></li>
+                        <li><a href="#services" class="hover:text-white">Services</a></li>
+                        <li><a href="#about" class="hover:text-white">About Us</a></li>
+                        <li><a href="#gallery" class="hover:text-white">Gallery</a></li>
+                        <li><a href="#contact" class="hover:text-white">Contact</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Follow Us</h3>
                     <div class="flex justify-center md:justify-start space-x-6 text-2xl">
-                        <a href="https://facebook.com" class="hover:text-[var(--primary-color)] transition-colors duration-300"
-                            aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="https://twitter.com" class="hover:text-[var(--primary-color)] transition-colors duration-300"
-                            aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="https://instagram.com" class="hover:text-[var(--primary-color)] transition-colors duration-300"
-                            aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="https://linkedin.com" class="hover:text-[var(--primary-color)] transition-colors duration-300"
-                            aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="hover:text-[var(--primary-color)] transition-colors"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="hover:text-[var(--primary-color)] transition-colors"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="hover:text-[var(--primary-color)] transition-colors"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
             </div>
-            <div class="border-t border-gray-700 pt-8 text-gray-500 text-sm">
-                &copy; 2023 Kashif Mehmood. All rights reserved.
+            <div class="border-t border-gray-700 pt-8 text-gray-500 text-sm text-center">
+                &copy; 2024 Kashif Mehmood. All rights reserved. Website by a World-Class AI.
             </div>
         </div>
     </footer>
 
+    <script>
+        // Navbar scroll effect
+        const nav = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('nav-scrolled');
+            } else {
+                nav.classList.remove('nav-scrolled');
+            }
+        });
+
+        // Close mobile menu on link click
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('menu-toggle').checked = false;
+            });
+        });
+    </script>
 </body>
 
 </html>
