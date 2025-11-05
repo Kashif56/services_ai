@@ -172,8 +172,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 
-BASE_URL = 'http://127.0.0.1:8000'
-
+BASE_URL = 'https://services-ai.up.railway.app'
 # OPENAI
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
@@ -183,7 +182,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://servicesai.up.railway.app',
+    'https://services-ai.up.railway.app',
 ]
 
 # Allow iframes from same origin for template preview
@@ -273,3 +272,5 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
