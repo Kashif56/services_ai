@@ -1,20 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.urls import reverse
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.db import models
-from django.utils import timezone
-
-from .models import Invoice, InvoiceStatus, Payment, PaymentMethod
-from bookings.models import Booking, BookingServiceItem
+from .models import Invoice,Payment
 
 
 
 def public_invoice_detail(request, invoice_id):
     from django.conf import settings
-    
-    invoice = get_object_or_404(Invoice, id=invoice_id)
+    invoice = Invoice.objects.get(id=invoice_id)
+
     service_items = invoice.booking.service_items.all()
     
     services_total = 0

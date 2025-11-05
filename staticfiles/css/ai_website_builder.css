@@ -1,0 +1,281 @@
+/* AI Website Builder Styles */
+
+.website-builder-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.builder-header {
+    padding: 2rem 0;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.builder-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.builder-subtitle {
+    font-size: 1.1rem;
+    color: #718096;
+    margin-bottom: 0;
+}
+
+/* Existing Website Card */
+.existing-website-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.existing-website-card h4 {
+    color: white;
+}
+
+.existing-website-card .text-muted {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.existing-website-card a {
+    color: white;
+    font-weight: 600;
+}
+
+.existing-website-card a:hover {
+    color: #ffd700;
+}
+
+.existing-website-card .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Generator Card */
+.generator-card {
+    border: none;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.generator-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border: none;
+}
+
+.generator-card .card-header h5 {
+    color: white;
+    font-weight: 600;
+}
+
+.generator-card .card-body {
+    padding: 2.5rem;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+}
+
+.form-control,
+.form-control-lg {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-control-lg:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 150px;
+}
+
+.form-text {
+    color: #718096;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* AI Tips Card */
+.ai-tips-card {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #667eea;
+}
+
+.ai-tips-card h6 {
+    color: #2d3748;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    color: #4a5568;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+.tips-list li i {
+    color: #48bb78;
+}
+
+/* Generate Button */
+#generateBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#generateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+#generateBtn:active {
+    transform: translateY(0);
+}
+
+/* Feature Boxes */
+.feature-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    border: 2px solid transparent;
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border-color: #667eea;
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.feature-box h5 {
+    color: #2d3748;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.feature-box p {
+    color: #718096;
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+/* Button Group Styles */
+.btn-group-vertical .btn {
+    border-radius: 10px !important;
+    margin-bottom: 0.5rem;
+}
+
+.btn-group-vertical .btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 2px solid #e2e8f0;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    border-top: 2px solid #e2e8f0;
+    padding: 1.5rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .builder-title {
+        font-size: 2rem;
+    }
+
+    .builder-subtitle {
+        font-size: 1rem;
+    }
+
+    .generator-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .existing-website-card .btn-group-vertical {
+        margin-top: 1rem;
+    }
+}
+
+/* Loading Animation */
+.btn.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
