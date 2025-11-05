@@ -63,7 +63,7 @@ class LicenceMiddleware:
             # For all other paths, require a license
             has_licence = LicenceKeyUsage.objects.filter(user=request.user).exists()
             
-            if not has_licence:
+            if not has_licence and not request.user.is_staff():
                 messages.warning(request, 'This feature requires a license. Please purchase or activate a license to continue.')
                 return redirect(reverse('licence:licence_home'))
         
