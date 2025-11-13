@@ -45,7 +45,7 @@ urlpatterns = [
     re_path(r'^plugin/(?P<plugin_slug>[\w-]+)/(?P<path>.*)$', plugin_views.plugin_route_handler),
     # Public AI-generated websites - must be last to avoid conflicts
     # Matches business slugs like 'kashif-mehmood', 'johns-plumbing', etc.
-    path('<slug:business_slug>/', ai_website_views.public_website, name='public_website'),
+    path('sites/<slug:business_slug>/', ai_website_views.public_website, name='public_website'),
 ]
 
 # Serve media files in development
